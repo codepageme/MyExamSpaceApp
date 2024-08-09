@@ -1,17 +1,36 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
-
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MyExamSpace.Com{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('css/bootstrap.css') }}">
+    {% block stylesheets %}
+       
+    {% endblock %}
+</head>
     <body>
-        {% block body %}{% endblock %}
-    </body>
+    <main>
+        {% block body %}
+        <div class="logincontainer">
+            <div id="auth">
+            <div class="logo2"></div>
+
+                {% block auth %}
+                
+                {% endblock %}
+            </div>
+            <div id="pp">
+                {% block pp %}{% endblock %}
+            </div>
+        </div>
+        {% endblock %}
+    </main>
+    {% block javascripts %}
+    <script src="{{ asset('js/jquery.js') }}"></script>
+    <script src="{{ asset('js/bootstrap.js') }}"></script>
+    {% endblock %}
+</body>
 </html>
+
