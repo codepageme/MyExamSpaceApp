@@ -13,8 +13,8 @@ class Teacher
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
-    private ?string $Prefix = null;
+    #[ORM\Column(length: 120)]
+    private ?string $prefix = null;
 
     #[ORM\Column(length: 255)]
     private ?string $FirstName = null;
@@ -23,18 +23,21 @@ class Teacher
     private ?string $LastName = null;
 
     #[ORM\Column(length: 255)]
+    private ?string $string = null;
+
+    #[ORM\Column(length: 255)]
     private ?string $Username = null;
 
     #[ORM\Column(length: 255)]
     private ?string $Password = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $Contact = null;
+    #[ORM\Column(nullable: true)]
+    private ?int $Number = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $Email = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 255)]
     private ?string $Role = null;
 
     public function getId(): ?int
@@ -44,12 +47,12 @@ class Teacher
 
     public function getPrefix(): ?string
     {
-        return $this->Prefix;
+        return $this->prefix;
     }
 
-    public function setPrefix(string $Prefix): static
+    public function setPrefix(string $prefix): static
     {
-        $this->Prefix = $Prefix;
+        $this->prefix = $prefix;
 
         return $this;
     }
@@ -78,6 +81,18 @@ class Teacher
         return $this;
     }
 
+    public function getString(): ?string
+    {
+        return $this->string;
+    }
+
+    public function setString(string $string): static
+    {
+        $this->string = $string;
+
+        return $this;
+    }
+
     public function getUsername(): ?string
     {
         return $this->Username;
@@ -102,14 +117,14 @@ class Teacher
         return $this;
     }
 
-    public function getContact(): ?string
+    public function getNumber(): ?int
     {
-        return $this->Contact;
+        return $this->Number;
     }
 
-    public function setContact(?string $Contact): static
+    public function setNumber(?int $Number): static
     {
-        $this->Contact = $Contact;
+        $this->Number = $Number;
 
         return $this;
     }
@@ -131,7 +146,7 @@ class Teacher
         return $this->Role;
     }
 
-    public function setRole(?string $Role): static
+    public function setRole(string $Role): static
     {
         $this->Role = $Role;
 

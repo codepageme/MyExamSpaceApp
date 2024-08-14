@@ -12,15 +12,14 @@
 <div class="loginform">
     <h1  id="who">Teacher Login</h1>
 
-      <form method="post" action="/">
-       <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+      <form action="{{ path('teacher_login') }}" method="post">
         <div class="form-group">
             <label for="username">Full name</label>
-            <input type="text" id="username" name="_username" class="form-control signup" required>
+            <input type="text" id="username" name="_username" class="form-control signup">
         </div>
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="_password" class="form-control signup"required>
+            <input type="password" id="password" name="_password" class="form-control signup">
         </div>
         <input type="submit" value="Login" class="btn btn-primary space">
     </form>
