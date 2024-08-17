@@ -286,4 +286,22 @@ label{
     }
 }
 
+
+/* alert */
+
+.alet{
+    padding: 15px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    width: 50%;
+    height: 500px;
+}
+
+.alet-danger {
+    color: #e00000;
+    background-color: #ffffff;
+    border-color: #f10909;
+}
+
+
 /*   */

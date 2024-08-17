@@ -4,9 +4,10 @@ namespace App\Entity;
 
 use App\Repository\TeacherRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: TeacherRepository::class)]
-class Teacher
+class Teacher implements UserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -21,9 +22,6 @@ class Teacher
 
     #[ORM\Column(length: 255)]
     private ?string $LastName = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $string = null;
 
     #[ORM\Column(length: 255)]
     private ?string $Username = null;
@@ -53,7 +51,6 @@ class Teacher
     public function setPrefix(string $prefix): static
     {
         $this->prefix = $prefix;
-
         return $this;
     }
 
@@ -65,7 +62,6 @@ class Teacher
     public function setFirstName(string $FirstName): static
     {
         $this->FirstName = $FirstName;
-
         return $this;
     }
 
@@ -77,19 +73,6 @@ class Teacher
     public function setLastName(string $LastName): static
     {
         $this->LastName = $LastName;
-
-        return $this;
-    }
-
-    public function getString(): ?string
-    {
-        return $this->string;
-    }
-
-    public function setString(string $string): static
-    {
-        $this->string = $string;
-
         return $this;
     }
 
@@ -101,7 +84,6 @@ class Teacher
     public function setUsername(string $Username): static
     {
         $this->Username = $Username;
-
         return $this;
     }
 
@@ -113,7 +95,6 @@ class Teacher
     public function setPassword(string $Password): static
     {
         $this->Password = $Password;
-
         return $this;
     }
 
@@ -125,7 +106,6 @@ class Teacher
     public function setNumber(?int $Number): static
     {
         $this->Number = $Number;
-
         return $this;
     }
 
@@ -137,7 +117,6 @@ class Teacher
     public function setEmail(?string $Email): static
     {
         $this->Email = $Email;
-
         return $this;
     }
 
@@ -149,7 +128,21 @@ class Teacher
     public function setRole(string $Role): static
     {
         $this->Role = $Role;
-
         return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->Username;
+    }
+
+    public function getRoles(): array
+    {
+        return [$this->Role];
+    }
+
+    public function eraseCredentials(): void
+    {
+        // Clear any sensitive data here
     }
 }

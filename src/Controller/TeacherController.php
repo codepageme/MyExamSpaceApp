@@ -12,38 +12,35 @@ use App\Repository\TeacherRepository;
 class TeacherController extends AbstractController
 {
     /**
-     * @Route("/teacher", name="teacher_index")
+     * @Route("/teacher", name="teacher_login_form")
      */
-    public function index()
+    public function loginForm(): Response
     {
         return $this->render('teacher/index.html.twig');
     }
 
     /**
-     * @Route("/teacher/login", name="teacher_login")
+     * @Route("/teacher/authenticate", name="teacher_authenticate", methods={"POST"})
      */
-    public function login(Request $request, TeacherRepository $teacherRepository)
+    public function authenticate(Request $request, TeacherRepository $teacherRepository): Response
     {
-        if ($request->isMethod('POST')) {
-            $username = $request->request->get('_username');
-            $password = $request->request->get('_password');
+        $username = $request->request->get('_username');
+        $password = $request->request->get('_password');
 
-            $teacher = $teacherRepository->findOneBy(['Username' => $username]);
+        $teacher = $teacherRepository->findOneBy(['Username' => $username]);
 
-            if ($teacher && $teacher->getPassword() === $password) {
-                return $this->redirectToRoute('teacher_dashboard');
-            } else {
-                $this->addFlash('error', 'Invalid username or password');
-            }
+        if ($teacher && $teacher->getPassword() === $password) {
+            return $this->redirectToRoute('teacher_dashboard');
+        } else {
+            $this->addFlash('error', 'Invalid username or password');
+            return $this->redirectToRoute('teacher_login_form');
         }
-
-        return $this->render('teacher/login.html.twig');
     }
 
     /**
      * @Route("/teacher/dashboard", name="teacher_dashboard")
      */
-    public function dashboard()
+    public function dashboard(): Response
     {
         return $this->render('teacher/dashboard.html.twig');
     }

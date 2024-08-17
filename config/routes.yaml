@@ -5,13 +5,16 @@ controllers:
     type: attribute
 
 
-# added here - config/routes.yaml
-teacher_login:
-  path: /teacher/login
-  controller: App\Controller\TeacherController::login
-  methods: [POST]
+# config/routes.yaml
+teacher_login_form:
+    path: /teacher
+    controller: App\Controller\TeacherController::loginForm
 
-teacher_index:
-  path: /teacher
-  controller: App\Controller\TeacherController::index
-  methods: [GET]
+teacher_authenticate:
+    path: /teacher/authenticate
+    controller: App\Controller\TeacherController::authenticate
+    methods: POST
+
+teacher_dashboard:
+    path: /teacher/dashboard
+    controller: App\Controller\TeacherController::dashboard

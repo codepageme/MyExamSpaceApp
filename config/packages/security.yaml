@@ -1,12 +1,27 @@
+# config/packages/security.yaml
+
 security:
-  providers:
-    app_user_provider:
-      entity:
-        class: App\Entity\User
-        property: username
-  firewalls:
-    main:
-      pattern: ^/
-      form_login:
-        login_path: teacher_login
-        check_path: teacher_login
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        teachers:
+            entity:
+                class: App\Entity\Teacher
+                property: Username
+
+    firewalls:
+        main:
+            lazy: true
+            provider: teachers
+            form_login:
+                login_path: teacher_login_form
+                check_path: teacher_authenticate
+                csrf_token_id: authenticate
+            logout:
+                path: app_logout
+                target: teacher_login_form
+
+    access_control:
+        - { path: ^/teacher/authenticate, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/teacher/dashboard, roles: ROLE_TEACHER }

@@ -9,17 +9,31 @@
 
 {% block auth %}
 
+{% if app.flashes('error') %}
+    <div class="alet alet-danger">
+        {% for flash_message in app.flashes('error') %}
+            <p>{{ flash_message }}</p>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No flash messages found.</p>
+{% endif %}
+{% if app.flashes('error') is empty %}
+    <p>No error messages found.</p>
+{% endif %}
+
 <div class="loginform">
     <h1  id="who">Teacher Login</h1>
 
-      <form action="{{ path('teacher_login') }}" method="post">
+        <form action="{{ path('teacher_authenticate') }}" method="post">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
         <div class="form-group">
             <label for="username">Full name</label>
-            <input type="text" id="username" name="_username" class="form-control signup">
+            <input type="text" id="username" name="_username" class="form-control signup" required autofocus>
         </div>
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="_password" class="form-control signup">
+            <input type="password" id="password" name="_password" class="form-control signup" required>
         </div>
         <input type="submit" value="Login" class="btn btn-primary space">
     </form>
@@ -31,3 +45,4 @@
         <img src="{{ asset('images/teacher.jfif') }}" alt="teacher Image" class="img">
     </div>
 {% endblock %}
+
