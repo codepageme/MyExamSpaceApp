@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Teacher - MyExamSpace.Com{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('Css/bootstrap.css') }}">
+    {% block stylesheets %}
+       
+    {% endblock %}
+</head>
+<body>
+    <div id="map">
+        {% block map_content %} 
+        
+        {% endblock %}
+        </div>
+    
+
+    <div id="screen">
+        {% block content %}
+        <!-- Default content, can be overridden in child templates -->
+        {% endblock %}
+        <footer>
+            <p class="footsign">- Copyright &copy; <a href="/">HappyCode</a> / <a href="/">Graphitie</a> 2024 - {{ "now"|date("Y") }} | All Rights Reserved MyExamSpace @newuser. -</p>
+         </footer>
+    </div>
+
+    <script src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
+</body>
+</html>

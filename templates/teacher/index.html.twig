@@ -3,13 +3,12 @@
 {% block title %}Teacher Login - MyExamSpace.Com{% endblock %}
 
 {% block stylesheets %}
-     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
-    </style>
+     <link rel="stylesheet" href="{{ asset('Css/styles.css') }}">
 {% endblock %}
 
 {% block auth %}
 
-{% if app.flashes('error') %}
+{% if app.flashes('error')%}
     <div class="alet alet-danger">
         {% for flash_message in app.flashes('error') %}
             <p>{{ flash_message }}</p>
@@ -17,9 +16,6 @@
     </div>
     {% else %}
     <p>No flash messages found.</p>
-{% endif %}
-{% if app.flashes('error') is empty %}
-    <p>No error messages found.</p>
 {% endif %}
 
 <div class="loginform">

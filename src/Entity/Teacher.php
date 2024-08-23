@@ -4,39 +4,38 @@ namespace App\Entity;
 
 use App\Repository\TeacherRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: TeacherRepository::class)]
-class Teacher implements UserInterface
+class Teacher
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 120)]
+    #[ORM\Column(length: 255)]
     private ?string $prefix = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $FirstName = null;
+    private ?string $firstname = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $LastName = null;
+    private ?string $lastname = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $Username = null;
+    private ?string $username = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $Password = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?int $Number = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $Email = null;
+    private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $Role = null;
+    private ?Int $number = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $email = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $role = null;
 
     public function getId(): ?int
     {
@@ -51,98 +50,91 @@ class Teacher implements UserInterface
     public function setPrefix(string $prefix): static
     {
         $this->prefix = $prefix;
+
         return $this;
     }
 
-    public function getFirstName(): ?string
+    public function getFirstname(): ?string
     {
-        return $this->FirstName;
+        return $this->firstname;
     }
 
-    public function setFirstName(string $FirstName): static
+    public function setFirstname(string $firstname): static
     {
-        $this->FirstName = $FirstName;
+        $this->firstname = $firstname;
+
         return $this;
     }
 
-    public function getLastName(): ?string
+    public function getLastname(): ?string
     {
-        return $this->LastName;
+        return $this->lastname;
     }
 
-    public function setLastName(string $LastName): static
+    public function setLastname(string $lastname): static
     {
-        $this->LastName = $LastName;
+        $this->lastname = $lastname;
+
         return $this;
     }
 
     public function getUsername(): ?string
     {
-        return $this->Username;
+        return $this->username;
     }
 
-    public function setUsername(string $Username): static
+    public function setUsername(string $username): static
     {
-        $this->Username = $Username;
+        $this->username = $username;
+
         return $this;
     }
 
     public function getPassword(): ?string
     {
-        return $this->Password;
+        return $this->password;
     }
 
-    public function setPassword(string $Password): static
+    public function setPassword(string $password): static
     {
-        $this->Password = $Password;
+        $this->password = $password;
+
         return $this;
     }
 
     public function getNumber(): ?int
     {
-        return $this->Number;
+        return $this->number;
     }
 
-    public function setNumber(?int $Number): static
+    public function setNumber(int $number): static
     {
-        $this->Number = $Number;
+        $this->number = $number;
+
         return $this;
     }
 
     public function getEmail(): ?string
     {
-        return $this->Email;
+        return $this->email;
     }
 
-    public function setEmail(?string $Email): static
+    public function setEmail(string $email): static
     {
-        $this->Email = $Email;
+        $this->email = $email;
+
         return $this;
     }
 
     public function getRole(): ?string
     {
-        return $this->Role;
+        return $this->role;
     }
 
-    public function setRole(string $Role): static
+    public function setRole(string $role): static
     {
-        $this->Role = $Role;
+        $this->role = $role;
+
         return $this;
-    }
-
-    public function getUserIdentifier(): string
-    {
-        return (string) $this->Username;
-    }
-
-    public function getRoles(): array
-    {
-        return [$this->Role];
-    }
-
-    public function eraseCredentials(): void
-    {
-        // Clear any sensitive data here
     }
 }

@@ -8,7 +8,7 @@ security:
         teachers:
             entity:
                 class: App\Entity\Teacher
-                property: Username
+                property: username
 
     firewalls:
         main:

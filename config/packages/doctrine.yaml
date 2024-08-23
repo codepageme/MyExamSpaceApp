@@ -1,13 +1,16 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
-        
-        # IMPORTANT: You MUST configure your server version,
-        # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
+        server_version: '11.5.2'  # Correct MariaDB server version
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        options:
+            # Remove SQLite-specific options, or replace them with MariaDB options
+            1002: 'SET NAMES utf8mb4'  # Character set for MariaDB (recommended)
+            # Remove this line:
+            # 3: 'PRAGMA busy_timeout = ''9000'' # Increase the timeout to 9 seconds'
+
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -28,7 +31,6 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            # "TEST_TOKEN" is typically set by ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
 when@prod:

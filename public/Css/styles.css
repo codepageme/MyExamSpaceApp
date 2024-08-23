@@ -290,11 +290,11 @@ label{
 /* alert */
 
 .alet{
-    padding: 15px;
+    padding: 5px;
     border: 1px solid transparent;
     border-radius: 10px;
     width: 50%;
-    height: 500px;
+    height: 100px;
 }
 
 .alet-danger {

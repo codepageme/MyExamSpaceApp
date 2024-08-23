@@ -18,3 +18,25 @@ teacher_authenticate:
 teacher_dashboard:
     path: /teacher/dashboard
     controller: App\Controller\TeacherController::dashboard
+
+teacher_account:
+    path: /teacher/account
+    controller: App\Controller\TeacherController::account
+
+teacher_update_account:
+    path: /teacher/update-account
+    controller: App\Controller\TeacherController::updateAccount
+    methods: POST
+
+
+#admin route here
+
+
+
+
+
+admin_create_teacher:
+    path: /admin/create-teacher
+    controller: App\Controller\AdminController::createTeacher
+
+

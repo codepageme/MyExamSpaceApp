@@ -11,24 +11,68 @@ body {
     text-align: center;
 }
 
-body {
-    background: linear-gradient(180deg, #091C38 0%, #006AA5 100%);
-    color: white;
-    font-family: Arial, sans-serif;
-    height: 100vh;
-    width: 100vw;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
 #map{
     height: 99%;
-    width: 220px;
-    
+    width: 220px;  
 }
+
+.here{
+    width: 80px !important;
+    height: 80px !important;
+    border: 1px solid white;
+    border-radius: 70%;
+    margin-top: 50px;
+    margin-bottom: 40px;
+    margin-left: 70px;
+}
+
+.boton{
+    display: block;
+    background-color: rgba(0, 0, 0, 0.336);
+    height: 50px;
+    width: 180px;
+    margin-top: 10px;
+    margin-left:-20px;
+    border-radius: 10px;
+}
+
+.boton a{
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.glypha{
+    color: #ffffff;
+    font-size: 15px;
+    margin-top: 5px;
+}
+
+.activa{
+    background-color: white;
+}
+
+.activa a{
+    color: #006AA5;
+    font-weight: bold;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.glyph{
+    color: #006AA5;
+    font-size: 20px;
+    margin-top: 5px;
+}
+
+
+#logout{
+    display: block;
+    color: white;
+    margin-top: 120px;
+    text-decoration: none;
+}
+
 
 #screen{
     height: 97%;
@@ -37,15 +81,6 @@ body {
     border-radius: 20px;
     margin:10px;
     margin-left: 20px;
-}
-
-#logo{
-    width: 100px;
-    height: 100px;
-    border: 1px solid white;
-    border-radius: 70%;
-    margin-top: 60px;
-    margin-left: 60px;
 }
 
 .footsign{

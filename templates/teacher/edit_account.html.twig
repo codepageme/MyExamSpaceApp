@@ -1,0 +1,28 @@
+{# templates/teacher/edit_account.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Teacher Account{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="edit-account-container">
+        <h1>Edit Teacher Account</h1>
+        
+        <form action="{{ path('teacher_update_account') }}" method="post">
+            <!-- Form fields for editing account details -->
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="{{ teacher.username }}" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ teacher.email }}" class="form-control" required>
+            </div>
+            <!-- Add more fields as needed -->
+            <input type="submit" value="Update" class="btn btn-primary">
+        </form>
+    </div>
+{% endblock %}
