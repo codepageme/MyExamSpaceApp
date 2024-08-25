@@ -26,10 +26,15 @@
         <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
     </ul>
 
-    <a href="#" id="logout"><span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+    <a href="{{ path('teacher_logout') }}" id="logout"><span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
    
 {% endblock %}
 
 {% block content %}
-<p style="color:black;"> dashboard</p>
+<h1>Welcome to your Dashboard, {{ username }}!</h1>
+
+<p>Email: {{ email }}</p>
+<p>Role: {{ role }}</p>
+
+
 {% endblock %}

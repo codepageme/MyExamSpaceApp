@@ -4,9 +4,11 @@ namespace App\Entity;
 
 use App\Repository\TeacherRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: TeacherRepository::class)]
-class Teacher
+class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -22,20 +24,20 @@ class Teacher
     #[ORM\Column(length: 255)]
     private ?string $lastname = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $username = null;
 
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    #[ORM\Column(length: 255)]
-    private ?Int $number = null;
+    #[ORM\Column(length: 1250)]
+    private ?int $number = null;
 
     #[ORM\Column(length: 255)]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $role = null;
+    #[ORM\Column(type: 'json')]
+    private array $roles = []; 
 
     public function getId(): ?int
     {
@@ -50,7 +52,6 @@ class Teacher
     public function setPrefix(string $prefix): static
     {
         $this->prefix = $prefix;
-
         return $this;
     }
 
@@ -62,7 +63,6 @@ class Teacher
     public function setFirstname(string $firstname): static
     {
         $this->firstname = $firstname;
-
         return $this;
     }
 
@@ -74,7 +74,6 @@ class Teacher
     public function setLastname(string $lastname): static
     {
         $this->lastname = $lastname;
-
         return $this;
     }
 
@@ -86,7 +85,6 @@ class Teacher
     public function setUsername(string $username): static
     {
         $this->username = $username;
-
         return $this;
     }
 
@@ -98,7 +96,6 @@ class Teacher
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
     }
 
@@ -110,7 +107,6 @@ class Teacher
     public function setNumber(int $number): static
     {
         $this->number = $number;
-
         return $this;
     }
 
@@ -122,19 +118,33 @@ class Teacher
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
-    public function getRole(): ?string
+    public function getRoles(): array
     {
-        return $this->role;
+        return $this->roles; // Returns the roles
+        
+        // Returning the fixed role 'ROLE_TEACHER' for all teachers
+        //$this->roles[] = 'ROLE_TEACHER';
+        //return array_unique($this->roles);
+        //return ['ROLE_TEACHER'];
     }
 
-    public function setRole(string $role): static
+    public function setRoles(array $roles): static
     {
-        $this->role = $role;
-
+        $this->roles = $roles;
         return $this;
+    }
+
+    public function eraseCredentials() : void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->username;
     }
 }

@@ -23,7 +23,8 @@ class AdminController extends AbstractController
             $teacher->setPassword(password_hash($request->request->get('password'), PASSWORD_BCRYPT));
             $teacher->setNumber($request->request->get('number'));
             $teacher->setEmail($request->request->get('email'));
-            $teacher->setRole($request->request->get('role'));
+            $roles = (array) $request->request->get('roles');
+            $teacher->setRoles(['ROLE_TEACHER']); // Ensure roles is an array
 
             $em->persist($teacher);
             $em->flush();

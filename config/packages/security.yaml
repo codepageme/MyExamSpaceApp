@@ -17,11 +17,16 @@ security:
             form_login:
                 login_path: teacher_login_form
                 check_path: teacher_authenticate
+                default_target_path: /teacher/dashboard # Redirect here after login
                 csrf_token_id: authenticate
             logout:
-                path: app_logout
+                path: Teacher_logout
                 target: teacher_login_form
+                invalidate_session: true
+                delete_cookies:
 
     access_control:
         - { path: ^/teacher/authenticate, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/teacher/dashboard, roles: ROLE_TEACHER }
+
+

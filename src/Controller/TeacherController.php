@@ -3,15 +3,18 @@
 // src/Controller/TeacherController.php
 namespace App\Controller;
 
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Entity\Teacher;
 use App\Repository\TeacherRepository;
 
 class TeacherController extends AbstractController
 {
+
+
     /**
      * @Route("/teacher", name="teacher_login_form")
      */
@@ -19,6 +22,10 @@ class TeacherController extends AbstractController
     {
         return $this->render('teacher/index.html.twig');
     }
+
+
+
+
 
     /**
      * @Route("/teacher/authenticate", name="teacher_authenticate", methods={"POST"})
@@ -38,13 +45,47 @@ class TeacherController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/teacher/dashboard", name="teacher_dashboard")
-     */
+
+
+
+
+
+    #[Route('/teacher/dashboard', name: 'teacher_dashboard')]
+    #[IsGranted('ROLE_TEACHER')]
     public function dashboard(): Response
     {
-        return $this->render('teacher/dashboard.html.twig');
+        // Get the currently logged-in teacher
+        $teacher = $this->getUser();
+
+        // Ensure that $teacher is indeed an instance of the Teacher entity
+        if (!$teacher instanceof Teacher) {
+            throw $this->createAccessDeniedException('Access denied. Teacher not found.');
+        }
+
+        return $this->render('teacher/dashboard.html.twig', [
+            'username' => $teacher->getUsername(),
+            'email' => $teacher->getEmail(),
+            'role' => $teacher->getRoles()[0] // Assuming 'ROLE_TEACHER' is always present
+        ]);
     }
+
+
+
+
+
+
+
+    #[Route('/tlogout', name: 'teacher_logout')]
+    public function logout(): void
+    {
+        // The logout action will never be executed because Symfony will intercept this route.
+        throw new \Exception('This should never be reached!');
+    }
+
+
+
+
+
 
 
     /**

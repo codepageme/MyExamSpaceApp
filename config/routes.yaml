@@ -29,6 +29,9 @@ teacher_update_account:
     methods: POST
 
 
+app_logout:
+    path: /logout
+
 #admin route here
 
 
