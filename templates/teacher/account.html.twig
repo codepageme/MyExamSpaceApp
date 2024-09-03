@@ -1,6 +1,6 @@
 {% extends 'tdashbase.html.twig' %}
 
-{% block title %}Account - MyExamSpace.Com{% endblock %}
+{% block title %} Account - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
      <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
 {% endblock %}
@@ -26,10 +26,76 @@
         <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
     </ul>
 
-    <a href="#" id="logout"><span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
-   
+ <a href="{{ path('teacher_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
 {% endblock %}
 
 {% block content %}
-<p style="color:black;"> my account </p>
+ <h3 id="pagetag">My ACCOUNT</h3>
+
+    <div class="container bracket">
+            <h4>My Profile</h4>
+            <div class="container-fluid prof">
+                <div id="dp"><p style = "text-align:center; display:inline-flex ; font-size:15px;">add image here</p></div>
+                <div class="prof-text">
+                    <h5>{{ teacher.username }}</h5>
+                    <h6>{{ teacher.roles[0] }} | class teacher</h6>
+                    <p>English - Language</p>
+                </div>
+                <a href="/"><span class="glyphicon glyphicon-edit editb"></span></a>
+            </div>
+    
+    <div class="container bracket">
+    <h4>Personal Information</h4>
+    <div class="container-fluid prof">
+        <div class="prof-text">
+            <h5>First Name: {{ teacher.firstname }}</h5>
+            <p>Last Name: {{ teacher.lastname }}</p>
+            <p>Email Address: {{ teacher.email }}</p>
+            <p>Phone: {{ teacher.number }}</p>
+            <p>Bio: current status</p>
+        </div>
+        <a href="/"><span class="glyphicon glyphicon-edit editb"></span></a>
+    </div>
+</div>
+
+ <div class="container bracket">
+    <h4>Question Information</h4>
+    <div class="container-fluid prof">
+        <div class="prof-text">
+            <h5>No of question</h5>
+            <p>no od subject</p>
+            <p></p>
+            <p>Phone: {{ teacher.number }}</p>
+            <p>Bio: current status</p>
+        </div>
+        <a href="/"><span class="glyphicon glyphicon-edit editb"></span></a>
+    </div>
+</div>
+
+<div class="container bracket">
+    <h4>Notes</h4>
+    <form action="{{ path('teacher_account') }}" method="post">
+        {{ form_start(form) }}
+        {{ form_widget(form.note, {'attr': {'placeholder': 'Write your notes here...'}}) }}
+        <button type="submit">Save Note</button>
+        {{ form_end(form) }}
+    </form>
+
+    <h4>Your Notes</h4>
+    {% for note in teacher.teacherNotes %}
+        <div class="note">
+            <p>{{ note.note }}</p>
+            <a href="{{ path('edit_note', {'id': note.id}) }}">Edit</a>
+            <a href="{{ path('delete_note', {'id': note.id}) }}">Delete</a>
+        </div>
+    {% endfor %}
+</div>
+
 {% endblock %}

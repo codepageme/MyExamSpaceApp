@@ -8,12 +8,24 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\HttpFoundation\RequestStack;
 use App\Entity\Teacher;
 use App\Repository\TeacherRepository;
+
+use App\Entity\TeacherNote;
+use App\Form\TeacherNoteType;
+use App\Repository\TeacherNoteRepository;
+use Doctrine\ORM\EntityManagerInterface;
+
+use App\Entity\Exam;
+use App\Form\ExamType;
+
+
 
 class TeacherController extends AbstractController
 {
 
+//Teacher Login Logic --------------------------------------------------------------------------
 
     /**
      * @Route("/teacher", name="teacher_login_form")
@@ -45,10 +57,10 @@ class TeacherController extends AbstractController
         }
     }
 
+//Teacher Login Logic --------------------------------------------------------------------------Ends here
 
 
-
-
+//Teacher Dashboard Logic --------------------------------------------------------------------------
 
     #[Route('/teacher/dashboard', name: 'teacher_dashboard')]
     #[IsGranted('ROLE_TEACHER')]
@@ -67,39 +79,30 @@ class TeacherController extends AbstractController
             'email' => $teacher->getEmail(),
             'role' => $teacher->getRoles()[0] // Assuming 'ROLE_TEACHER' is always present
         ]);
+
+         
     }
 
 
+//Teacher Dashboard Logic --------------------------------------------------------------------------Ends here
 
 
-
-
+//Teacher Logout Logic --------------------------------------------------------------------------
 
     #[Route('/tlogout', name: 'teacher_logout')]
-    public function logout(): void
+    public function logout(RequestStack $requestStack): void
     {
+        $session = $requestStack->getSession();
+        $session->invalidate();
+        
         // The logout action will never be executed because Symfony will intercept this route.
         throw new \Exception('This should never be reached!');
+
+        
     }
 
-
-
-
-
-
-
-    /**
-     * @Route("/teacher/account", name="teacher_account")
-     */
-    public function account(): Response
-    {
-        // Optionally, fetch the current logged-in teacher's details if needed
-        //$teacher = $this->getUser();
-
-        return $this->render('teacher/account.html.twig', [
-           // 'teacher' => $teacher,
-        ]);
-    }
+//Teacher Logout Logic --------------------------------------------------------------------------Ends here
+    
 
 
     /**
@@ -122,6 +125,192 @@ class TeacherController extends AbstractController
 
     // Redirect or render a response
     //}
+
+
+
+
+
+
+
+
+
+//Teacher Account Controller / -------------------------------------------- ; Note ; starts here 
+
+#[Route('/teacher/account', name: 'teacher_account')]
+public function account(EntityManagerInterface $em, Request $request): Response
+{
+    // Retrieve the logged-in teacher
+    $teacher = $this->getUser();
+
+    // Create a new note
+    $note = new TeacherNote();
+    $form = $this->createForm(TeacherNoteType::class, $note);
+
+    // Handle form submission
+    $form->handleRequest($request);
+    if ($form->isSubmitted() && $form->isValid()) {
+        $note->setTeacher($teacher);
+        $note->setCreatedat(new \DateTime());
+        $note->setUpdatedat(new \DateTime());
+
+        $em->persist($note);
+        $em->flush();
+
+        return $this->redirectToRoute('teacher_account');
+    }
+
+    // Fetch existing notes
+    $notes = $teacher->getTeacherNotes(); // Updated method name
+
+    return $this->render('teacher/account.html.twig', [
+        'teacher' => $teacher,
+        'form' => $form->createView(),
+        'notes' => $notes,
+    ]);
+}
+
+
+/**
+ * @Route("/teacher/note/{id}/edit", name="edit_note")
+ * @ParamConverter("note", class="App\Entity\TeacherNote")
+ */
+public function editNote(TeacherNote $note, Request $request, EntityManagerInterface $em): Response
+{
+    $form = $this->createForm(TeacherNoteType::class, $note);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        $em->flush();
+        return $this->redirectToRoute('teacher_account');
+    }
+
+    return $this->render('teacher/edit_note.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
+
+
+/**
+ * @Route("/teacher/note/{id}/delete", name="delete_note")
+ * @ParamConverter("note", class="App\Entity\TeacherNote")
+ */
+public function deleteNote(TeacherNote $note, EntityManagerInterface $em): Response
+{
+    $em->remove($note);
+    $em->flush();
+    return $this->redirectToRoute('teacher_account');
+}
+
+//Teacher Account Controller --------------------------------------------------------------Ends here
+
+//Teacher Exam Controller --------------------------------------------------------------
+
+// src/Controller/TeacherController.php
+
+#[Route('/teacher/exams/create', name: 'teacher_create_exam')]
+public function createExam(Request $request, EntityManagerInterface $em): Response
+{
+    $teacher = $this->getUser();
+    
+    // Create a new Exam
+    $exam = new Exam();
+    $form = $this->createForm(ExamType::class, $exam);
+
+    // Handle form submission
+    $form->handleRequest($request);
+    if ($form->isSubmitted() && $form->isValid()) {
+        $exam->setTeacher($teacher);
+        $exam->setCreatedAt(new \DateTime());
+        $exam->setUpdatedAt(new \DateTime());
+
+        $em->persist($exam);
+        $em->flush();
+
+        return $this->redirectToRoute('teacher_create_exam');
+    }
+
+    // Fetch all exams created by the teacher
+    $exams = $em->getRepository(Exam::class)->findBy(['teacher' => $teacher]);
+
+    return $this->render('teacher/create_exam.html.twig', [
+        'form' => $form->createView(),
+        'exams' => $exams,
+    ]);
+}
+
+
+//view exams
+
+#[Route('/teacher/exam/{id}', name: 'teacher_view_exam')]
+public function viewExam(int $id, EntityManagerInterface $em): Response
+{
+    $exam = $em->getRepository(Exam::class)->find($id);
+    return $this->render('teacher/view_exam.html.twig', [
+        'exam' => $exam,
+    ]);
+}
+
+
+
+//edit exams in list
+
+#[Route('/teacher/exam/{id}/edit', name: 'teacher_edit_exam')]
+public function editExam(int $id, Request $request, EntityManagerInterface $em): Response
+{
+    $exam = $em->getRepository(Exam::class)->find($id);
+    $form = $this->createForm(ExamType::class, $exam);
+
+    $form->handleRequest($request);
+    if ($form->isSubmitted() && $form->isValid()) {
+        $exam->setUpdatedAt(new \DateTime());
+        $em->flush();
+
+        return $this->redirectToRoute('teacher_create_exam');
+    }
+
+    return $this->render('teacher/edit_exam.html.twig', [
+        'form' => $form->createView(),
+        'exam' => $exam,
+    ]);
+}
+
+//delete exams
+
+#[Route('/teacher/exam/{id}/delete', name: 'teacher_delete_exam')]
+public function deleteExam(int $id, EntityManagerInterface $em): Response
+{
+    $exam = $em->getRepository(Exam::class)->find($id);
+    if ($exam) {
+        $em->remove($exam);
+        $em->flush();
+    }
+
+    return $this->redirectToRoute('teacher_create_exam');
+}
+
+
+//publish exams
+
+#[Route('/teacher/exam/{id}/publish', name: 'teacher_publish_exam')]
+public function publishExam(int $id, EntityManagerInterface $em): Response
+{
+    $exam = $em->getRepository(Exam::class)->find($id);
+    if ($exam) {
+        $exam->setPublished(true); // Assuming you have a published field
+        $em->flush();
+    }
+
+    return $this->redirectToRoute('teacher_create_exam');
+}
+
+
+
+
+
+
+//Teacher Exam Controller --------------------------------------------------------------Ends here
+
+
 
 
 }

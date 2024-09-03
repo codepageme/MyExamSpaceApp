@@ -25,9 +25,16 @@
         <li class="boton"><span class="glyphicon glyphicon-user glypha"></span>
         <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
     </ul>
+    <a href="{{ path('teacher_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
 
-    <a href="{{ path('teacher_logout') }}" id="logout"><span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
-   
+<form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
 {% endblock %}
 
 {% block content %}

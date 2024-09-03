@@ -1,8 +1,10 @@
-<?php
+<?php 
 
 namespace App\Entity;
 
 use App\Repository\TeacherRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -37,7 +39,29 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(type: 'json')]
-    private array $roles = []; 
+    private array $roles = [];
+
+    #[ORM\OneToMany(targetEntity: TeacherNote::class, mappedBy: 'teacher')]
+    private Collection $teacherNotes;
+
+    /**
+     * @var Collection<int, Exam>
+     */
+    #[ORM\OneToMany(targetEntity: Exam::class, mappedBy: 'teacher')]
+    private Collection $exams;
+
+    /**
+     * @var Collection<int, Question>
+     */
+    #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'teacher')]
+    private Collection $questions;
+
+    public function __construct()
+    {
+        $this->teacherNotes = new ArrayCollection();
+        $this->exams = new ArrayCollection();
+        $this->questions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -123,12 +147,10 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        return $this->roles; // Returns the roles
-        
-        // Returning the fixed role 'ROLE_TEACHER' for all teachers
-        //$this->roles[] = 'ROLE_TEACHER';
-        //return array_unique($this->roles);
-        //return ['ROLE_TEACHER'];
+        // Guarantee that the user always has at least one role
+        $roles = $this->roles;
+        $roles[] = 'ROLE_TEACHER';
+        return array_unique($roles);
     }
 
     public function setRoles(array $roles): static
@@ -137,14 +159,107 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function eraseCredentials() : void
+    public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
     }
 
+
+    
+    // Teacher note reference begins here 
+    /**
+     * @return Collection<int, TeacherNote>
+     */
+    public function getTeacherNotes(): Collection
+    {
+        return $this->teacherNotes;
+    }
+
+    public function addTeacherNote(TeacherNote $teacherNote): self
+    {
+        if (!$this->teacherNotes->contains($teacherNote)) {
+            $this->teacherNotes->add($teacherNote);
+            $teacherNote->setTeacher($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTeacherNote(TeacherNote $teacherNote): self
+    {
+        if ($this->teacherNotes->removeElement($teacherNote)) {
+            // Set the owning side to null (unless already changed)
+            if ($teacherNote->getTeacher() === $this) {
+                $teacherNote->setTeacher(null);
+            }
+        }
+
+        return $this;
+    }
+
+    // Implementing UserInterface method
     public function getUserIdentifier(): string
     {
-        return $this->username;
+        return $this->username; // or return $this->email if that's your identifier
+    }
+
+    /**
+     * @return Collection<int, Exam>
+     */
+    public function getExams(): Collection
+    {
+        return $this->exams;
+    }
+
+    public function addExam(Exam $exam): static
+    {
+        if (!$this->exams->contains($exam)) {
+            $this->exams->add($exam);
+            $exam->setTeacher($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExam(Exam $exam): static
+    {
+        if ($this->exams->removeElement($exam)) {
+            // set the owning side to null (unless already changed)
+            if ($exam->getTeacher() === $this) {
+                $exam->setTeacher(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Question>
+     */
+    public function getQuestions(): Collection
+    {
+        return $this->questions;
+    }
+
+    public function addQuestion(Question $question): static
+    {
+        if (!$this->questions->contains($question)) {
+            $this->questions->add($question);
+            $question->setTeacher($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuestion(Question $question): static
+    {
+        if ($this->questions->removeElement($question)) {
+            // set the owning side to null (unless already changed)
+            if ($question->getTeacher() === $this) {
+                $question->setTeacher(null);
+            }
+        }
+
+        return $this;
     }
 }

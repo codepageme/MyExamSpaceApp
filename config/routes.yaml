@@ -23,14 +23,18 @@ teacher_account:
     path: /teacher/account
     controller: App\Controller\TeacherController::account
 
-teacher_update_account:
-    path: /teacher/update-account
-    controller: App\Controller\TeacherController::updateAccount
-    methods: POST
+edit_note:
+    path: /teacher/note/{id}/edit
+    controller: App\Controller\TeacherController::editNote
+    requirements:
+        id: '\d+'
 
+delete_note:
+    path: /teacher/note/{id}/delete
+    controller: App\Controller\TeacherController::deleteNote
+    requirements:
+        id: '\d+'
 
-app_logout:
-    path: /logout
 
 #admin route here
 

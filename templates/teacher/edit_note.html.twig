@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Note</title>
+    <style>
+        /* Add your CSS styles here */
+        .edit-form {
+            width: 50%;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .edit-form label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .edit-form input {
+            width: 80%;
+            height: 40px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        
+        .edit-form textarea {
+            width: 90%;
+            height: 100px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        
+        .edit-form button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .edit-form button:hover {
+            background-color: #3e8e41;
+        }
+    </style>
+</head>
+<body>
+    <h1>Edit Note</h1>
+    {{ form_start(form, {'attr': {'class': 'edit-form'}}) }}
+        {{ form_widget(form) }}
+        <button type="submit">Save Changes</button>
+    {{ form_end(form) }}
+</body>
+</html>
