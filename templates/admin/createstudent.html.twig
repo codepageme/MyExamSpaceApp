@@ -1,0 +1,55 @@
+
+
+{% block title %}Create Student{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>Create New Student</h1>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {{ form_start(form) }}
+        <div class="form-group mb-3">
+            {{ form_label(form.Firstname) }}
+            {{ form_widget(form.Firstname, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.Firstname) }}
+        </div>
+
+        <div class="form-group mb-3">
+            {{ form_label(form.Lastname) }}
+            {{ form_widget(form.Lastname, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.Lastname) }}
+        </div>
+
+        <div class="form-group mb-3">
+            {{ form_label(form.Middlename) }}
+            {{ form_widget(form.Middlename, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.Middlename) }}
+        </div>
+
+        <div class="form-group mb-3">
+            {{ form_label(form.Age) }}
+            {{ form_widget(form.Age, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.Age) }}
+        </div>
+
+        <div class="form-group mb-3">
+            {{ form_label(form.Gender) }}
+            {{ form_widget(form.Gender, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_errors(form.Gender) }}
+        </div>
+
+        <div class="form-group mb-3">
+            {{ form_label(form.classroom) }}
+            {{ form_widget(form.classroom, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.classroom) }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Student</button>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

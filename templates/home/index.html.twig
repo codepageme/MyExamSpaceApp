@@ -15,10 +15,10 @@
         <div class="login-options">
             <h4 id="as">Login As</h4>
             <ul>
-            <li><a href= "/">Administrator</a></li>
-            <li><a href= "/">Class Teacher</a></li>
+            <li><a href= "{{ path('admin_login_form') }}">Administrator</a></li>
+            <li><a href= "{{ path('classteacher_login_form') }}">Class Teacher</a></li>
             <li><a href="{{ path('teacher_login_form') }}">Teacher</a></li>
-            <li><a href="/">Student</a></li>
+            <li><a href="{{ path('student_login_form') }}">Student</a></li>
             </ul>
         </div>
     </div>

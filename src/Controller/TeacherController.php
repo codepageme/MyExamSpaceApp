@@ -3,6 +3,7 @@
 // src/Controller/TeacherController.php
 namespace App\Controller;
 
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,10 @@ use Doctrine\ORM\EntityManagerInterface;
 
 use App\Entity\Exam;
 use App\Form\ExamType;
+
+use App\Entity\Question;
+use App\Form\QuestionType;
+use App\Repository\QuestionRepository;
 
 
 
@@ -38,26 +43,32 @@ class TeacherController extends AbstractController
 
 
 
-
     /**
-     * @Route("/teacher/authenticate", name="teacher_authenticate", methods={"POST"})
-     */
-    public function authenticate(Request $request, TeacherRepository $teacherRepository): Response
-    {
-        $username = $request->request->get('_username');
-        $password = $request->request->get('_password');
+ * @Route("/teacher/authenticate", name="teacher_authenticate", methods={"POST"})
+ */
+public function authenticate(Request $request, TeacherRepository $teacherRepository, UserPasswordHasherInterface $passwordHasher): Response
+{
+    $username = $request->request->get('_username');
+    $password = $request->request->get('_password');
+    $csrfToken = $request->request->get('_csrf_token'); // Get the CSRF token
 
-        $teacher = $teacherRepository->findOneBy(['username' => $username]);
-
-        if ($teacher && $teacher->getPassword() === $password) {
-            return $this->redirectToRoute('teacher_dashboard');
-        } else {
-            $this->addFlash('error', 'Invalid username or password');
-            return $this->redirectToRoute('teacher_login_form');
-        }
+    // Validate CSRF token
+    if (!$this->isCsrfTokenValid('authenticate', $csrfToken)) {
+        $this->addFlash('error', 'Invalid CSRF token');
+        return $this->redirectToRoute('teacher_login_form');
     }
 
-//Teacher Login Logic --------------------------------------------------------------------------Ends here
+    $teacher = $teacherRepository->findOneBy(['username' => $username]);
+
+    if ($teacher && $passwordHasher->isPasswordValid($teacher, $password)) {
+        // Redirect to the teacher dashboard after successful login
+        return $this->redirectToRoute('teacher_dashboard');
+    } else {
+        // Add flash message and redirect back to the login form on failure
+        $this->addFlash('error', 'Invalid username or password');
+        return $this->redirectToRoute('teacher_login_form');
+    }
+}
 
 
 //Teacher Dashboard Logic --------------------------------------------------------------------------
@@ -77,31 +88,28 @@ class TeacherController extends AbstractController
         return $this->render('teacher/dashboard.html.twig', [
             'username' => $teacher->getUsername(),
             'email' => $teacher->getEmail(),
-            'role' => $teacher->getRoles()[0] // Assuming 'ROLE_TEACHER' is always present
+            'role' => $teacher->getRoles()[0] // Assuming 'TEACHER' is always present
         ]);
 
          
     }
 
-
-//Teacher Dashboard Logic --------------------------------------------------------------------------Ends here
-
-
 //Teacher Logout Logic --------------------------------------------------------------------------
 
-    #[Route('/tlogout', name: 'teacher_logout')]
-    public function logout(RequestStack $requestStack): void
+    /**
+     * @Route("/teacher/logout", name="teacher_logout")
+     */
+    public function logout()
     {
-        $session = $requestStack->getSession();
-        $session->invalidate();
-        
-        // The logout action will never be executed because Symfony will intercept this route.
+        // This will never be executed because Symfony intercepts this route and handles logout automatically
         throw new \Exception('This should never be reached!');
-
-        
     }
+    
 
-//Teacher Logout Logic --------------------------------------------------------------------------Ends here
+
+
+    
+//Teacher EDit Logic -------------------------------------------------------------------------
     
 
 
@@ -203,7 +211,47 @@ public function deleteNote(TeacherNote $note, EntityManagerInterface $em): Respo
 
 //Teacher Account Controller --------------------------------------------------------------Ends here
 
+
+
+
+
+
 //Teacher Exam Controller --------------------------------------------------------------
+//preview Exam
+
+#[Route('/teacher/exam', name: 'teacher_exam')]
+public function examIndex(EntityManagerInterface $em): Response
+{
+    // Fetch all exams for the logged-in teacher
+    $teacher = $this->getUser(); 
+
+    // Fetch exams linked to this teacher
+    $exams = $em->getRepository(Exam::class)->findBy(['teacher' => $teacher]);
+
+    // Render the exam page
+    return $this->render('teacher/exam.html.twig', [
+        'exams' => $exams,
+    ]);
+}
+
+
+
+
+//create exam question
+#[Route('/teacher/exam/question', name: 'teacher_create_question')]
+public function createQuestion(SubjectRepository $subjectRepo)
+{
+    // Fetch the subjects related to the logged-in teacher (for example purposes, fetching all subjects)
+    $teacher = $this->getUser(); // assuming you have a logged-in user/teacher
+    $subjects = $subjectRepo->findBy(['teacher' => $teacher]);
+
+    return $this->render('teacher/createquestion.html.twig', [
+        'subjects' => $subjects,
+    ]);
+}
+
+
+
 
 // src/Controller/TeacherController.php
 

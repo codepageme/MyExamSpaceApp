@@ -32,8 +32,8 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    #[ORM\Column(length: 1250)]
-    private ?int $number = null;
+    #[ORM\Column(length: 250)]
+    private ?string $number = null;
 
     #[ORM\Column(length: 255)]
     private ?string $email = null;
@@ -56,11 +56,33 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'teacher')]
     private Collection $questions;
 
+    /**
+     * @var Collection<int, Subject>
+     */
+    #[ORM\ManyToMany(targetEntity: Subject::class, mappedBy: 'teacher')]
+    private Collection $subjects;
+
+    /**
+     * @var Collection<int, Subject>
+     */
+    #[ORM\ManyToMany(targetEntity: Subject::class, inversedBy: 'teachers')]
+    private Collection $Subject;
+
+    /**
+     * @var Collection<int, Classroom>
+     */
+    #[ORM\ManyToMany(targetEntity: Classroom::class, inversedBy: 'teachers')]
+    private Collection $Classroom;
+
+
     public function __construct()
     {
         $this->teacherNotes = new ArrayCollection();
         $this->exams = new ArrayCollection();
         $this->questions = new ArrayCollection();
+        $this->subjects = new ArrayCollection();
+        $this->Subject = new ArrayCollection();
+        $this->Classroom = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -123,12 +145,12 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getNumber(): ?int
+    public function getNumber(): ?string
     {
         return $this->number;
     }
 
-    public function setNumber(int $number): static
+    public function setNumber(string $number): static
     {
         $this->number = $number;
         return $this;
@@ -262,4 +284,81 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, Subject>
+     */
+    public function getSubjects(): Collection
+    {
+        return $this->subjects;
+    }
+
+    public function addSubjects(Subject $subjects): static
+    {
+        if (!$this->subjects->contains($subjects)) {
+            $this->subjects->add($subjects);
+            $subjects->addTeacher($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSubjectss(Subject $subjects): static
+    {
+        if ($this->subjects->removeElement($subjects)) {
+            $subjects->removeTeacher($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Subject>
+     */
+    public function getSubject(): Collection
+    {
+        return $this->Subject;
+    }
+
+    public function addSubject(Subject $subject): static
+    {
+        if (!$this->Subject->contains($subject)) {
+            $this->Subject->add($subject);
+        }
+
+        return $this;
+    }
+
+    public function removeSubject(Subject $subject): static
+    {
+        $this->Subject->removeElement($subject);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Classroom>
+     */
+    public function getClassroom(): Collection
+    {
+        return $this->Classroom;
+    }
+
+    public function addClassroom(Classroom $classroom): static
+    {
+        if (!$this->Classroom->contains($classroom)) {
+            $this->Classroom->add($classroom);
+        }
+
+        return $this;
+    }
+
+    public function removeClassroom(Classroom $classroom): static
+    {
+        $this->Classroom->removeElement($classroom);
+
+        return $this;
+    }
+
+   
 }

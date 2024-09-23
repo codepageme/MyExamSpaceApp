@@ -1,0 +1,57 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Create Teacher - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+
+{% endblock %}
+
+{% block content %}
+ 
+    <h1>Create New Admin</h1>
+
+    {# Check if there are any flash messages (e.g., success, error) #}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {{ form_start(form) }}
+        <div class="form-group">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.username) }}
+            {{ form_widget(form.username, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.username) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.password) }}
+            {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.password) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.email) }}
+            {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.email) }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Admin</button>
+    {{ form_end(form) }}
+
+{% endblock %}

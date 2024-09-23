@@ -11,41 +11,18 @@
 {% endblock %}
 
 {% block content %}
-   <h1>Create Teacher</h1>
-    <form method="POST">
-        <div>
-            <label for="prefix">Prefix:</label>
-            <input type="text" name="prefix" id="prefix" required>
-        </div>
-        <div>
-            <label for="firstName">First Name:</label>
-            <input type="text" name="firstName" id="firstName" required>
-        </div>
-        <div>
-            <label for="lastName">Last Name:</label>
-            <input type="text" name="lastName" id="lastName" required>
-        </div>
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" name="username" id="username" required>
-        </div>
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" name="password" id="password" required>
-        </div>
-         <div>
-            <label for="number">Number:</label>
-            <input type="number" name="number" id="number">
-        </div>
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" name="email" id="email">
-        </div>
-        <!-- <div>
-            <label for="role">Role:</label>
-            <input type="text" name="role" id="role">
-        </div>-->
-        <button type="submit">Create</button>
-    </form>   
+ 
+    <h1>Create a New Teacher</h1>
+
+    {{ form_start(form) }}
+        {{ form_row(form.prefix) }}
+        {{ form_row(form.firstname) }}
+        {{ form_row(form.lastname) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.number) }}
+
+        <button class="btn btn-primary">Create</button>
+    {{ form_end(form) }}
+
 
 {% endblock %}

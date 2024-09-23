@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Welcome to your Dashboard, {{ student.firstname }} {{ student.lastname }}</h1>
+        
+        <section class="student-info">
+            <h2>Your Information</h2>
+            <p><strong>Class:</strong> {{ student.classroom.classname }}</p>
+            <p><strong>Email:</strong> {{ student.email }}</p>
+            <p><strong>Phone:</strong> {{ student.phone }}</p>
+            <p><strong>Department:</strong> 
+                {% if student.classroom.department %}
+                    {{ student.classroom.department.name }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </p>
+        </section>
+
+        <section class="student-actions">
+            <h2>Actions</h2>
+            <ul>
+                <li><a href="{{ path('student_exams') }}">View Exams</a></li>
+                <li><a href="{{ path('student_profile') }}">Edit Profile</a></li>
+                <li><a href="{{ path('student_logout') }}">Logout</a></li>
+            </ul>
+        </section>
+    </div>
+{% endblock %}

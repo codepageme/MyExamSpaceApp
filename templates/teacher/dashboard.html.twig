@@ -1,6 +1,6 @@
 {% extends 'tdashbase.html.twig' %}
 
-{% block title %}Dashboard - MyExamSpace.Com{% endblock %}
+{% block title %}Teacher Dashboard - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
      <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
 {% endblock %}
@@ -14,7 +14,7 @@
         <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-book glypha"></span>
-        <br><a href="#">Exam</a></li>
+        <br><a href="{{ path('teacher_exam') }}">Exam</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
         <br><a href="#">Results</a></li>

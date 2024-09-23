@@ -1,0 +1,68 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Exam - MyExamSpace.Com{% endblock %}
+
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+    <div class="here"></div>
+
+    <ul>
+        <li class="boton"><span class="glyphicon glyphicon-th-large glypha"></span>
+        <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
+
+        <li class="boton activa"><span class="glyphicon glyphicon-book glyph"></span>
+        <br><a href="{{ path('teacher_exam') }}">Exam</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
+        <br><a href="#">Results</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
+        <br><a href="#">Data</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-user glypha"></span>
+        <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
+    </ul>
+    <a href="{{ path('teacher_logout') }}" id="logout" 
+       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <span class="glyphicon glyphicon-log-out glypha"></span> Logout
+    </a>
+
+    <form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+    </form>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+   
+    <div class="btn-group" role="group">
+        <a href= "{{ path('teacher_create_question') }}" class="btn btn-primary">Create Questions</a> 
+        <a href="{{ path('teacher_exam') }}" class="btn btn-primary">Preview Questions</a>
+    </div>
+
+    <div class="form-section">
+        <!-- Dropdown for subjects -->
+        <select id="subject-dropdown" class="form-control">
+            <option value="">Select Subject</option>
+            <!-- To be dynamically filled with subjects related to the teacher -->
+        </select>
+
+        <!-- Dropdown for classes, will appear after subject is selected -->
+        <select id="class-dropdown" class="form-control" style="display:none;">
+            <option value="">Select Class</option>
+        </select>
+
+        <!-- Dropdown for question types, will appear after class is selected -->
+        <select id="question-type-dropdown" class="form-control" style="display:none;">
+            <option value="">Select Question Type</option>
+        </select>
+    </div>
+
+    <div id="preview-bar" class="right-preview">
+        <!-- Placeholder for dynamically displaying current questions being typed/inputted -->
+    </div>
+</div>
+{% endblock %}

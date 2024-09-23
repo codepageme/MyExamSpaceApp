@@ -1,0 +1,49 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Admin Dashboard - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton activa"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glyph"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton"><a href="#"> 
+        <span class="glyphicon glyphicon-user glypha"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+<h1>Welcome to your Dashboard, {{ name }}!</h1>
+
+
+<p>Role: {{ role }}</p>
+
+
+{% endblock %}

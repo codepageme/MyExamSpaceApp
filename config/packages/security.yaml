@@ -1,5 +1,3 @@
-# config/packages/security.yaml
-
 security:
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
@@ -10,24 +8,99 @@ security:
                 class: App\Entity\Teacher
                 property: username
 
+        admins:
+            entity:
+                class: App\Entity\Admin
+                property: username
+
+        students:
+            entity:
+                class: App\Entity\Student
+                property: firstname
+
+        classteachers:
+            entity:
+                class: App\Entity\Teacher
+                property: username       
+
     firewalls:
-        main:
+        # Teacher firewall configuration
+        teacher:
             lazy: true
+            pattern: ^/teacher
             provider: teachers
             form_login:
                 login_path: teacher_login_form
                 check_path: teacher_authenticate
-                default_target_path: /teacher/dashboard # Redirect here after login
-                csrf_token_id: authenticate
+                default_target_path: /teacher/dashboard
+                csrf_token_id: authenticate  # Use a unique ID
             logout:
                 path: teacher_logout
                 target: teacher_login_form
                 invalidate_session: true
-                delete_cookies:
+
+        # Admin firewall configuration
+        admin:
+            lazy: true
+            pattern: ^/admin
+            provider: admins
+            form_login:
+                login_path: admin_login_form
+                check_path: admin_authenticate
+                default_target_path: /admin/dashboard
+                csrf_token_id: authorize  # Already unique, which is good
+            logout:
+                path: admin_logout
+                target: admin_login_form
+                invalidate_session: true
+
+        # Student firewall configuration
+        student:
+            pattern: ^/student
+            #stateless: false
+            provider: students
+            form_login:
+                username_parameter: _firstname   # Custom username field
+                password_parameter: _password
+                login_path: student_login_form
+                check_path: student_access
+                default_target_path: student_dashboard
+                csrf_token_id: access
+            logout:
+                path: student_logout
+                target: student_login_form
+
+        classteacher:
+            lazy: true
+            pattern: ^/classteacher
+            provider: teachers
+            form_login:
+                login_path: classteacher_login_form
+                check_path: teacher_access
+                default_target_path: /teacher/dashboard
+                csrf_token_id: access  # Use a unique ID
+            logout:
+                path: classteacher_logout
+                target: classteacher_login_form
+                invalidate_session: true
+
 
     access_control:
-        - { path: ^/teacher/authenticate, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # Teacher access control
+        - { path: ^/teacher/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/teacher/dashboard, roles: ROLE_TEACHER }
         - { path: ^/teacher/account, roles: ROLE_TEACHER }
+        
 
+        # Admin access control
+        - { path: ^/admin/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/admin/dashboard, roles: ROLE_ADMIN }
 
+        # Student access control
+        - { path: ^/student/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/student/dashboard, roles: ROLE_STUDENT }
+
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+        ROLE_TEACHER: ROLE_USER
+        ROLE_STUDENT: ROLE_USER

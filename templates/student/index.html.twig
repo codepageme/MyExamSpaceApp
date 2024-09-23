@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Student Login - MyExamSpace.Com{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+{% endblock %}
+
+{% block auth %}
+<div class="adjust">
+    <div class="loginform">
+        <h1 id="who">Student Login</h1>
+
+        {# Display error messages if any #}
+        {% for flash_message in app.flashes('error') %}
+            <div class="alert alert-danger">{{ flash_message }}</div>
+        {% endfor %}
+
+        {# Form starts here #}
+        <form action="{{ path('student_access') }}" method="POST">
+            <div class="form-group">
+                <label for="firstname">First Name</label>
+                <span class="glyphicon glyphicon-user gly"></span>
+                <input type="text" name="_firstname" id="firstname" class="form-control signup" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastname">Last Name</label>
+                <span class="glyphicon glyphicon-user gly"></span>
+                <input type="text" name="_lastname" id="lastname" class="form-control signup" required>
+            </div>
+
+
+               <div class="form-group">
+                <label for="classroom">Classroom</label>
+                <span class="glyphicon glyphicon-list gly"></span>
+                <select name="_classroom" id="classroom" class="form-control signup" required>
+                    <option value="">Select Classroom</option>
+                    {% for classroom in classrooms %}
+                        <option value="{{ classroom.id }}">
+                            {% if classroom.department is not null %}
+                                {{ classroom.department.department }} - 
+                            {% endif %}
+                            {{ classroom.classname }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# Include CSRF token for security #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('access') }}">
+
+            <input type="submit" value="Login" class="btn btn-primary space">
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block pp %}
+<div class="imgcontainer">
+    <img src="{{ asset('images/student.jfif') }}" alt="student Image" class="imge">
+</div>
+{% endblock %}

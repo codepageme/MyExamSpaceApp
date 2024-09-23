@@ -1,0 +1,87 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Exam - MyExamSpace.Com{% endblock %}
+
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+    <div class="here"></div>
+
+    <ul>
+        <li class="boton"><span class="glyphicon glyphicon-th-large glypha"></span>
+        <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
+
+        <li class="boton activa"><span class="glyphicon glyphicon-book glyph"></span>
+        <br><a href="{{ path('teacher_exam') }}">Exam</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
+        <br><a href="#">Results</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
+        <br><a href="#">Data</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-user glypha"></span>
+        <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
+    </ul>
+    <a href="{{ path('teacher_logout') }}" id="logout" 
+       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <span class="glyphicon glyphicon-log-out glypha"></span> Logout
+    </a>
+
+    <form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+    </form>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Exam Management</h2>
+
+    <!-- Create / Preview / Export Buttons -->
+    <div class="btn-group" role="group">
+        <a href= "{{ path('teacher_create_question') }}" class="btn btn-primary">Create Questions</a> 
+        <a href="{{ path('teacher_exam') }}" class="btn btn-primary">Preview Questions</a>
+        <a href="#" class="btn btn-primary">Export Questions</a>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter mt-4">
+        <input type="text" placeholder="Search by subject, class, or question type..." class="form-control mb-3">
+        
+        <select class="form-control">
+            <option value="">Select Subject</option>
+            <!-- Populate options dynamically -->
+        </select>
+
+        <select class="form-control mt-2">
+            <option value="">Select Class</option>
+            <!-- Populate options dynamically -->
+        </select>
+
+        <select class="form-control mt-2">
+            <option value="">Select Question Type</option>
+            <!-- Populate options dynamically -->
+        </select>
+
+        <button class="btn btn-secondary mt-2">Apply Filters</button>
+    </div>
+
+    <!-- List of Exams -->
+    <h3 class="mt-4">Your Exams</h3>
+    <ul>
+        {% for exam in exams %}
+            <li>
+                <strong>{{ exam.title }}</strong> ({{ exam.createdAt|date('Y-m-d H:i') }})
+                <br>
+                <a href="/">View</a> | 
+                <a href="/">Edit</a> | 
+                <a href="/" onclick="return confirm('Are you sure you want to delete this exam?');">Delete</a>
+            </li>
+        {% else %}
+            <p>No exams found. You can create your first exam now!</p>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

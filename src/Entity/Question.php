@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\QuestionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\QuestionType;
 
 #[ORM\Entity(repositoryClass: QuestionRepository::class)]
 class Question
@@ -30,6 +31,19 @@ class Question
     #[ORM\ManyToOne(inversedBy: 'questions')]
     #[ORM\JoinColumn(nullable: false)]
     private ?teacher $teacher = null;
+
+    #[ORM\ManyToOne(inversedBy: 'questions')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Subject $Subject = null;
+
+    #[ORM\ManyToOne(inversedBy: 'questions')]
+    private ?Classroom $Classroom = null;
+
+    #[ORM\ManyToOne(inversedBy: 'questions')]
+    private ?Department $Department = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $QuestionType = null;
 
     public function getId(): ?int
     {
@@ -92,6 +106,30 @@ class Question
     public function setTeacher(?teacher $teacher): static
     {
         $this->teacher = $teacher;
+
+        return $this;
+    }
+
+    public function getClassroom(): ?Classroom
+    {
+        return $this->Classroom;
+    }
+
+    public function setClassroom(?Classroom $Classroom): static
+    {
+        $this->Classroom = $Classroom;
+
+        return $this;
+    }
+
+    public function getDepartment(): ?Department
+    {
+        return $this->Department;
+    }
+
+    public function setDepartment(?Department $Department): static
+    {
+        $this->Department = $Department;
 
         return $this;
     }
