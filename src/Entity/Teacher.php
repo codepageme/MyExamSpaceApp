@@ -57,22 +57,18 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $questions;
 
     /**
-     * @var Collection<int, Subject>
+     * @var Collection<int, TeacherSubject>
      */
-    #[ORM\ManyToMany(targetEntity: Subject::class, mappedBy: 'teacher')]
-    private Collection $subjects;
+    #[ORM\OneToMany(targetEntity: TeacherSubject::class, mappedBy: 'teacher')]
+    private Collection $teacherSubjects;
 
     /**
-     * @var Collection<int, Subject>
+     * @var Collection<int, TeacherClassroom>
      */
-    #[ORM\ManyToMany(targetEntity: Subject::class, inversedBy: 'teachers')]
-    private Collection $Subject;
+    #[ORM\OneToMany(targetEntity: TeacherClassroom::class, mappedBy: 'teacher', orphanRemoval: true)]
+    private Collection $teacherClassrooms;
 
-    /**
-     * @var Collection<int, Classroom>
-     */
-    #[ORM\ManyToMany(targetEntity: Classroom::class, inversedBy: 'teachers')]
-    private Collection $Classroom;
+
 
 
     public function __construct()
@@ -80,9 +76,8 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
         $this->teacherNotes = new ArrayCollection();
         $this->exams = new ArrayCollection();
         $this->questions = new ArrayCollection();
-        $this->subjects = new ArrayCollection();
-        $this->Subject = new ArrayCollection();
-        $this->Classroom = new ArrayCollection();
+        $this->teacherSubjects = new ArrayCollection();
+        $this->teacherClassrooms = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -285,80 +280,68 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, Subject>
-     */
-    public function getSubjects(): Collection
-    {
-        return $this->subjects;
-    }
 
-    public function addSubjects(Subject $subjects): static
-    {
-        if (!$this->subjects->contains($subjects)) {
-            $this->subjects->add($subjects);
-            $subjects->addTeacher($this);
-        }
-
-        return $this;
-    }
-
-    public function removeSubjectss(Subject $subjects): static
-    {
-        if ($this->subjects->removeElement($subjects)) {
-            $subjects->removeTeacher($this);
-        }
-
-        return $this;
-    }
 
     /**
-     * @return Collection<int, Subject>
+     * @return Collection<int, TeacherSubject>
      */
-    public function getSubject(): Collection
+    public function getTeacherSubjects(): Collection
     {
-        return $this->Subject;
+        return $this->teacherSubjects;
     }
 
-    public function addSubject(Subject $subject): static
+    public function addTeacherSubject(TeacherSubject $teacherSubject): static
     {
-        if (!$this->Subject->contains($subject)) {
-            $this->Subject->add($subject);
+        if (!$this->teacherSubjects->contains($teacherSubject)) {
+            $this->teacherSubjects->add($teacherSubject);
+            $teacherSubject->setTeacher($this);
         }
 
         return $this;
     }
 
-    public function removeSubject(Subject $subject): static
+    public function removeTeacherSubject(TeacherSubject $teacherSubject): static
     {
-        $this->Subject->removeElement($subject);
+        if ($this->teacherSubjects->removeElement($teacherSubject)) {
+            // set the owning side to null (unless already changed)
+            if ($teacherSubject->getTeacher() === $this) {
+                $teacherSubject->setTeacher(null);
+            }
+        }
 
         return $this;
     }
 
     /**
-     * @return Collection<int, Classroom>
+     * @return Collection<int, TeacherClassroom>
      */
-    public function getClassroom(): Collection
+    public function getTeacherClassrooms(): Collection
     {
-        return $this->Classroom;
+        return $this->teacherClassrooms;
     }
 
-    public function addClassroom(Classroom $classroom): static
+    public function addTeacherClassroom(TeacherClassroom $teacherClassroom): static
     {
-        if (!$this->Classroom->contains($classroom)) {
-            $this->Classroom->add($classroom);
+        if (!$this->teacherClassrooms->contains($teacherClassroom)) {
+            $this->teacherClassrooms->add($teacherClassroom);
+            $teacherClassroom->setTeacher($this);
         }
 
         return $this;
     }
 
-    public function removeClassroom(Classroom $classroom): static
+    public function removeTeacherClassroom(TeacherClassroom $teacherClassroom): static
     {
-        $this->Classroom->removeElement($classroom);
+        if ($this->teacherClassrooms->removeElement($teacherClassroom)) {
+            // set the owning side to null (unless already changed)
+            if ($teacherClassroom->getTeacher() === $this) {
+                $teacherClassroom->setTeacher(null);
+            }
+        }
 
         return $this;
     }
 
+   
    
 }

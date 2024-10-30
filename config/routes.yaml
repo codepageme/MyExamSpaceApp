@@ -23,8 +23,6 @@ teacher_logout:
     path: /teacher/logout
     controller: App\Controller\TeacherController::logout
 
-
-
 teacher_account:
     path: /teacher/account
     controller: App\Controller\TeacherController::account
@@ -62,18 +60,107 @@ admin_logout:
     path: /admin/logout
     controller: App\Controller\AdminController::logout
 
+admin_list:
+    path: /admin/list
+    controller: App\Controller\AdminController::listAdmins   
 
+admin_edit:
+    path: /admin/edit/{id}
+    controller: App\Controller\AdminController::editAdmin
+    methods: [GET, POST]
 
+admin_delete:
+    path: /admin/delete/{id}
+    controller: App\Controller\AdminController::deleteAdmin
+    methods: [POST]  # Usually DELETE method, but POST for simplicity
 
+admin_create_admin:
+    path: /admin/create-admin
+    controller: App\Controller\AdminController::createAdmin
 
+admin_account:
+    path: /admin/account
+    controller: App\Controller\AdminController::account
+    methods: [GET , POST]
+
+admin_message:
+    path: /admin/message
+    controller: App\Controller\AdminController::message
+
+admin_teacher_list:
+    path: /admin/teacher
+    controller: App\Controller\AdminController::listTeachers
+
+admin_edit_teacher:
+    path: /admin/teacher/edit/{id}
+    controller: App\Controller\AdminController::editTeacher
+    methods: [GET, POST]
+
+admin_delete_teacher:
+    path: /admin/teacher/delete/{id}
+    controller: App\Controller\AdminController::deleteTeacher
+    methods: [POST]  
 
 admin_create_teacher:
     path: /admin/create-teacher
     controller: App\Controller\AdminController::createTeacher
 
-admin_create_admin:
-    path: /admin/create-admin
-    controller: App\Controller\AdminController::createAdmin
+admin_assign_teacher:
+    path: /admin/assign-teacher
+    controller: App\Controller\AdminController::assignTeacher
+
+admin_assign_classroom:
+  path: /admin/assign-classroom
+  controller: App\Controller\AdminController::assignClassroom
+  methods: [POST]    
+
+admin_assign_teacher_subject:
+  path: /admin/assign-teachersubject
+  controller: App\Controller\AdminController::assignTeachersubject
+  methods: [POST]    
+
+admin_fetch_teacher_subjects:
+  path: /admin/fetch-teachersubjects
+  controller: App\Controller\AdminController::fetchTeacherSubjects   
+
+admin_get_all_assignments:
+  path: /admin/get-allassignments
+  controller: App\Controller\AdminController::getAllAssignments  
+
+admin_delete_assignment:
+    path: /admin/delete-assignment/{teacher_subject_id}
+    controller: App\Controller\AdminController::deleteAssignment
+    methods: POST
+
+admin_assign_classteacher:
+    path: /admin/assign-classteacher
+    controller: App\Controller\AdminController::assignClassTeacher
+    methods: POST
+
+#Message
+admin_message_inbox:
+    path: /admin/message-inbox
+    controller: App\Controller\AdminController::inbox
+
+admin_message_send:
+    path: /admin/message-send
+    controller: App\Controller\AdminController::sendMessage
+    methods: POST
+
+admin_message_fetch:
+    path: /admin/message-fetch
+    controller: App\Controller\AdminController::fetchMessage
+
+admin_student_list:
+    path: /admin/studentlist
+    controller: App\Controller\AdminController::studentList
+
+
+
+
+
+
+
 
 admin_create_student:
     path: /admin/create-student
@@ -107,3 +194,22 @@ student_dashboard:
 classteacher_login_form:
     path: /classteacher
     controller: App\Controller\ClassTeacherController::loginform
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

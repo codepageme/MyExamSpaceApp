@@ -1,0 +1,83 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Admin Edit - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glyph"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div class="text-left" style="margin-left:10px; margin-top:10px;">
+  <a href="{{ path('admin_create_admin') }}" class="btn btn-default">Create Admin</a>
+  <a href="{{ path('admin_account') }}" class="btn btn-default ml-2">My Account</a>
+   <a href="{{ path('admin_list') }}" class="btn btn-default ml-2"> View Admins</a>
+</div>
+
+
+<div class="container" style="max-width:800px;">
+        <h2 class="text-center" style= "font-family:inter;color:grey;">{{ admin is defined ? '- Edit Admin Information - ' : '- Edit Admin Information -' }}</h2>
+
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3"> <!-- Center the form -->
+                
+                {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }} <!-- Horizontal form layout -->
+                
+                {% for field in form %}
+                    <div class="form-group">
+                        {{ form_label(field, null, {'label_attr': {'class': 'col-sm-3 control-label'}}) }} <!-- Label with Bootstrap class -->
+                        <div class="col-sm-9">
+                            {{ form_widget(field, {'attr': {'class': 'form-control'}}) }} <!-- Form field with Bootstrap style -->
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="form-group">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">
+                            {{ admin is defined ? 'Update' : 'Update' }}
+                        </button>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Admin Account - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glyph"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div class="text-left" style="margin-left:10px; margin-top:10px;">
+  <a href="{{ path('admin_create_admin') }}" class="btn btn-primary">Create Admin</a>
+  <a href="{{ path('admin_account') }}" class="btn btn-default ml-2">My Account</a>
+   <a href="{{ path('admin_list') }}" class="btn btn-primary ml-2"> View Admins</a>
+</div>
+
+ 
+   <div class="container-fluid" style="max-width:1000px;">
+    <div class="row">
+
+        <!-- Left Div: Account Details and Profile Picture -->
+        <div class="col-md-6">       
+            <div class="media" style="margin-top:70px;">
+                <!-- Profile Picture -->
+                <div class="media-left">
+                    {% if admin.profilePicture %}
+                        <img src="{{ asset('uploads/profile_pictures/' ~ admin.profilePicture) }}" 
+                             class="media-object img-circle" 
+                             alt="Profile Picture" 
+                             style="width: 120px; height: 120px;">
+                    {% else %}
+                        <img src="{{ asset('images/admin-default.png') }}" 
+                             class="media-object img-circle" 
+                             alt="Default Profile Picture" 
+                             style="width: 120px; height: 120px;">
+                    {% endif %}
+                    
+                    <!-- Form for uploading profile picture -->
+                    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}, 'method': 'POST'}) }}
+                        <div class="form-group">
+                            {{ form_label(form.profilePicture) }}
+                            {{ form_widget(form.profilePicture, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.profilePicture) }}
+                        
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-upload"></i> Upload
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+
+
+                <!-- Admin Details -->
+                <div class="media-body" style="text-align:left;">
+                    <h4 class="media-heading">Welcome Back, {{ admin.name }}!</h4>
+                    <!-- Greeting based on time of day -->
+                    <h6>
+                        {% set hour = "now"|date("H") %}
+                        {% if hour >= 6 and hour < 12 %}
+                            Good morning, {{ admin.name }}!<br><br> Hope You Had A Good Night?
+                        {% elseif hour >= 12 and hour < 17 %}
+                            Good afternoon, {{ admin.name }}! <br><br> How Has The Day Been?
+                        {% elseif hour >= 17 and hour < 24 %}
+                            Good evening, {{ admin.name }}! <br><br> Busy Day?
+                        {% else %}
+                            It's Always Nice To Have You Here, {{ admin.name }}!
+                        {% endif %}
+                    </h6>
+                    <p><strong>Email:</strong> {{ admin.email }}</p>
+                    <p><strong>Username:</strong> {{ admin.username }}</p>
+                    <p><strong>Last Login:</strong> {{ admin.lastLogin ? admin.lastLogin|date('Y-m-d H:i:s') : 'N/A' }}</p>
+                </div>
+            </div>
+
+            <!-- Task Management Tabs -->
+            <ul class="nav nav-tabs" style="width: 400px;">
+                <li class="active">
+                    <a href="#activeTasks" data-toggle="tab">Active</a>
+                </li>
+                <li>
+                    <a href="#uncompleted-tasks" data-toggle="tab">Uncompleted</a>
+                </li>
+                <li>
+                    <a href="#completed-tasks" data-toggle="tab">Completed</a>
+                </li>
+                <li>
+                    <a href="#add-task" data-toggle="tab">New Task</a>
+                </li>
+            </ul>
+
+            <div class="tab-content" style="width: 400px; height: 100px; overflow-y: scroll;">
+                <!-- Active Tasks -->
+                <div class="tab-pane fade in active" id="activeTasks">
+                    <ul class="list-group">
+                        {% for task in activeItems %}
+                            <li class="list-group-item" style="background-color: white;">
+                                <form action="{{ path('admin_account') }}" method="POST">
+                                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                                    <input type="checkbox" onchange="this.form.submit()" {% if task.isCompleted %}checked{% endif %}> 
+                                    {{ task.task }} - Deadline: {{ task.deadline|date('Y-m-d H:i') }}
+                                </form>
+                            </li>
+                        {% else %}
+                            <li class="list-group-item">No active tasks</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Uncompleted Tasks -->
+                <div class="tab-pane fade" id="uncompleted-tasks">
+                    <ul class="list-group">
+                        {% for task in uncompletedItems %}
+                            <li class="list-group-item">{{ task.task }} - Deadline: {{ task.deadline|date('Y-m-d H:i') }}</li>
+                        {% else %}
+                            <li class="list-group-item">No uncompleted tasks</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Completed Tasks -->
+                <div class="tab-pane fade" id="completed-tasks">
+                    <ul class="list-group">
+                        {% for task in completedItems %}
+                            <li class="list-group-item">
+                                <input type="checkbox" checked disabled> 
+                                {{ task.task }} - Completed at: {{ task.deadline|date('Y-m-d H:i') }}
+                            </li>
+                        {% else %}
+                            <li class="list-group-item">No completed tasks</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Add New Task Form -->
+                <div class="tab-pane fade" id="add-task" style="background-color:white; color:black; padding: 20px;">
+                    {{ form_start(todoForm) }}
+                        <div class="form-group">
+                            {{ form_label(todoForm.task, 'Task Title') }}
+                            {{ form_widget(todoForm.task, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(todoForm.task) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(todoForm.deadline, 'Deadline') }}
+                            {{ form_widget(todoForm.deadline, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(todoForm.deadline) }}
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Task</button>
+                    {{ form_end(todoForm) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Div: Messages and Notifications -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <a href="{{ path('admin_message_inbox') }}" class="btn btn-primary">
+                        <span class="badge"></span> Messages
+                    </a>
+                   
+                          <h4>NOTIFICATIONS</h4>
+                          <div> 
+                           lets write something here
+                          </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

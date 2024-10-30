@@ -31,13 +31,13 @@ class Exam
     private ?Teacher $teacher = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $CreatedAt = null;
+    private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $UpdatedAt = null;
+    private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\Column]
-    private ?bool $Published = null;
+    private ?bool $published = null;  // Change Published to published
 
     public function getId(): ?int
     {
@@ -106,36 +106,36 @@ class Exam
 
     public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->CreatedAt;
+        return $this->createdAt;  // Updated to lowercase
     }
 
-    public function setCreatedAt(\DateTimeInterface $CreatedAt): static
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
-        $this->CreatedAt = $CreatedAt;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
 
     public function getUpdatedAt(): ?\DateTimeInterface
     {
-        return $this->UpdatedAt;
+        return $this->updatedAt;  // Updated to lowercase
     }
 
-    public function setUpdatedAt(\DateTimeInterface $UpdatedAt): static
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
-        $this->UpdatedAt = $UpdatedAt;
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }
 
     public function isPublished(): ?bool
     {
-        return $this->Published;
+        return $this->published;  // Updated to lowercase
     }
 
-    public function setPublished(bool $Published): static
+    public function setPublished(bool $published): static
     {
-        $this->Published = $Published;
+        $this->published = $published;  // Updated to lowercase
 
         return $this;
     }

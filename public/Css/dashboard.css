@@ -165,3 +165,51 @@ h6{
 p{
     font-size: 10px;
 }
+
+   
+#displayscreen {
+    /* Adds shadow and other aesthetic styles */
+    margin-left: 140px;
+    width: 700px;
+    height: 400px;
+    border-radius: 20px;
+    background-color: rgb(255, 255, 255);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.message-item {
+    background-color: rgb(245, 245, 245) !important; /* White background */
+    border-radius: 8px; /* Rounded corners for smoother look */
+    padding: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Sender name styling */
+.message-item strong {
+    color: rgb(0, 0, 0);
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 1.0em;
+    display: inline;
+    margin-right: 8px;
+}
+
+/* Message content styling */
+.message-content {
+    font-size: 1.1em; /* Slightly larger font size for readability */
+    color: #333;
+}
+
+/* Styling for download link */
+.message-item a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 1em;
+}
+
+.message-item a:hover {
+    text-decoration: underline;
+}

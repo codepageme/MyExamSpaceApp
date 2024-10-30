@@ -1,0 +1,100 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}AdminList - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glyph"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+
+<div class="text-left" style="margin-left:10px; margin-top:10px;">
+  <a href="{{ path('admin_create_admin') }}" class="btn btn-primary">Create Admin</a>
+  <a href="{{ path('admin_account') }}" class="btn btn-primary ml-2">My Account</a>
+   <a href="{{ path('admin_list') }}" class="btn btn-default ml-2"> View Admins</a>
+</div>
+
+<h2 class="text-center" style = "color:grey; margin-bottom:50px;font-family:inter">- ADMINISTRATORS -</h2>
+
+  {# Check if there are any flash messages (e.g., success, error) #}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+<div class="container" style="max-width:800px;">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2"> <!-- Center the table and reduce width -->
+            <table class="table table-striped table-bordered" style="width: 100%;">
+                <thead>
+                    <tr class="text-center"> <!-- Center table headers -->
+                        <th style="text-align:center; font-family:inter;">#</th>
+                        <th style="text-align:center; font-family:inter;">Name</th>
+                        <th style="text-align:center; font-family:inter;">Email</th>
+                        <th style="text-align:center; font-family:inter;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                        <tr>
+                            <td>{{ loop.index }}</td> <!-- Display the current loop index for ordering -->
+                            <td>{{ admin.name }}</td>
+                            <td>{{ admin.email }}</td>
+                            <td>
+                                <a href="{{ path('admin_edit', {id: admin.id}) }}" class="btn btn-primary btn-sm"> <span class="glyphicon glyphicon-pencil"></span>  Edit</a>
+                                <form action="{{ path('admin_delete', {id: admin.id}) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this admin?')"><span class="glyphicon glyphicon-trash"></span>  Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

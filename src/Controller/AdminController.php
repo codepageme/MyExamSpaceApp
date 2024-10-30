@@ -2,24 +2,56 @@
 
 namespace App\Controller;
 
+
 use App\Entity\Teacher;
-use App\Form\CreateteacherType;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Admin;
-use App\Form\CreateAdminType;
-use App\Repository\AdminRepository;
+use App\Entity\Subject;
 use App\Entity\Student;
+use App\Entity\Classroom;
+use App\Entity\TeacherClassroom;
+use App\Entity\TeacherSubject;
+use App\Entity\TeacherSubjectClassroom;
+use App\Entity\TodoList; 
+use App\Entity\Message;
+
+
+
+use App\Repository\AdminRepository;
+use App\Repository\TeacherRepository;
+use App\Repository\TeacherSubjectRepository;
+use App\Repository\TeacherSubjectClassroomRepository;
+
+
+use App\Form\CreateteacherType;
+use App\Form\EditteacherType;
+use App\Form\CreateAdminType;
+use App\Form\AdminprofilepixType;
 use App\Form\CreateStudentType;
+use App\Form\TodoItemType; 
+
+
+
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+
+
+
+
+
+
 
 class AdminController extends AbstractController
 {
 
-//Admin Login Logic --------------------------------------------------------------------------
+//Admin Login Logic --------------------------------------------------------------------------D.O.N.E
 
     /**
  * @Route("/admin", name="admin_login_form")
@@ -61,93 +93,487 @@ public function authenticate(Request $request, AdminRepository $adminRepository,
     }
 }
 
-//Admin Dashboard Logic --------------------------------------------------------------------------
 
 
+//D.O.N.E---------------------------------------------------------------
+//Admin[Teacher] creation Module --------------------------------------------------------------------------
 
-/**
- * @Route("/admin/dashboard", name="admin_dashboard")
- * @IsGranted('ROLE_ADMIN')
- */
-public function dashboard(): Response
+//list Teacher ---------------------------D.O.N.E
+
+#[Route('/admin/teacher', name: 'admin_teacher_list')]
+public function listTeachers(TeacherRepository $teacherRepository): Response
 {
-    $admin = $this->getUser();
+    // Fetch all teachers from the database
+    $teachers = $teacherRepository->findAll();
 
-    if (!$admin instanceof Admin) {
-        throw $this->createAccessDeniedException('Access denied.');
+    // Render the teacher list template
+    return $this->render('admin/listteacher.html.twig', [
+        'teachers' => $teachers,
+    ]);
+}
+
+
+//edit teacher --------------------------D.O.N.E
+
+#[Route('/admin/teacher/edit/{id}', name: 'admin_edit_teacher')]
+public function editTeacher(Request $request, Teacher $teacher, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
+{
+    $form = $this->createForm(EditteacherType::class, $teacher);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Hash password if it's changed
+        if ($form->get('password')->getData()) {
+            $hashedPassword = $passwordHasher->hashPassword($teacher, $form->get('password')->getData());
+            $teacher->setPassword($hashedPassword);
+        }
+
+        $entityManager->flush();
+        $this->addFlash('success', 'Teacher updated successfully!');
+        return $this->redirectToRoute('admin_teacher_list');
     }
 
-    return $this->render('admin/dashboard.html.twig', [
-        'name' => $admin->getname(),
-        'role' => $admin->getRoles()[0] // Assuming 'ROLE_ADMIN' is present
+    return $this->render('admin/editteacher.html.twig', [
+        'teacher' => $teacher,
+        'form' => $form->createView(),
     ]);
 }
 
 
 
-//Admin Logout Logic ------------------------------------------------------------------------
+//delete teacher ----------------------------------D.O.N.E
+
+#[Route('/admin/teacher/delete/{id}', name: 'admin_delete_teacher', methods: ['POST'])]
+public function deleteTeacher(Request $request, Teacher $teacher, EntityManagerInterface $entityManager): Response
+{
+    // Validate the CSRF token before deleting the teacher
+    if ($this->isCsrfTokenValid('delete' . $teacher->getId(), $request->request->get('_token'))) {
+        // Remove the teacher from the database
+        $entityManager->remove($teacher);
+        $entityManager->flush();
+
+        // Add success message
+        $this->addFlash('success', 'Teacher deleted successfully!');
+    }
+
+    // Redirect to the teacher list
+    return $this->redirectToRoute('admin_teacher_list');
+}
+
+
+//create teacher ---------------------------------D.O.N.E
+
+/**
+ * @Route("/admin/create-teacher", name="admin_create_teacher")
+ */
+public function createTeacher(
+    Request $request, 
+    EntityManagerInterface $entityManager,
+    UserPasswordHasherInterface $passwordHasher
+): Response {
+    $teacher = new Teacher();
+    $form = $this->createForm(CreateteacherType::class, $teacher);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Set a temporary username as a placeholder (could be anything)
+        $teacher->setUsername('newTeacher');
+
+        // Hash the password using the lastname
+        $hashedPassword = $passwordHasher->hashPassword($teacher, $teacher->getLastname());
+        $teacher->setPassword($hashedPassword);
+
+        // Set the default role to "ROLE_TEACHER"
+        $teacher->setRoles(['ROLE_TEACHER']);
+
+        // Persist the teacher entity to generate the ID
+        $entityManager->persist($teacher);
+        $entityManager->flush(); // This generates the teacher's ID
+
+        // Now set the username to be a combination of firstname and ID
+        $teacher->setUsername($teacher->getFirstname() . $teacher->getId());
+
+        // Flush again to save the updated username
+        $entityManager->flush();
+
+        // Add a success flash message or redirect as needed
+        $this->addFlash('success', 'Teacher created successfully.');
+        return $this->redirectToRoute('admin_teacher_list');
+    }
+
+    return $this->render('admin/createteacher.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
+
+
+
+//assign teacher-----------------------D.O.N.E
+
+/**
+ * @Route("/admin/assign-teacher", name="admin_assign_teacher")
+ */
+public function assignTeacher(EntityManagerInterface $em): Response
+{
+    // Fetch all teachers, subjects, and classrooms
+    $teachers = $em->getRepository(Teacher::class)->findAll();
+    $subjects = $em->getRepository(Subject::class)->findAll();
+    $classrooms = $em->getRepository(Classroom::class)->findAll();
+    $teachersubjects = $em->getRepository(TeacherSubject::class)->findAll(); // Fetching teacher-subject assignments
+
+    // Fetch teacher-subject-classroom assignments
+    $assignments = $em->getRepository(TeacherSubjectClassroom::class)->findAll();
+
+    // Fetch teacher-classroom assignments for class teacher roles
+    $teacherClassroomAssignments = $em->getRepository(TeacherClassroom::class)->findAll();
+
+    return $this->render('admin/assignteacher.html.twig', [
+        'teachers' => $teachers,
+        'subjects' => $subjects,
+        'classrooms' => $classrooms,
+        'teachersubjects' => $teachersubjects,
+        'assignments' => $assignments, // For teacher-subject-classroom assignments
+        'teacher_classroom_assignments' => $teacherClassroomAssignments, // For class teacher assignments
+    ]);
+}
+
+
+
 
 
 /**
-     * @Route("/admin/logout", name="admin_logout")
-     */
-    public function logout(): void
-    {
-        // Symfony handles the logout automatically, so this method can be blank.
-        // This method will never be executed because Symfony will intercept this route and handle the logout for you.
-        throw new \Exception('This method should not be reached!');
+ * @Route("/admin/assign-teachersubject", name="admin_assign_teacher_subject", methods={"POST"})
+ */
+public function assignTeachersubject(Request $request, EntityManagerInterface $em): JsonResponse
+{
+    // Get teacher and subject IDs from the request
+    $teacherId = $request->request->get('teacher_id');
+    $subjectId = $request->request->get('subject_id');
+
+    // Check if teacherId or subjectId is missing from the request
+    if (!$teacherId || !$subjectId) {
+        return new JsonResponse(['error' => 'Invalid teacher or subject ID.'], 400);
     }
 
+    // Retrieve the Teacher and Subject entities using the provided IDs
+    $teacher = $em->getRepository(Teacher::class)->find($teacherId);
+    $subject = $em->getRepository(Subject::class)->find($subjectId);
+
+    // If either the teacher or subject is not found, return an error response
+    if (!$teacher || !$subject) {
+        return new JsonResponse(['error' => 'Invalid teacher or subject.'], 400);
+    }
+
+    // Check if the teacher is already assigned to this subject to avoid duplicates
+    $teacherSubject = $em->getRepository(TeacherSubject::class)
+        ->findOneBy(['teacher' => $teacher, 'subject' => $subject]);
+
+    if (!$teacherSubject) {
+        // If not assigned, create a new TeacherSubject relationship
+        $teacherSubject = new TeacherSubject();
+        $teacherSubject->setTeacher($teacher);
+        $teacherSubject->setSubject($subject);
+
+        // Persist the new relationship to the database
+        $em->persist($teacherSubject);
+        $em->flush();  // Commit the changes to the database
+    }
+
+    // Return a success response in JSON format
+    return new JsonResponse(['success' => 'Teacher assigned to subject successfully.']);
+}
+
+
+
+/**
+ * @Route("/admin/assign-classroom", name="admin_assign_classroom", methods={"POST"})
+ */
+public function assignClassroom(Request $request, EntityManagerInterface $em): JsonResponse
+{
+    // Get all POST data
+    $data = $request->request->all();
+
+    // Extract teacher_subject_id and classroom_ids from the data array
+    $teacherSubjectId = $data['teacher_subject_id'] ?? null;
+    $classroomIds = $data['classroom_ids'] ?? [];
+
+    // Check if teacher_subject_id is provided
+    if (!$teacherSubjectId || empty($classroomIds)) {
+        return new JsonResponse(['error' => 'TeacherSubject ID or Classroom IDs missing.'], 400);
+    }
+
+    // Retrieve the teacher_subject entity
+    $teacherSubject = $em->getRepository(TeacherSubject::class)->find($teacherSubjectId);
+
+    if (!$teacherSubject) {
+        return new JsonResponse(['error' => 'Invalid TeacherSubject ID.'], 400);
+    }
+
+    // Retrieve classrooms and assign them to the TeacherSubject
+    foreach ($classroomIds as $classroomId) {
+        $classroom = $em->getRepository(Classroom::class)->find($classroomId);
+
+        if ($classroom) {
+            // Check if the classroom is already assigned to the TeacherSubject to prevent duplicates
+            $existingAssignment = $em->getRepository(TeacherSubjectClassroom::class)
+                ->findOneBy(['teacherSubject' => $teacherSubject, 'classroom' => $classroom]);
+
+            if (!$existingAssignment) {
+                // If not already assigned, create a new TeacherSubjectClassroom relationship
+                $teacherSubjectClassroom = new TeacherSubjectClassroom();
+                $teacherSubjectClassroom->setTeacherSubject($teacherSubject);
+                $teacherSubjectClassroom->setClassroom($classroom);
+
+                // Persist the new relationship
+                $em->persist($teacherSubjectClassroom);
+            }
+        }
+    }
+
+    // Flush to save changes
+    $em->flush();
+
+    return new JsonResponse(['success' => 'Classrooms assigned successfully to TeacherSubject.']);
+}
 
 
 
 
-//Admin create Logic --------------------------------------------------------------------------
+
+/**
+ * @Route("/admin/fetch-teachersubjects", name="admin_fetch_teacher_subjects", methods={"GET"})
+ */
+public function fetchTeacherSubjects(EntityManagerInterface $entityManager): JsonResponse
+{
+    // Fetch the 5 most recent teacher-subject assignments
+    $teacherSubjects = $entityManager->getRepository(TeacherSubject::class)->findBy([], ['id' => 'DESC'], 5);
+
+    // Prepare the data
+    $result = [];
+    foreach ($teacherSubjects as $teacherSubject) {
+        $result[] = [
+            'id' => $teacherSubject->getId(),
+            'teacher' => [
+                'firstname' => $teacherSubject->getTeacher()->getFirstname(),
+                'lastname' => $teacherSubject->getTeacher()->getLastname(),
+            ],
+            'subject' => [
+                'course' => $teacherSubject->getSubject()->getCourse(),
+            ],
+        ];
+    }
+
+    return new JsonResponse($result);
+}
+
+
+
+
+
+/**
+ * @Route("/admin/get-allassignments", name="admin_get_all_assignments", methods={"GET"})
+ */
+public function getAllAssignments(): JsonResponse
+{
+    $assignments = $this->entityManager->getRepository(TeacherSubjectClassroom::class)->findAll();
+
+    $result = [];
+    foreach ($assignments as $assignment) {
+        $result[] = [
+            'teacher' => $assignment->getTeacherSubject()->getTeacher()->getFirstname() . ' ' . $assignment->getTeacherSubject()->getTeacher()->getLastname(),
+            'subject' => $assignment->getTeacherSubject()->getSubject()->getCourse(),
+            'classroom' => $assignment->getClassroom()->getClassname(),
+        ];
+    }
+
+    return new JsonResponse($result);
+}
+
+
+
+
 
  /**
-     * @Route("/admin/create-teacher", name="admin_create_teacher")
-     */
-    public function createTeacher(
-        Request $request, 
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
-    ): Response {
-        $teacher = new Teacher();
-        $form = $this->createForm(CreateteacherType::class, $teacher);
-        $form->handleRequest($request);
+  * @Route("/admin/delete-assignment/{teacher_subject_id}", name="admin_delete_assignment", methods={"POST"})
+  */
+ public function deleteAssignment(
+     int $teacher_subject_id, 
+     TeacherSubjectRepository $teacherSubjectRepository, 
+     TeacherSubjectClassroomRepository $classroomRepository, 
+     EntityManagerInterface $em
+ ) {
+     // Fetch the TeacherSubject assignment
+     $teacherSubject = $teacherSubjectRepository->find($teacher_subject_id);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Set username to be the same as firstname
-            $teacher->setUsername($teacher->getFirstname());
+     // Proceed only if the assignment exists
+     if ($teacherSubject) {
+         // Remove associated classrooms
+         $classrooms = $classroomRepository->findBy(['teacherSubject' => $teacherSubject]);
+         foreach ($classrooms as $classroom) {
+             $em->remove($classroom);
+         }
 
-            // Set the password to be the same as lastname, but hashed
-            $hashedPassword = $passwordHasher->hashPassword($teacher, $teacher->getLastname());
-            $teacher->setPassword($hashedPassword);
+         // Remove the teacher-subject assignment
+         $em->remove($teacherSubject);
+         $em->flush();
 
-             // Set the default role to "ROLE_TEACHER"
-             $teacher->setRoles(['ROLE_TEACHER']);
+         $this->addFlash('success', 'Assignment deleted successfully.');
+     } else {
+         $this->addFlash('error', 'Assignment not found.');
+     }
 
-            // Save the teacher entity to the database
-            $entityManager->persist($teacher);
-            $entityManager->flush();
+     // Redirect back to the page where assignments are listed
+     return $this->redirectToRoute('admin_assign_teacher'); // Ensure this route exists
+ }
 
-            // Add a success flash message or redirect as needed
-            $this->addFlash('success', 'Teacher created successfully.');
-            return $this->redirectToRoute('admin_create_teacher');
-        }
 
-        return $this->render('admin/createteacher.html.twig', [
-            'form' => $form->createView(),
-        ]);
+
+
+
+ /**
+ * @Route("/admin/assign-classteacher", name="admin_assign_classteacher", methods={"POST"})
+ */
+public function assignClassTeacher(Request $request, EntityManagerInterface $em): Response
+{
+    $teacherId = $request->request->get('teacher_id');
+    $classroomId = $request->request->get('classroom_id');
+
+    // Validate input data
+    if (!$teacherId || !$classroomId) {
+        $this->addFlash('error', 'Please select both a teacher and a classroom.');
+        return $this->redirectToRoute('admin_assign_teacher');
     }
 
+    // Retrieve the teacher and classroom entities
+    $teacher = $em->getRepository(Teacher::class)->find($teacherId);
+    $classroom = $em->getRepository(Classroom::class)->find($classroomId);
+
+    if (!$teacher || !$classroom) {
+        $this->addFlash('error', 'Invalid teacher or classroom selection.');
+        return $this->redirectToRoute('admin_assign_teacher');
+    }
+
+    // Check if the classroom already has a teacher assigned
+    $existingAssignment = $em->getRepository(TeacherClassroom::class)
+        ->findOneBy(['classroom' => $classroom]);
+
+    if ($existingAssignment) {
+        // Update the assignment with the new teacher
+        $existingAssignment->setTeacher($teacher);
+        $this->addFlash('success', 'Class teacher updated successfully.');
+    } else {
+        // Create a new TeacherClassroom assignment
+        $teacherClassroom = new TeacherClassroom();
+        $teacherClassroom->setTeacher($teacher);
+        $teacherClassroom->setClassroom($classroom);
+
+        // Persist the new assignment
+        $em->persist($teacherClassroom);
+        $this->addFlash('success', 'Class teacher assigned successfully.');
+    }
+
+    // Persist changes to the database
+    $em->flush();
+
+    return $this->redirectToRoute('admin_assign_teacher');
+}
 
 
 
+//D.O.N.E-------------------------------------------------------------------------------
+//Admin [Admin Creation] Module Logic here --------------------------------------------------------------------
+
+//list admins------------ D.O.N.E
+
+/**
+ * @Route("/admin/list", name="admin_list")
+ */
+public function listAdmins(AdminRepository $adminRepository)
+{ 
+    // Exclude superadmin based on their email or ID
+    $admins = $adminRepository->createQueryBuilder('a')
+        ->where('a.email != :email') // or exclude by ID
+        ->setParameter('email', 'Codepage.me@gmail.com')  
+        ->getQuery()
+        ->getResult();
+    
+    return $this->render('admin/listadmin.html.twig', [
+        'admins' => $admins,
+   
+    ]);
+}
 
 
+//Edit admins------------------------- D.O.N.E
 
-//Admin Creation Logic here --------------------------------------------------------------------
+/**
+ * @Route("/admin/edit/{id}", name="admin_edit")
+ */
+public function editAdmin(
+    $id, 
+    Request $request, 
+    AdminRepository $adminRepository, 
+    EntityManagerInterface $entityManager, 
+    UserPasswordHasherInterface $passwordHasher
+): Response
+{
+    // Find the existing Admin entity
+    $admin = $adminRepository->find($id);
+
+    if (!$admin) {
+        throw $this->createNotFoundException('The admin does not exist.');
+    }
+
+    // Create the form for editing the admin
+    $form = $this->createForm(CreateAdminType::class, $admin);
+    
+    // Handle form submission
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Check if the password field is filled (i.e., the admin changed the password)
+        if ($admin->getPassword() !== null) {
+            // Hash the new password before saving
+            $hashedPassword = $passwordHasher->hashPassword($admin, $admin->getPassword());
+            $admin->setPassword($hashedPassword);
+        }
+
+        // Update the admin entity in the database
+        $entityManager->flush();
+
+        // Add a flash message for success
+        $this->addFlash('success', 'Admin updated successfully!');
+
+        // Redirect to the admin list page
+        return $this->redirectToRoute('admin_list');
+    }
+
+    // Render the form view
+    return $this->render('admin/editadmin.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
+
+
+//Delete Admins---------------------------- D.O.N.E
+
+/**
+ * @Route("/admin/delete/{id}", name="admin_delete")
+ */
+public function deleteAdmin($id, AdminRepository $adminRepository, EntityManagerInterface $em)
+{
+    $admin = $adminRepository->find($id);
+
+    if ($admin) {
+        $em->remove($admin);
+        $em->flush();
+    }
+
+    return $this->redirectToRoute('admin_list');
+}
+
+
+//Create admin ---------------------------- D.O.N.E
 
    /**
  * @Route("/admin/create-admin", name="admin_create_admin")
@@ -182,8 +608,8 @@ public function createAdmin(
         // Add a flash message for success
         $this->addFlash('success', 'Admin created successfully!');
 
-        // Redirect to the admin dashboard
-        return $this->redirectToRoute('admin_create_admin');
+        
+        return $this->redirectToRoute('admin_list');
     }
 
     // Render the form view
@@ -193,14 +619,229 @@ public function createAdmin(
 }
 
 
+//admin account/profile and todolist---------------------------- D.O.N.E
+
+/**
+ * @Route("/admin/account", name="admin_account", methods={"GET", "POST"})
+ */
+public function account(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $admin = $this->getUser(); // Get the currently logged-in admin
+    
+    // Create the form for updating the admin profile picture
+    $form = $this->createForm(AdminprofilepixType::class, $admin);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Handle profile picture upload
+        $file = $form->get('profilePicture')->getData();
+
+        if ($file) {
+            $fileName = uniqid() . '.' . $file->guessExtension();
+            $file->move($this->getParameter('profile_pictures_directory'), $fileName);
+            $admin->setProfilePicture($fileName);
+        }
+
+        $entityManager->persist($admin);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('admin_account');
+    }
+
+    // Create a new to-do list item form
+    $todoItem = new TodoList();
+    $todoForm = $this->createForm(TodoItemType::class, $todoItem);
+    $todoForm->handleRequest($request);
+
+    if ($todoForm->isSubmitted() && $todoForm->isValid()) {
+        $todoItem->setAdmin($admin);
+        $entityManager->persist($todoItem);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('admin_account');
+    }
+
+    // Handle task completion toggle (mark as completed/uncompleted)
+    if ($request->isMethod('POST') && $request->request->has('task_id')) {
+        $taskId = $request->request->get('task_id');
+        $task = $entityManager->getRepository(TodoList::class)->find($taskId);
+
+        if ($task && $task->getAdmin() === $admin) {
+            $task->setCompleted(!$task->isCompleted()); // Toggle completion
+            if ($task->isCompleted()) {
+                $task->setCompletionDate(new \DateTime()); // Set the completion date
+            }
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('admin_account');
+    }
+
+    // Fetch tasks: Active, Uncompleted, and Completed
+    $now = new \DateTime();
+
+    // Active tasks: Not completed and before the deadline
+    $activeItems = $entityManager->getRepository(TodoList::class)
+        ->createQueryBuilder('t')
+        ->where('t.admin = :admin')
+        ->andWhere('t.isCompleted = false AND t.deadline > :now')
+        ->setParameter('admin', $admin)
+        ->setParameter('now', $now)
+        ->orderBy('t.deadline', 'ASC')
+        ->getQuery()
+        ->getResult();
+
+    // Uncompleted tasks: Not completed and past their deadline
+    $uncompletedItems = $entityManager->getRepository(TodoList::class)
+        ->createQueryBuilder('t')
+        ->where('t.admin = :admin')
+        ->andWhere('t.isCompleted = false AND t.deadline <= :now')
+        ->setParameter('admin', $admin)
+        ->setParameter('now', $now)
+        ->orderBy('t.deadline', 'ASC')
+        ->setMaxResults(5) // Limit to the last 5 uncompleted tasks
+        ->getQuery()
+        ->getResult();
+
+    // Completed tasks: Completed tasks only
+    $completedItems = $entityManager->getRepository(TodoList::class)
+        ->createQueryBuilder('t')
+        ->where('t.admin = :admin')
+        ->andWhere('t.isCompleted = true')
+        ->setParameter('admin', $admin)
+        ->orderBy('t.completionDate', 'DESC') // Sort by completion date
+        ->setMaxResults(5) // Limit to the last 5 completed tasks
+        ->getQuery()
+        ->getResult();
+
+
+
+    return $this->render('admin/myaccount.html.twig', [
+        'admin' => $admin,
+        'form' => $form->createView(),
+        'todoForm' => $todoForm->createView(),
+        'activeItems' => $activeItems,
+        'uncompletedItems' => $uncompletedItems,
+        'completedItems' => $completedItems,
+    ]);
+}
+
+
+
+
+//Admin Message inbox ---------------------D.O.N.E
+
+/**
+ * @Route("/admin/message-inbox", name="admin_message_inbox", methods={"GET"})
+ */
+public function inbox(SessionInterface $session, EntityManagerInterface $entityManager): Response
+{
+    // Reset unread message count to zero
+    $session->set('unread_message_count', 0);
+
+    // Retrieve all messages
+    $messages = $entityManager->getRepository(Message::class)
+        ->findBy([], ['sentAt' => 'DESC']);
+
+    return $this->render('admin/message_inbox.html.twig', [
+        'messages' => $messages,
+    ]);
+}
+
+
+
+
+/**
+ * @Route("admin/message-send", name="admin_message_send", methods={"POST"})
+ */
+public function sendMessage(Request $request, EntityManagerInterface $entityManager, SessionInterface $session): JsonResponse
+{
+    $sender = $this->getUser(); // Get the logged-in user
+
+    if (!$sender) {
+        return new JsonResponse(['status' => 'error', 'message' => 'User not logged in'], 403);
+    }
+
+    $messageContent = $request->request->get('content');
+    if (!$messageContent) {
+        return new JsonResponse(['status' => 'error', 'message' => 'Message content is required'], 400);
+    }
+
+    // Create and populate the message entity
+    $message = new Message();
+    $message->setSender($sender->getUsername());
+    $message->setContent($messageContent);
+    $message->setSentAt(new \DateTime());
+
+    // Handle file upload
+    $file = $request->files->get('fileAttachment');
+    if ($file) {
+        $fileName = uniqid() . '.' . $file->guessExtension();
+        try {
+            $file->move($this->getParameter('message_files_directory'), $fileName);
+            $message->setFileAttachment($fileName);
+        } catch (FileException $e) {
+            return new JsonResponse(['status' => 'error', 'message' => 'File upload failed'], 500);
+        }
+    }
+
+    // Persist the message in the database
+    $entityManager->persist($message);
+    $entityManager->flush();
+
+   
+
+    return new JsonResponse(['status' => 'success']);
+}
+
+
+
+/**
+ * @Route("admin/message-fetch", name="admin_message_fetch", methods={"GET"})
+ */
+public function fetchMessage(EntityManagerInterface $entityManager): JsonResponse
+{
+    // Fetch all messages ordered by sentAt (most recent first)
+    $messages = $entityManager->getRepository(Message::class)->findBy([], ['sentAt' => 'DESC']);
+
+    $messageData = [];
+    foreach ($messages as $message) {
+        $messageData[] = [
+            'sender' => strtoupper($message->getSender()),
+            'content' => $message->getContent(),
+            'fileAttachment' => $message->getFileAttachment(),
+        ];
+    }
+
+    return new JsonResponse($messageData);
+}
+
+
+
+//D.O.N.E------------------------------------------------------------------------------------------END.
+//ADMIN [STUDENT CREATION] LOGIC----------------------------
+
+/**
+ * @Route("/admin/studentlist", name="admin_student_list", methods={"GET"})
+ */
+public function studentList(EntityManagerInterface $entityManager): Response
+{
+    // Fetch all students from the database
+    $students = $entityManager->getRepository(Student::class)->findAll();
+
+    return $this->render('admin/liststudent.html.twig', [
+        'students' => $students,
+    ]);
+}
+
 
 
 
 
 
 /**
-     * @Route("/admin/create-student", name="admin_create_student")
-     */
+ * @Route("/admin/create-student", name="admin_create_student")
+ */
     public function createStudent(Request $request, 
     EntityManagerInterface $entityManager): Response
     {
@@ -238,7 +879,67 @@ public function createAdmin(
 
 
 
-// Admin Create  logic Ends -----------------------------------------------------------------------------------
+//logic Ends -----------------------------------------------------------------------------------
+
+
+
+
+
+//Admin Dashboard Logic --------------------------------------------------------------------------
+
+
+
+/**
+ * @Route("/admin/dashboard", name="admin_dashboard")
+ * @IsGranted('ROLE_ADMIN')
+ */
+public function dashboard(): Response
+{
+    $admin = $this->getUser();
+
+    if (!$admin instanceof Admin) {
+        throw $this->createAccessDeniedException('Access denied.');
+    }
+
+    return $this->render('admin/dashboard.html.twig', [
+        'name' => $admin->getname(),
+        'role' => $admin->getRoles()[0] // Assuming 'ROLE_ADMIN' is present
+    ]);
+}
+
+
+
+//Admin Logout Logic ------------------------------------------------------------------------
+
+
+private EntityManagerInterface $entityManager;
+
+public function __construct(EntityManagerInterface $entityManager)
+{
+    $this->entityManager = $entityManager;
+}
+
+/**
+ * @Route("/admin/logout", name="admin_logout")
+ */
+public function logout(): Response
+{
+    $admin = $this->getUser();
+
+    if ($admin) {
+        // Set the lastLogin field to the current DateTime
+        $admin->setLastLogin(new \DateTime());
+
+        // Persist the changes to the database
+        $this->entityManager->persist($admin);
+        $this->entityManager->flush();
+    }
+
+    // Redirect to login page
+    return $this->redirectToRoute('admin_login_form');
+}
+
+
 
 
 }

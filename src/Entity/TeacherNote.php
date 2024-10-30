@@ -19,10 +19,12 @@ class TeacherNote
     #[ORM\Column(type: Types::TEXT)]
     private ?string $note = null;
 
-    #[ORM\ManyToOne(inversedBy: 'teacherNotes')]  // Updated to match the Teacher entity
+    // Ensure that inversedBy references the lowercase 'teacher'
+    #[ORM\ManyToOne(targetEntity: Teacher::class, inversedBy: 'teacherNotes')] 
     #[ORM\JoinColumn(nullable: false)]
     private ?Teacher $teacher = null;
 
+    
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 

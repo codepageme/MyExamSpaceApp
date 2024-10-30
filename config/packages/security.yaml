@@ -95,6 +95,29 @@ security:
         # Admin access control
         - { path: ^/admin/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/admin/dashboard, roles: ROLE_ADMIN }
+        - { path: ^/admin/list, roles: ROLE_ADMIN }
+        - { path: ^/admin/edit, roles: ROLE_ADMIN }
+        - { path: ^/admin/create-admin, roles: ROLE_ADMIN }
+        - { path: ^/admin/account, roles: ROLE_ADMIN }
+        - { path: ^/admin/message, roles: ROLE_ADMIN }
+        - { path: ^/admin/teacher, roles: ROLE_ADMIN }
+        - { path: ^/admin/teacher/edit, roles: ROLE_ADMIN }
+        - { path: ^/admin/create-teacher, roles: ROLE_ADMIN }
+        - { path: ^/admin/assign-teacher, roles: ROLE_ADMIN }
+        - { path: ^/admin/assign-classroom, roles: ROLE_ADMIN, methods: [POST] }
+        - { path: ^/admin/assign-teachersubject, roles: ROLE_ADMIN, methods: [POST] }
+        - { path: ^/admin/fetch-teachersubjects, roles: ROLE_ADMIN }
+        - { path: ^/admin/get-allassignments, roles: ROLE_ADMIN }
+        - { path: ^/admin/delete-assignment, roles: ROLE_ADMIN }
+        - { path: ^/admin/assign-classteacher, roles: ROLE_ADMIN }
+        - { path: ^/admin/message-inbox, roles: ROLE_ADMIN }
+        - { path: ^/admin/message-send, roles: ROLE_ADMIN, methods: [POST] }
+        - { path: ^/admin/message-fetch, roles: ROLE_ADMIN }
+        - { path: ^/admin/studentlist, roles: ROLE_ADMIN }
+        - { path: ^/admin/create-student, roles: ROLE_ADMIN }
+
+
+      
 
         # Student access control
         - { path: ^/student/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }

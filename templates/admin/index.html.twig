@@ -9,6 +9,17 @@
 
 {% block auth %}
 
+
+<!-- Display Flash Messages -->
+{% for label, messages in app.flashes %}
+    <div class="alert alert-{{ label }}">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+{% endfor %}
+
+
 <div class="loginform">
     <h1  id="who">Administrator Login</h1>
 
@@ -27,6 +38,8 @@
         <input type="submit" value="Login" class="btn btn-primary space">
     </form>
 </div>
+
+
 {% endblock %}
 
 {% block pp %}

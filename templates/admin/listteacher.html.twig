@@ -1,0 +1,105 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Teacherslist - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glyph"></span><br>Teacher</a></li>
+
+        <li class="boton"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glypha"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+
+<div class="text-left" style="margin-left:20px; margin-top:20px;">
+  <a href="{{ path('admin_create_teacher') }}" class="btn btn-default">Create Teacher</a>
+  <a href="{{ path('admin_assign_teacher') }}" class="btn btn-default ml-2">Assign Teacher</a>
+   <a href="{{ path('admin_teacher_list') }}" class="btn btn-primary ml-2"> View Teacher</a>
+</div>
+
+<h3 class="text-center" style = "color:grey; margin-bottom:50px;font-family:inter">- TEACHERS -</h3>
+
+  {# Check if there are any flash messages (e.g., success, error) #}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+<div class="container" style="max-width:900px; height:300px; overflow-y: auto;  overflow-x:auto; ">    
+    <table class="table table-bordered table-hover table-striped">
+        <thead>
+            <tr>
+                <th style="text-align:center">#</th>
+                <th style="text-align:center">Prefix</th>
+                <th style="text-align:center">Firstname</th>
+                <th style="text-align:center">Lastname</th>
+                <th style="text-align:center">Username</th>
+                <th style="text-align:center">Email / Number </th>
+                <th style="text-align:center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teacher in teachers %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                     <td>{{ teacher.prefix }}</td>
+                      <td>{{ teacher.firstname }}</td>
+                       <td>{{ teacher.lastname }}</td>
+                    <td>{{ teacher.username }}</td>
+                    <td>{{ teacher.number }} <br> {{ teacher.email }}</td>
+                    <td>
+                        <a href="{{ path('admin_edit_teacher', { id: teacher.id }) }}" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-pencil"></span>  Edit</a>
+                        <form action="{{ path('admin_delete_teacher', { id: teacher.id }) }}" method="post" style="display:inline;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ teacher.id) }}">
+                            <button class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span>  Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4">No teachers found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock %}

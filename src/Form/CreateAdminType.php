@@ -7,18 +7,39 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 
 class CreateAdminType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('name')
-            ->add('username')
-            ->add('password', PasswordType::class)
-            ->add('email')
-        ;
-    }
+        ->add('name', null, [
+            'constraints' => [
+                new Assert\NotBlank(),
+                new Assert\Length(['max' => 255]),
+            ],
+        ])
+        ->add('username', null, [
+            'constraints' => [
+                new Assert\NotBlank(),
+                new Assert\Length(['max' => 255]),
+            ],
+        ])
+        ->add('password', PasswordType::class, [
+            'constraints' => [
+                new Assert\NotBlank(),
+                new Assert\Length(['min' => 8]),
+            ],
+        ])
+        ->add('email', EmailType::class, [
+            'constraints' => [
+                new Assert\NotBlank(),
+                new Assert\Email(),
+            ],
+        ]);
+}
 
     public function configureOptions(OptionsResolver $resolver): void
     {
@@ -26,4 +47,5 @@ class CreateAdminType extends AbstractType
             'data_class' => Admin::class,
         ]);
     }
+    
 }

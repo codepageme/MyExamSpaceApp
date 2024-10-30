@@ -1,0 +1,386 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %} Assignteacher - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glyph"></span><br>Teacher</a></li>
+
+        <li class="boton"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glypha"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+
+<div class="text-left" style="margin-left:20px; margin-top:20px;">
+  <a href="{{ path('admin_create_teacher') }}" class="btn btn-default">Create Teacher</a>
+  <a href="{{ path('admin_assign_teacher') }}" class="btn btn-primary ml-2">Assign Teacher</a>
+   <a href="{{ path('admin_teacher_list') }}" class="btn btn-default ml-2">View Teacher</a>
+</div>
+
+
+{% for message in app.flashes('success') %}
+    <div class="alert alert-success">{{ message }}</div>
+{% endfor %}
+
+{% for message in app.flashes('error') %}
+    <div class="alert alert-danger">{{ message }}</div>
+{% endfor %}
+ 
+
+ <div class="container" style="max-width:800px; ">
+    <div class="row" style="width:900px; margin-left:50px;">
+        <!-- Left Column for Assigning Teacher to Subject and Classrooms -->
+        <div class="col-md-6" style="margin-left:-200px; margin-top:20px; border:1px solid blue; border-radius:10px; height:450px; overflow-y:hidden; ">
+          <br>
+            <!-- Assign Teacher to Subject Form --> 
+            <div id="assign-teacher-section">
+                <h5 style="text-align:left">Assign Teacher to Subject</h5>
+                <br>
+                <form id="assign-teacher-form" style="margin-left:-100px;">
+                    <div class="form-group">
+                        <label for="teacher-select">Teacher:</label>
+                        <select id="teacher-select" name="teacher_id" class="custom-select">
+                            <option value="">Select a teacher</option>
+                            {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}">{{ teacher.firstname }} {{ teacher.lastname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-left:10px;">
+                        <label for="subject-select">Subject:</label>
+                        <select id="subject-select" name="subject_id" class="custom-select">
+                            <option value="">Select a subject</option>
+                            {% for subject in subjects %}
+                                <option value="{{ subject.id }}">{{ subject.course }}</option>
+                            {% endfor %}
+                        </select>
+                         <button type="submit" class="btn btn-primary">Assign</button>
+                    </div>
+                   
+                </form>
+            </div>
+
+            <!-- Assign Classrooms Form (Hidden initially) -->
+            <div id="assign-classroom-section" style="display: none;">
+                <h5 style="text-align:left;">Assign Classrooms to Subject</h5>
+                <br>
+                <form id="assign-classroom-form" style="margin-left:-20px;">
+                    <div class="form-group">
+                        <label for="teacher-subject-dropdown">Teacher's Subject:</label>
+                        <select id="teacher-subject-dropdown" name="teacher_subject_id" class="custom-select">
+                            <option value="">Select Teachers Subjects</option>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="height:200px; overflow-x:hidden; overflow-y:auto;">
+                        <h4 style="text-align:left;margin-left: 20px;">Select Classrooms:</h4>
+                        <div class="row">
+                            {% for classroom in classrooms %}
+                                <div class="col-md-4"> <!-- 3 per row -->
+                                    <div class="form-check">
+                                        <input type="checkbox" name="classroom_ids[]" value="{{ classroom.id }}" class="form-check-input" id="classroom-{{ classroom.id }}" /><br>
+                                        <label class="form-check-label" for="classroom-{{ classroom.id }}">
+                                            {{ classroom.classname }} 
+                                            {% if classroom.department %}- {{ classroom.department.department }}{% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                </form>
+            </div>
+            <br>
+            <br>
+            <hr style="background-color:black; border:1px solid blue"></hr>
+
+           <!-- Teacher-Classroom Assignment Section -->
+<div class="col-md-6" style="margin-left:100px; margin-top:-10px;">
+    <h5 style="text-align:left; margin-left:-100px;">Assign Class Teachers</h5>
+    <form id="assign-class-teacher-form" method="POST" action="{{ path('admin_assign_classteacher') }}">
+        
+        <!-- Teacher Selection -->
+        <div class="form-group" style="margin-left:-80px;">
+            <label for="teacher-select" style="float:inline-start;">Teacher:</label>
+            <select id="teacher-select" name="teacher_id" class="custom-select">
+                <option value="">Select a teacher</option>
+                {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.firstname }} {{ teacher.lastname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Classroom Selection -->
+        <div class="form-group" style="margin-left:-50px;">
+            <label for="classroom-select" style="float:inline-start;margin-left:-30px;">Classroom:</label>
+            <select id="classroom-select" name="classroom_id" class="custom-select">
+                <option value="">Select a classroom</option>
+                {% for classroom in classrooms %}
+                    <option value="{{ classroom.id }}">
+                        {{ classroom.classname }}{% if classroom.department %} - {{ classroom.department.department }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Assign</button>
+    </form>
+</div>
+
+        </div>
+
+
+       <!-- Right Column for Current Assignments -->
+<div class="col-md-6" style="margin-left:200px; margin-top:-50px;">
+    <!-- Bootstrap Tabs for Assignments -->
+    <br>
+    <br>
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#teacher-subject-assignments" data-toggle="tab">Subject-Teachers</a></li>
+        <li><a href="#teacher-classroom-assignments" data-toggle="tab">Class-Teachers</a></li>
+    </ul>
+
+    <div class="tab-content" style="margin-top:20px;">
+        <!-- Tab 1: Teacher-Subject-Classroom Assignments -->
+        <div id="teacher-subject-assignments" class="tab-pane fade in active">
+            <h5>List Of Current Subject Teachers</h5>
+            <div id="assignments-list" style="overflow-y:auto; overflow-x:hidden; max-height:350px;">
+                <div class="row">
+                    {% set currentTeacherSubject = null %}
+                    {% set classrooms = [] %}
+                    
+                    {% for assignment in assignments %}
+                        {% if currentTeacherSubject and currentTeacherSubject != assignment.teacherSubject %}
+                            <div class="col-md-12">
+                                <div class="panel panel-primary mb-3">
+                                    <div class="panel-heading">
+                                        <h5 class="panel-title" style="font-size:14px;">
+                                            {{ currentTeacherSubject.Teacher.firstname }} {{ currentTeacherSubject.Teacher.lastname }}
+                                        </h5>
+                                        <br>
+                                        <form action="{{ path('admin_delete_assignment', { 'teacher_subject_id': currentTeacherSubject.id }) }}" method="POST">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                    <div class="panel-body">
+                                        <p>
+                                            <strong style="font-size:16px;">Subject:</strong> 
+                                            <span style="font-size:16px;">{{ currentTeacherSubject.Subject.course }}</span> <br>
+                                            <strong style="font-size:16px;">Classes:</strong> 
+                                            <span style="font-size:16px;">{{ classrooms|join(', ') }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% set classrooms = [] %}
+                        {% endif %}
+
+                        {% set classrooms = classrooms|merge([assignment.classroom.classname]) %}
+                        {% set currentTeacherSubject = assignment.teacherSubject %}
+
+                        {% if loop.last %}
+                            <div class="col-md-12">
+                                <div class="panel panel-primary mb-3">
+                                    <div class="panel-heading">
+                                        <h5 class="panel-title" style="font-size:14px;">
+                                            {{ currentTeacherSubject.Teacher.firstname }} {{ currentTeacherSubject.Teacher.lastname }}
+                                        </h5>
+                                        <form action="{{ path('admin_delete_assignment', { 'teacher_subject_id': currentTeacherSubject.id }) }}" method="POST">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                    <div class="panel-body">
+                                        <p>
+                                            <strong style="font-size:16px;">Subject:</strong> 
+                                            <span style="font-size:16px;">{{ currentTeacherSubject.Subject.course }}</span> <br>
+                                            <strong style="font-size:16px;">Classes:</strong> 
+                                            <span style="font-size:16px;">{{ classrooms|join(', ') }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Teacher-Classroom Assignments -->
+        <div id="teacher-classroom-assignments" class="tab-pane fade" style="overflow-y:auto; overflow-x:hidden; max-height:400px;">
+            <h5>List of current Class-Teachers</h5>
+            <ul class="list-group">
+                {% for assignment in teacher_classroom_assignments %}
+                    <li class="list-group-item">
+                        {{ assignment.teacher.firstname }} {{ assignment.teacher.lastname }} - 
+                        {{ assignment.classroom.classname }}
+                        {% if assignment.classroom.department %}
+                            ({{ assignment.classroom.department.department }})
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+</div>
+
+    
+
+
+
+
+<script>
+$(document).ready(function() {
+    // Handle teacher-subject assignment
+    $('#assign-teacher-form').on('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+
+        let teacherId = $('#teacher-select').val();
+        let subjectId = $('#subject-select').val();
+
+        $.ajax({
+            url: "{{ path('admin_assign_teacher_subject') }}",
+            type: 'POST',
+            data: { teacher_id: teacherId, subject_id: subjectId },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.success);
+                    $('#assign-teacher-section').hide(); // Hide teacher assignment section
+                    $('#assign-classroom-section').show(); // Show classroom assignment section
+
+                    // Load the latest teacher subjects after assignment
+                    loadTeacherSubjects();
+
+                    // Load all assignments to refresh the assignment list
+                    loadAllAssignments();
+                }
+            },
+            error: function(xhr) {
+                alert('Error: ' + xhr.responseJSON.error);
+            }
+        });
+    });
+
+    // Function to load the latest teacher subjects (most recent 5)
+    function loadTeacherSubjects() {
+        $.ajax({
+            url: "{{ path('admin_fetch_teacher_subjects') }}", // Your endpoint to fetch teacher subjects
+            type: 'GET',
+            success: function(data) {
+                var dropdown = $('#teacher-subject-dropdown');
+                dropdown.empty(); // Clear current options
+
+                dropdown.append('<option value="">Select Teacher Subject</option>');
+                $.each(data, function(index, teachersubject) {
+                    dropdown.append('<option value="' + teachersubject.id + '">' +
+                        teachersubject.teacher.firstname + ' ' + teachersubject.teacher.lastname + ' - ' +
+                        teachersubject.subject.course + '</option>');
+                });
+            },
+            error: function(xhr) {
+                console.error('Error fetching teacher subjects:', xhr);
+            }
+        });
+    }
+
+    // Handle classroom assignment
+    $('#assign-classroom-form').on('submit', function(e) {
+        e.preventDefault(); // Prevent the form from reloading the page
+
+        var teacherSubjectId = $('#teacher-subject-dropdown').val();
+        var classroomIds = [];
+        $('input[name="classroom_ids[]"]:checked').each(function() {
+            classroomIds.push($(this).val());
+        });
+
+        $.ajax({
+            url: "{{ path('admin_assign_classroom') }}", // Updated URL to use route path
+            type: 'POST',
+            data: {
+                teacher_subject_id: teacherSubjectId,
+                classroom_ids: classroomIds
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.success);
+
+                    // Optionally reset the classroom form after successful assignment
+                    $('#assign-classroom-form')[0].reset();
+                    $('#assign-classroom-section').hide(); // Hide classroom assignment section
+                    $('#assign-teacher-section').show(); // Show teacher assignment section again
+
+                    // Reload all assignments to show the updated list
+                    loadAllAssignments();
+                } else if (response.error) {
+                    alert(response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                alert('An error occurred while assigning classrooms.');
+            }
+        });
+    });
+
+    // Function to load all teacher-subject-classroom assignments into the assignment list
+    function loadAllAssignments() {
+        $.ajax({
+            url: "{{ path('admin_get_all_assignments') }}", // Endpoint to fetch all assignments
+            type: 'GET',
+            success: function(data) {
+                var assignmentList = $('#assignments-list ul');
+                assignmentList.empty(); // Clear current list
+
+                $.each(data, function(index, assignment) {
+                    assignmentList.append('<li class="list-group-item">Teacher: ' + assignment.teacher +
+                        ' - Subject: ' + assignment.subject + ' - Classrooms: ' + assignment.classroom + '</li>');
+                });
+            },
+            error: function(xhr) {
+                console.error('Error fetching assignments:', xhr);
+            }
+        });
+    }
+
+    // Initial load of recent teacher subjects and all assignments on page load
+    loadTeacherSubjects();  // Load the most recent 5 teacher subjects
+    loadAllAssignments();   // Load all assignments to display
+});
+
+</script>
+
+{% endblock %}

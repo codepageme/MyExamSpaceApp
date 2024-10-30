@@ -24,17 +24,8 @@ class Classroom
     #[ORM\ManyToMany(targetEntity: Subject::class, inversedBy: 'classrooms')]
     private Collection $Subject;
 
-    /**
-     * @var Collection<int, Teacher>
-     */
-    #[ORM\ManyToMany(targetEntity: Teacher::class, mappedBy: 'Classroom')]
-    private Collection $teachers;
-
     #[ORM\ManyToOne(inversedBy: 'Classroom')]
     private ?Department $department = null;
-
-    #[ORM\ManyToOne(inversedBy: 'classrooms')]
-    private ?Department $Department = null;
 
     /**
      * @var Collection<int, Student>
@@ -42,11 +33,17 @@ class Classroom
     #[ORM\OneToMany(targetEntity: Student::class, mappedBy: 'classroom')]
     private Collection $students;
 
+    /**
+     * @var Collection<int, TeacherClassroom>
+     */
+    #[ORM\OneToMany(targetEntity: TeacherClassroom::class, mappedBy: 'Classroom', orphanRemoval: true)]
+    private Collection $teacherClassrooms;
+
     public function __construct()
     {
         $this->Subject = new ArrayCollection();
-        $this->teachers = new ArrayCollection();
         $this->students = new ArrayCollection();
+        $this->teacherClassrooms = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -90,32 +87,6 @@ class Classroom
         return $this;
     }
     
-    /**
-     * @return Collection<int, Teacher>
-     */
-    public function getTeachers(): Collection
-    {
-        return $this->teachers;
-    }
-
-    public function addTeacher(Teacher $teacher): static
-    {
-        if (!$this->teachers->contains($teacher)) {
-            $this->teachers->add($teacher);
-            $teacher->addClassroom($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTeacher(Teacher $teacher): static
-    {
-        if ($this->teachers->removeElement($teacher)) {
-            $teacher->removeClassroom($this);
-        }
-
-        return $this;
-    }
 
     public function getDepartment(): ?Department
     {
@@ -153,6 +124,36 @@ class Classroom
             // set the owning side to null (unless already changed)
             if ($student->getClassroom() === $this) {
                 $student->setClassroom(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TeacherClassroom>
+     */
+    public function getTeacherClassrooms(): Collection
+    {
+        return $this->teacherClassrooms;
+    }
+
+    public function addTeacherClassroom(TeacherClassroom $teacherClassroom): static
+    {
+        if (!$this->teacherClassrooms->contains($teacherClassroom)) {
+            $this->teacherClassrooms->add($teacherClassroom);
+            $teacherClassroom->setClassroom($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTeacherClassroom(TeacherClassroom $teacherClassroom): static
+    {
+        if ($this->teacherClassrooms->removeElement($teacherClassroom)) {
+            // set the owning side to null (unless already changed)
+            if ($teacherClassroom->getClassroom() === $this) {
+                $teacherClassroom->setClassroom(null);
             }
         }
 

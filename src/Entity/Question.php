@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Repository\QuestionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\QuestionType;
 
 #[ORM\Entity(repositoryClass: QuestionRepository::class)]
 class Question
@@ -20,7 +19,7 @@ class Question
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Questiontype $questiontype = null;
+    private ?QuestionType $questionType = null; // Updated to QuestionType
 
     #[ORM\Column(length: 255)]
     private ?string $class = null;
@@ -30,20 +29,13 @@ class Question
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?teacher $teacher = null;
+    private ?Teacher $teacher = null; // Updated to Teacher
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Subject $Subject = null;
+    private ?Classroom $classroom = null; // Updated to classroom
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
-    private ?Classroom $Classroom = null;
-
-    #[ORM\ManyToOne(inversedBy: 'questions')]
-    private ?Department $Department = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $QuestionType = null;
+    private ?Department $department = null; // Updated to department
 
     public function getId(): ?int
     {
@@ -62,14 +54,14 @@ class Question
         return $this;
     }
 
-    public function getQuestiontype(): ?Questiontype
+    public function getQuestionType(): ?QuestionType // Updated method name
     {
-        return $this->questiontype;
+        return $this->questionType;
     }
 
-    public function setQuestiontype(?Questiontype $questiontype): static
+    public function setQuestionType(?QuestionType $questionType): static // Updated method name
     {
-        $this->questiontype = $questiontype;
+        $this->questionType = $questionType;
 
         return $this;
     }
@@ -98,38 +90,38 @@ class Question
         return $this;
     }
 
-    public function getTeacher(): ?teacher
+    public function getTeacher(): ?Teacher // Updated method name
     {
         return $this->teacher;
     }
 
-    public function setTeacher(?teacher $teacher): static
+    public function setTeacher(?Teacher $teacher): static // Updated method name
     {
         $this->teacher = $teacher;
 
         return $this;
     }
 
-    public function getClassroom(): ?Classroom
+    public function getClassroom(): ?Classroom // Updated method name
     {
-        return $this->Classroom;
+        return $this->classroom;
     }
 
-    public function setClassroom(?Classroom $Classroom): static
+    public function setClassroom(?Classroom $classroom): static // Updated method name
     {
-        $this->Classroom = $Classroom;
+        $this->classroom = $classroom;
 
         return $this;
     }
 
-    public function getDepartment(): ?Department
+    public function getDepartment(): ?Department // Updated method name
     {
-        return $this->Department;
+        return $this->department;
     }
 
-    public function setDepartment(?Department $Department): static
+    public function setDepartment(?Department $department): static // Updated method name
     {
-        $this->Department = $Department;
+        $this->department = $department;
 
         return $this;
     }

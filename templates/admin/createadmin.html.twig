@@ -1,57 +1,115 @@
 {% extends 'tdashbase.html.twig' %}
 
-{% block title %}Create Teacher - MyExamSpace.Com{% endblock %}
+{% block title %}Admin Create - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
      <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
 {% endblock %}
 
 {% block map_content %}
 
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glyph"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
 
 {% endblock %}
 
 {% block content %}
- 
-    <h1>Create New Admin</h1>
 
-    {# Check if there are any flash messages (e.g., success, error) #}
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success">
-            {{ message }}
-        </div>
-    {% endfor %}
-    {% for message in app.flashes('error') %}
-        <div class="alert alert-danger">
-            {{ message }}
-        </div>
-    {% endfor %}
+<div class="text-left" style="margin-left:10px; margin-top:10px;">
+  <a href="{{ path('admin_create_admin') }}" class="btn btn-default">Create Admin</a>
+  <a href="{{ path('admin_account') }}" class="btn btn-primary ml-2">My Account</a>
+   <a href="{{ path('admin_list') }}" class="btn btn-primary ml-2"> View Admins</a>
+</div>
 
-    {{ form_start(form) }}
-        <div class="form-group">
-            {{ form_label(form.name) }}
-            {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.name) }}
-        </div>
+   <div class="container" style="max-width:800px;">
+        <h2 class="text-center" style = "color:grey; margin-bottom:50px;font-family:inter">- CREATE ADMIN -</h2>
 
-        <div class="form-group">
-            {{ form_label(form.username) }}
-            {{ form_widget(form.username, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.username) }}
-        </div>
 
-        <div class="form-group">
-            {{ form_label(form.password) }}
-            {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.password) }}
-        </div>
+        {# Display success or error flash messages #}
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">
+                {{ message }}
+            </div>
+        {% endfor %}
 
-        <div class="form-group">
-            {{ form_label(form.email) }}
-            {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.email) }}
-        </div>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3"> <!-- Center the form -->
+                {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }} <!-- Horizontal form -->
 
-        <button type="submit" class="btn btn-primary">Create Admin</button>
-    {{ form_end(form) }}
+                <div class="form-group">
+                    {{ form_label(form.name, null, {'label_attr': {'class': 'col-sm-3 control-label'}}) }}
+                    <div class="col-sm-9">
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.name) }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.username, null, {'label_attr': {'class': 'col-sm-3 control-label'}}) }}
+                    <div class="col-sm-9">
+                        {{ form_widget(form.username, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.username) }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.password, null, {'label_attr': {'class': 'col-sm-3 control-label'}}) }}
+                    <div class="col-sm-9">
+                        {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.password) }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.email, null, {'label_attr': {'class': 'col-sm-3 control-label'}}) }}
+                    <div class="col-sm-9">
+                        {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.email) }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">Create Admin</button>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+
+
 
 {% endblock %}

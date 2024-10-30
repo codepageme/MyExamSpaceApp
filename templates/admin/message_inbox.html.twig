@@ -1,0 +1,166 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}AdminInbox - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-stats glypha"></span><br>Student</a></li>
+
+        <li class="boton"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glyph"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div class="text-left" style="margin-left:10px; margin-top:10px;">
+  <a href="{{ path('admin_account') }}" class="btn btn-default ml-2">My Account</a>
+</div>
+
+ 
+   <div class="container-fluid" style="max-width:1000px;">
+   
+   <div class="message-inbox">
+   
+ <div id="displayscreen" style="margin-left:140px;width: 700px; height: 400px; border-radius:20px; overflow-x:hidden; overflow-y:scroll; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);">
+    <div class="messages">
+        {% for message in messages %}
+            <div class="well message-item">
+                <strong>{{ message.sender|upper }}:</strong> <!-- Sender name in uppercase with a colon -->
+                <span class="message-content">{{ message.content }}</span> <!-- Message content with larger font size -->
+                {% if message.fileAttachment %}
+                    <div>
+                        <a href="{{ asset('uploads/message_files/' ~ message.fileAttachment) }}" target="_blank">Download Attachment</a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+    <div class="message-form" style="margin-top: 20px;">
+    <form id="sendMessageForm" action="{{ path('admin_message_send') }}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('send_message') }}">
+
+        <!-- Input Group to Inline Elements -->
+        <div class="input-group">
+            <!-- File Sharing Icon Button -->
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-default" onclick="document.getElementById('fileAttachment').click();">
+                    <i class="glyphicon glyphicon-paperclip"></i>
+                </button>
+                <input type="file" name="fileAttachment" id="fileAttachment" style="display: none;">
+            </span>
+
+            <!-- Message Textarea -->
+            <textarea name="content" id="messageContent" class="form-control" rows="1" placeholder="Enter your message" style="resize: none;"></textarea>
+
+            <!-- Submit Button -->
+            <span class="input-group-btn">
+                <button type="submit" class="btn btn-primary">Send</button>
+            </span>
+        </div>
+    </form>
+</div>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+$('#sendMessageForm').submit(function(e) {
+    e.preventDefault(); // Prevent normal form submission
+
+    var formData = new FormData(this);
+
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        headers: {
+            'X-CSRF-TOKEN': $('input[name="_csrf_token"]').val() // Send CSRF token in the headers
+        },
+        success: function(response) {
+            console.log('Message sent successfully!');
+        },
+        error: function(xhr, status, error) {
+            alert('AJAX error: ' + xhr.status + ' - ' + xhr.responseText);
+        }
+    });
+});
+
+</script>
+
+<script>
+
+ $(document).ready(function() {
+        // Function to load messages
+        function loadMessages() {
+            $.ajax({
+                url: "{{ path('admin_message_fetch') }}",
+                method: "GET",
+                dataType: "json",
+                success: function(data) {
+                    // Clear the message display area
+                    $('#displayscreen .messages').empty();
+
+                    // Loop through each message and append to the display
+                    data.forEach(function(message) {
+                        var messageHtml = `
+                            <div class="well message-item">
+                                <strong style="color:black; text-transform:uppercase;">${message.sender}</strong>: ${message.content}
+                                ${message.fileAttachment ? `<br><a href="/uploads/message_files/${message.fileAttachment}" target="_blank">Download Attachment</a>` : ''}
+                            </div>
+                        `;
+                        $('#displayscreen .messages').append(messageHtml);
+                    });
+                },
+                error: function() {
+                    console.error("Error loading messages");
+                }
+            });
+        }
+
+        // Load messages every 90 seconds
+        setInterval(loadMessages, 90000);
+
+        // Initial load
+        loadMessages();
+    });
+
+</script>
+
+{% endblock %}
