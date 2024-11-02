@@ -115,8 +115,8 @@ security:
         - { path: ^/admin/message-fetch, roles: ROLE_ADMIN }
         - { path: ^/admin/studentlist, roles: ROLE_ADMIN }
         - { path: ^/admin/create-student, roles: ROLE_ADMIN }
-
-
+        - { path: ^/admin/student/edit, roles: ROLE_ADMIN }
+        - { path: ^/admin/curriculum, roles: ROLE_ADMIN }
       
 
         # Student access control

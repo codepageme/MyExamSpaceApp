@@ -24,7 +24,7 @@ class Classroom
     #[ORM\ManyToMany(targetEntity: Subject::class, inversedBy: 'classrooms')]
     private Collection $Subject;
 
-    #[ORM\ManyToOne(inversedBy: 'Classroom')]
+    #[ORM\ManyToOne(inversedBy: 'classrooms')]
     private ?Department $department = null;
 
     /**
@@ -36,7 +36,7 @@ class Classroom
     /**
      * @var Collection<int, TeacherClassroom>
      */
-    #[ORM\OneToMany(targetEntity: TeacherClassroom::class, mappedBy: 'Classroom', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: TeacherClassroom::class, mappedBy: 'classroom', orphanRemoval: true)]
     private Collection $teacherClassrooms;
 
     public function __construct()

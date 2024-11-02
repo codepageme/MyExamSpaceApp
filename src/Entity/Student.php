@@ -27,14 +27,18 @@ class Student
     #[ORM\JoinColumn(nullable: false)]
     private ?Classroom $classroom = null;
 
-    #[ORM\Column]
-    private ?int $Age = null;
 
     #[ORM\Column(length: 255)]
     private ?string $Gender = null;
 
     #[ORM\Column(type: Types::JSON)]
     private array $Roles = [];
+
+    #[ORM\Column]
+    private ?int $admissionYear = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $dateOfBirth = null;
 
     public function getId(): ?int
     {
@@ -89,17 +93,6 @@ class Student
         return $this;
     }
 
-    public function getAge(): ?int
-    {
-        return $this->Age;
-    }
-
-    public function setAge(int $Age): static
-    {
-        $this->Age = $Age;
-
-        return $this;
-    }
 
     public function getGender(): ?string
     {
@@ -124,5 +117,36 @@ class Student
 
         return $this;
     }
+
+    public function getAdmissionYear(): ?int
+    {
+        return $this->admissionYear;
+    }
+
+    public function setAdmissionYear(int $admissionYear): static
+    {
+        $this->admissionYear = $admissionYear;
+
+        return $this;
+    }
+
+    public function getDateOfBirth(): ?\DateTimeInterface
+    {
+        return $this->dateOfBirth;
+    }
+
+    public function setDateOfBirth(\DateTimeInterface $dateOfBirth): static
+    {
+        $this->dateOfBirth = $dateOfBirth;
+
+        return $this;
+    }
+
+    public function getAge(): int
+{
+    return $this->dateOfBirth ? (new \DateTime())->diff($this->dateOfBirth)->y : 0; // returns 0 if dateOfBirth is null
+}
+
+
 }
 

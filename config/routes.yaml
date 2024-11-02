@@ -155,18 +155,21 @@ admin_student_list:
     path: /admin/studentlist
     controller: App\Controller\AdminController::studentList
 
+admin_student_edit:
+    path: /admin/student/edit/{id}
+    controller: App\Controller\AdminController::editStudent
 
-
-
-
-
-
-
+admin_student_delete:
+    path: /admin/student/delete/{id}
+    controller: App\Controller\AdminController::deleteStudent
+    
 admin_create_student:
     path: /admin/create-student
     controller: App\Controller\AdminController::createStudent   
 
-
+admin_curriculum:
+    path: /admin/curriculum
+    controller: App\Controller\AdminController::curriculumPage 
 
 
 

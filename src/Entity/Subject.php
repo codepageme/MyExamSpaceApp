@@ -27,7 +27,7 @@ class Subject
     /**
      * @var Collection<int, TeacherSubject>
      */
-    #[ORM\OneToMany(targetEntity: TeacherSubject::class, mappedBy: 'Subject', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: TeacherSubject::class, mappedBy: 'subject', orphanRemoval: true)]
     private Collection $teacherSubjects;
 
    

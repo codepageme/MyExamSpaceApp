@@ -22,18 +22,13 @@ class Department
      * @var Collection<int, Classroom>
      */
     #[ORM\OneToMany(targetEntity: Classroom::class, mappedBy: 'department')]
-    private Collection $Classroom;
-
-    /**
-     * @var Collection<int, Classroom>
-     */
-    #[ORM\OneToMany(targetEntity: Classroom::class, mappedBy: 'Department')]
     private Collection $classrooms;
+
 
     public function __construct()
     {
-        $this->Classroom = new ArrayCollection();
         $this->classrooms = new ArrayCollection();
+       
     }
 
     public function getId(): ?int
@@ -59,13 +54,13 @@ class Department
      */
     public function getClassroom(): Collection
     {
-        return $this->Classroom;
+        return $this->classrooms;
     }
 
     public function addClassroom(Classroom $classroom): static
     {
-        if (!$this->Classroom->contains($classroom)) {
-            $this->Classroom->add($classroom);
+        if (!$this->classrooms->contains($classroom)) {
+            $this->classrooms->add($classroom);
             $classroom->setDepartment($this);
         }
 
@@ -75,7 +70,7 @@ class Department
     public function removeClassroom(Classroom $classroom): static
 
     {
-        if ($this->Classroom->removeElement($classroom)) {
+        if ($this->classrooms->removeElement($classroom)) {
             // set the owning side to null (unless already changed)
             if ($classroom->getDepartment() === $this) {
                 $classroom->setDepartment(null);

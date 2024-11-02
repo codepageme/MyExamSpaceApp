@@ -1,0 +1,217 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Curriculum - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+
+    <div class = "here" ></div>
+ 
+    <ul>
+        <li class="boton"><a href="{{ path('admin_dashboard') }}">
+        <span class="glyphicon glyphicon-th-list glypha"></span> <br>Dashboard</a></li>
+
+        <li class="boton"><a href="#">
+        <span class="glyphicon glyphicon-blackboard glypha"></span><br>Exam</a></li>
+
+        <li class="boton activa"><a href="{{ path('admin_student_list') }}">
+        <span class="glyphicon glyphicon-stats glyph"></span><br>Student</a></li>
+
+        <li class="boton"><a href="{{ path('admin_teacher_list') }}">
+        <span class="glyphicon glyphicon-folder-open glypha"></span><br>Teacher</a></li>
+
+        <li class="boton"><a href="{{ path('admin_list') }}"> 
+        <span class="glyphicon glyphicon-user glypha"></span><br>Admin</a></li>
+    </ul>
+
+
+    <a href="{{ path('admin_logout') }}" id="logout" 
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
+
+<form id="logout-form" action="{{ path('admin_logout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+</form>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+
+<div class="text-left" style="margin-left:10px; margin-top:10px;">
+  <a href="{{ path('admin_create_student') }}" class="btn btn-primary">Create Student</a>
+  <a href="{{ path('admin_curriculum') }}" class="btn btn-default ml-2">Curriculum</a>
+   <a href="{{ path('admin_student_list') }}" class="btn btn-default ml-2"> View Student</a>
+</div>
+
+<h2 class="text-center" style = "color:grey; margin-bottom:50px;font-family:inter">- Students -</h2>
+
+  {# Check if there are any flash messages (e.g., success, error) #}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+<div class="container" style="max-width:900px;">
+   
+
+
+
+<div class="container text-center" style="margin-top:20px; border:2px solid blue; border-radius: 5px; width:500px; height:200px;">
+    <!-- Bootstrap Pills -->
+    <ul class="nav nav-pills">
+        <li role="presentation" class="active">
+            <a href="#" data-toggle="modal" data-target="#classModal"> New Class</a>
+        </li>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#deptModal">Department</a>
+        </li>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#examTypeModal">Exam Type</a>
+        </li>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#subjectModal">Subject</a>
+        </li>
+    </ul>
+</div>
+
+<!-- Modals for Each Pill Button -->
+<!-- Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1" role="dialog" aria-labelledby="addClassModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="addClassForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addClassModalLabel">Add New Class</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="classname" placeholder="Class Name" class="form-control mb-3" required>
+                    <input type="text" name="department" placeholder="Department ID (optional)" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Department Modal -->
+<div class="modal fade" id="deptModal" tabindex="-1" role="dialog" aria-labelledby="deptModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="deptModalLabel">Add Department</h4>
+            </div>
+            <form action="/" method="POST">
+                <div class="modal-body">
+                    <input type="text" name="department" placeholder="Department Name" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Exam Type Modal -->
+<div class="modal fade" id="examTypeModal" tabindex="-1" role="dialog" aria-labelledby="examTypeModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="examTypeModalLabel">Add Exam Type</h4>
+            </div>
+            <form action="/" method="POST">
+                <div class="modal-body">
+                    <input type="text" name="examtype" placeholder="Exam Type" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Subject Modal -->
+<div class="modal fade" id="subjectModal" tabindex="-1" role="dialog" aria-labelledby="subjectModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="subjectModalLabel">Add Subject</h4>
+            </div>
+            <form action="/" method="POST">
+                <div class="modal-body">
+                    <input type="text" name="subject" placeholder="Subject Name" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+</div>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#addClassForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            $.ajax({
+                url: "{{ path('admin_class_add') }}", // URL for the controller route
+                type: "POST",
+                data: $(this).serialize(), // Serialize form data
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message); // Success message
+                        $('#addClassModal').modal('hide'); // Hide modal
+                        $('#addClassForm')[0].reset(); // Clear form
+                        // Optionally, refresh or update class list
+                    } else {
+                        alert(response.message); // Error message
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.message || 'An error occurred.');
+                }
+            });
+        });
+    });
+</script>
+
+
+
+{% endblock %}

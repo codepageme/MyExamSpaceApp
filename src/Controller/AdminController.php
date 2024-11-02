@@ -822,20 +822,82 @@ public function fetchMessage(EntityManagerInterface $entityManager): JsonRespons
 //ADMIN [STUDENT CREATION] LOGIC----------------------------
 
 /**
- * @Route("/admin/studentlist", name="admin_student_list", methods={"GET"})
+ * @Route("/admin/studentlist", name="admin_student_list")
  */
 public function studentList(EntityManagerInterface $entityManager): Response
 {
-    // Fetch all students from the database
+    // Retrieve students
     $students = $entityManager->getRepository(Student::class)->findAll();
+
+    // Retrieve classrooms for filter options
+    $classrooms = $entityManager->getRepository(Classroom::class)->findAll();
+
+    // Create an array to hold unique class names
+    $uniqueClassrooms = [];
+    foreach ($classrooms as $classroom) {
+        $uniqueClassrooms[$classroom->getClassname()] = $classroom;
+    }
+
+    // Retrieve unique admission years from students
+    $admissionYears = $entityManager->getRepository(Student::class)->createQueryBuilder('s')
+        ->select('DISTINCT s.admissionYear')
+        ->orderBy('s.admissionYear', 'ASC')
+        ->getQuery()
+        ->getResult();
 
     return $this->render('admin/liststudent.html.twig', [
         'students' => $students,
+        'classrooms' => array_values($uniqueClassrooms),
+        'admission_years' => array_column($admissionYears, 'admissionYear'),
     ]);
 }
 
 
 
+
+
+/**
+ * @Route("/admin/student/{id}/edit", name="admin_student_edit", methods={"GET", "POST"})
+ */
+public function editStudent(Request $request, Student $student, EntityManagerInterface $entityManager): Response
+{
+    $form = $this->createForm(CreateStudentType::class, $student);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        $entityManager->flush();
+
+         // Add flash message for success
+         $this->addFlash('success', 'Student details updated successfully.');
+
+        return $this->redirectToRoute('admin_student_list');
+    }
+
+    return $this->render('admin/editstudent.html.twig', [
+        'form' => $form->createView(),
+        'student' => $student,
+    ]);
+}
+
+
+
+
+   /**
+ * @Route("/admin/student/{id}/delete", name="admin_student_delete", methods={"POST"})
+ */
+public function deleteStudent(Request $request, EntityManagerInterface $entityManager, Student $student): Response
+{
+    // Check for CSRF token
+    if ($this->isCsrfTokenValid('delete' . $student->getId(), $request->request->get('_token'))) {
+        $entityManager->remove($student); // Remove the student
+        $entityManager->flush(); // Save changes to the database
+
+        // Add a flash message for successful deletion
+        $this->addFlash('success', 'Student deleted successfully.');
+    }
+
+    return $this->redirectToRoute('admin_student_list'); // Redirect back to the student list
+}
 
 
 
@@ -867,7 +929,7 @@ public function studentList(EntityManagerInterface $entityManager): Response
             // Add a success flash message and redirect to the desired page
             $this->addFlash('success', 'Student created successfully!');
 
-            return $this->redirectToRoute('admin_create_student'); // Redirect list page
+            return $this->redirectToRoute('admin_student_list'); // Redirect list page
         }
 
         // Render the form
@@ -876,6 +938,49 @@ public function studentList(EntityManagerInterface $entityManager): Response
         ]);
     }
 
+
+
+
+     /**
+     * @Route("/admin/curriculum", name="admin_curriculum")
+     */
+    public function curriculumPage(): Response
+    {
+        return $this->render('admin/curriculum.html.twig');
+    }
+
+/**
+ * @Route("/admin/class/add", name="admin_class_add", methods={"POST"})
+ */
+public function addClass(Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $classname = $request->request->get('classname');
+    $departmentId = $request->request->get('department');
+
+    // Validate the required field
+    if (!$classname) {
+        return new JsonResponse(['success' => false, 'message' => 'Class name is required.'], 400);
+    }
+
+    // Create a new Classroom entity
+    $classroom = new Classroom();
+    $classroom->setClassname($classname);
+
+    // Optionally set the department
+    if ($departmentId) {
+        $department = $entityManager->getRepository(Department::class)->find($departmentId);
+        if ($department) {
+            $classroom->setDepartment($department);
+        } else {
+            return new JsonResponse(['success' => false, 'message' => 'Invalid department ID.'], 400);
+        }
+    }
+
+    $entityManager->persist($classroom);
+    $entityManager->flush();
+
+    return new JsonResponse(['success' => true, 'message' => 'Class added successfully!']);
+}
 
 
 
