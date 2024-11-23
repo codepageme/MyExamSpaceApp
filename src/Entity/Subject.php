@@ -30,12 +30,26 @@ class Subject
     #[ORM\OneToMany(targetEntity: TeacherSubject::class, mappedBy: 'subject', orphanRemoval: true)]
     private Collection $teacherSubjects;
 
+    /**
+     * @var Collection<int, Question>
+     */
+    #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'Subject')]
+    private Collection $questions;
+
+    /**
+     * @var Collection<int, Theory>
+     */
+    #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'subject', orphanRemoval: true)]
+    private Collection $theories;
+
    
 
     public function __construct()
     {
         $this->classrooms = new ArrayCollection();
         $this->teacherSubjects = new ArrayCollection();
+        $this->questions = new ArrayCollection();
+        $this->theories = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -107,6 +121,66 @@ class Subject
             // set the owning side to null (unless already changed)
             if ($teacherSubject->getSubject() === $this) {
                 $teacherSubject->setSubject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Question>
+     */
+    public function getQuestions(): Collection
+    {
+        return $this->questions;
+    }
+
+    public function addQuestion(Question $question): static
+    {
+        if (!$this->questions->contains($question)) {
+            $this->questions->add($question);
+            $question->setSubject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuestion(Question $question): static
+    {
+        if ($this->questions->removeElement($question)) {
+            // set the owning side to null (unless already changed)
+            if ($question->getSubject() === $this) {
+                $question->setSubject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Theory>
+     */
+    public function getTheories(): Collection
+    {
+        return $this->theories;
+    }
+
+    public function addTheory(Theory $theory): static
+    {
+        if (!$this->theories->contains($theory)) {
+            $this->theories->add($theory);
+            $theory->setSubject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTheory(Theory $theory): static
+    {
+        if ($this->theories->removeElement($theory)) {
+            // set the owning side to null (unless already changed)
+            if ($theory->getSubject() === $this) {
+                $theory->setSubject(null);
             }
         }
 

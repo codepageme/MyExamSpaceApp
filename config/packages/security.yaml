@@ -90,7 +90,16 @@ security:
         - { path: ^/teacher/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/teacher/dashboard, roles: ROLE_TEACHER }
         - { path: ^/teacher/account, roles: ROLE_TEACHER }
+        - { path: ^/teacher/preview-question, roles: ROLE_TEACHER }
+        - { path: ^/teacher/create-question, roles: ROLE_TEACHER }
+        - { path: ^/teacher/get-classrooms, roles: ROLE_TEACHER }
+        - { path: ^/teacher/save-theoryquestion, roles: ROLE_TEACHER }
         
+
+
+
+
+
 
         # Admin access control
         - { path: ^/admin/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
@@ -117,6 +126,8 @@ security:
         - { path: ^/admin/create-student, roles: ROLE_ADMIN }
         - { path: ^/admin/student/edit, roles: ROLE_ADMIN }
         - { path: ^/admin/curriculum, roles: ROLE_ADMIN }
+        - { path: ^/admin/add-classroom, roles: ROLE_ADMIN, methods: [POST] }
+        - { path: ^/admin/add-subject, roles: ROLE_ADMIN, methods: [POST] }
       
 
         # Student access control

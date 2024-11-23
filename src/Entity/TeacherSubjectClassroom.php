@@ -6,7 +6,7 @@ use App\Repository\TeacherSubjectClassroomRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TeacherSubjectClassroomRepository::class)]
-#[ORM\Table(name: 'teacher_subject_class')]
+#[ORM\Table(name: 'teacher_subject_classroom')]
 class TeacherSubjectClassroom
 {
     #[ORM\Id]
@@ -14,10 +14,9 @@ class TeacherSubjectClassroom
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: TeacherSubject::class)]
+    #[ORM\ManyToOne(targetEntity: TeacherSubject::class, inversedBy: "teacherSubjectClassrooms")]
     #[ORM\JoinColumn(nullable: false)]
     private TeacherSubject $teacherSubject;
-
     #[ORM\ManyToOne(targetEntity: Classroom::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Classroom $classroom;

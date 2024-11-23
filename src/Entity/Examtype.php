@@ -2,14 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\QuestionTypeRepository;
+use App\Repository\ExamtypeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: QuestionTypeRepository::class)]
-class QuestionType
+#[ORM\Entity(repositoryClass: ExamtypeRepository::class)]
+class Examtype
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -19,19 +18,16 @@ class QuestionType
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $description = null;
-
     /**
      * @var Collection<int, Question>
      */
-    #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'questionType', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'examtype')]
     private Collection $questions;
 
     /**
      * @var Collection<int, Theory>
      */
-    #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'questionType', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'examType', orphanRemoval: true)]
     private Collection $theories;
 
     public function __construct()
@@ -57,18 +53,6 @@ class QuestionType
         return $this;
     }
 
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): static
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Question>
      */
@@ -81,7 +65,7 @@ class QuestionType
     {
         if (!$this->questions->contains($question)) {
             $this->questions->add($question);
-            $question->setQuestiontype($this);
+            $question->setExamtype($this);
         }
 
         return $this;
@@ -91,8 +75,8 @@ class QuestionType
     {
         if ($this->questions->removeElement($question)) {
             // set the owning side to null (unless already changed)
-            if ($question->getQuestiontype() === $this) {
-                $question->setQuestiontype(null);
+            if ($question->getExamtype() === $this) {
+                $question->setExamtype(null);
             }
         }
 
@@ -111,7 +95,7 @@ class QuestionType
     {
         if (!$this->theories->contains($theory)) {
             $this->theories->add($theory);
-            $theory->setQuestionType($this);
+            $theory->setExamType($this);
         }
 
         return $this;
@@ -121,8 +105,8 @@ class QuestionType
     {
         if ($this->theories->removeElement($theory)) {
             // set the owning side to null (unless already changed)
-            if ($theory->getQuestionType() === $this) {
-                $theory->setQuestionType(null);
+            if ($theory->getExamType() === $this) {
+                $theory->setExamType(null);
             }
         }
 

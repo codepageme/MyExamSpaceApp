@@ -68,6 +68,12 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: TeacherClassroom::class, mappedBy: 'teacher', orphanRemoval: true)]
     private Collection $teacherClassrooms;
 
+    /**
+     * @var Collection<int, Theory>
+     */
+    #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'Teacher', orphanRemoval: true)]
+    private Collection $theories;
+
 
 
 
@@ -78,6 +84,7 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
         $this->questions = new ArrayCollection();
         $this->teacherSubjects = new ArrayCollection();
         $this->teacherClassrooms = new ArrayCollection();
+        $this->theories = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -336,6 +343,36 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($teacherClassroom->getTeacher() === $this) {
                 $teacherClassroom->setTeacher(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Theory>
+     */
+    public function getTheories(): Collection
+    {
+        return $this->theories;
+    }
+
+    public function addTheory(Theory $theory): static
+    {
+        if (!$this->theories->contains($theory)) {
+            $this->theories->add($theory);
+            $theory->setTeacher($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTheory(Theory $theory): static
+    {
+        if ($this->theories->removeElement($theory)) {
+            // set the owning side to null (unless already changed)
+            if ($theory->getTeacher() === $this) {
+                $theory->setTeacher(null);
             }
         }
 

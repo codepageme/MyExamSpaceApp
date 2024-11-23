@@ -13,14 +13,14 @@ use App\Entity\TeacherSubject;
 use App\Entity\TeacherSubjectClassroom;
 use App\Entity\TodoList; 
 use App\Entity\Message;
-
+use App\Entity\Department;
 
 
 use App\Repository\AdminRepository;
 use App\Repository\TeacherRepository;
 use App\Repository\TeacherSubjectRepository;
 use App\Repository\TeacherSubjectClassroomRepository;
-
+use App\Repository\DepartmentRepository;
 
 use App\Form\CreateteacherType;
 use App\Form\EditteacherType;
@@ -48,12 +48,13 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 
 
+
 class AdminController extends AbstractController
 {
 
 //Admin Login Logic --------------------------------------------------------------------------D.O.N.E
 
-    /**
+/**
  * @Route("/admin", name="admin_login_form")
  */
 public function loginForm(): Response
@@ -882,7 +883,7 @@ public function editStudent(Request $request, Student $student, EntityManagerInt
 
 
 
-   /**
+/**
  * @Route("/admin/student/{id}/delete", name="admin_student_delete", methods={"POST"})
  */
 public function deleteStudent(Request $request, EntityManagerInterface $entityManager, Student $student): Response
@@ -940,47 +941,77 @@ public function deleteStudent(Request $request, EntityManagerInterface $entityMa
 
 
 
-
-     /**
-     * @Route("/admin/curriculum", name="admin_curriculum")
-     */
-    public function curriculumPage(): Response
-    {
-        return $this->render('admin/curriculum.html.twig');
-    }
+//controller logic ----------------------working 
 
 /**
- * @Route("/admin/class/add", name="admin_class_add", methods={"POST"})
+ * @Route("/admin/curriculum", name="admin_curriculum")
  */
-public function addClass(Request $request, EntityManagerInterface $entityManager): JsonResponse
+public function curriculumPage(DepartmentRepository $departmentRepository): Response
 {
-    $classname = $request->request->get('classname');
-    $departmentId = $request->request->get('department');
+    $departments = $departmentRepository->findAll();
+    return $this->render('admin/curriculum.html.twig', [
+        'departments' => $departments,
+    ]);
+}
+    
 
-    // Validate the required field
-    if (!$classname) {
-        return new JsonResponse(['success' => false, 'message' => 'Class name is required.'], 400);
-    }
 
-    // Create a new Classroom entity
-    $classroom = new Classroom();
-    $classroom->setClassname($classname);
+    /**
+     * @Route("/admin/add-classroom", name="admin_add_classroom", methods={"POST"})
+     */
+    public function addClassroom(Request $request): JsonResponse
+    {
+        $classname = $request->request->get('classname');
+        $departmentId = $request->request->get('department_id');
 
-    // Optionally set the department
-    if ($departmentId) {
-        $department = $entityManager->getRepository(Department::class)->find($departmentId);
-        if ($department) {
+        $classroom = new Classroom();
+        $classroom->setClassname($classname);
+
+        if ($departmentId) {
+            $department = $this->entityManager->getRepository(Department::class)->find($departmentId);
             $classroom->setDepartment($department);
-        } else {
-            return new JsonResponse(['success' => false, 'message' => 'Invalid department ID.'], 400);
         }
+
+        $this->entityManager->persist($classroom);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['status' => 'success', 'message' => 'Classroom added successfully']);
     }
 
-    $entityManager->persist($classroom);
+
+
+
+
+/**
+ * @Route("/admin/add-subject", name="admin_add_subject", methods={"POST"})
+ */
+public function addSubject(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $subjectName = $request->request->get('subject');
+
+    if (!$subjectName) {
+        $this->addFlash('error', 'Please enter a subject name.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $subject = new Subject();
+    $subject->setCourse($subjectName);
+
+    $entityManager->persist($subject);
     $entityManager->flush();
 
-    return new JsonResponse(['success' => true, 'message' => 'Class added successfully!']);
+    $this->addFlash('success', 'Subject added successfully!');
+    return $this->redirectToRoute('admin_curriculum');
 }
+
+
+
+
+
+
+
+
+
 
 
 

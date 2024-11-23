@@ -39,11 +39,22 @@ class Classroom
     #[ORM\OneToMany(targetEntity: TeacherClassroom::class, mappedBy: 'classroom', orphanRemoval: true)]
     private Collection $teacherClassrooms;
 
+    #[ORM\ManyToMany(targetEntity: Question::class, mappedBy: 'classrooms')]
+    private Collection $questions;
+
+    /**
+     * @var Collection<int, Theory>
+     */
+    #[ORM\ManyToMany(targetEntity: Theory::class, mappedBy: 'classrooms')]
+    private Collection $theories;
+
     public function __construct()
     {
         $this->Subject = new ArrayCollection();
         $this->students = new ArrayCollection();
         $this->teacherClassrooms = new ArrayCollection();
+        $this->questions = new ArrayCollection();
+        $this->theories = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -159,4 +170,59 @@ class Classroom
 
         return $this;
     }
+
+   /**
+     * @return Collection<int, Question>
+     */
+    public function getQuestions(): Collection
+    {
+        return $this->questions;
+    }
+
+    public function addQuestion(Question $question): static
+    {
+        if (!$this->questions->contains($question)) {
+            $this->questions->add($question);
+            $question->addClassroom($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuestion(Question $question): static
+    {
+        if ($this->questions->removeElement($question)) {
+            $question->removeClassroom($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Theory>
+     */
+    public function getTheories(): Collection
+    {
+        return $this->theories;
+    }
+
+    public function addTheory(Theory $theory): static
+    {
+        if (!$this->theories->contains($theory)) {
+            $this->theories->add($theory);
+            $theory->addClassroom($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTheory(Theory $theory): static
+    {
+        if ($this->theories->removeElement($theory)) {
+            $theory->removeClassroom($this);
+        }
+
+        return $this;
+    }
+
 }

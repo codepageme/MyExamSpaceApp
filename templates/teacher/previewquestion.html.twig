@@ -1,0 +1,147 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Question - MyExamSpace.Com{% endblock %}
+
+{% block stylesheets %}
+     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+{% endblock %}
+
+{% block map_content %}
+    <div class="here"></div>
+
+    <ul>
+        <li class="boton"><span class="glyphicon glyphicon-th-large glypha"></span>
+        <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
+
+        <li class="boton activa"><span class="glyphicon glyphicon-book glyph"></span>
+        <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
+        <br><a href="#">Results</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
+        <br><a href="#">Data</a></li>
+
+        <li class="boton"><span class="glyphicon glyphicon-user glypha"></span>
+        <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
+    </ul>
+    <a href="{{ path('teacher_logout') }}" id="logout" 
+       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <span class="glyphicon glyphicon-log-out glypha"></span> Logout
+    </a>
+
+    <form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+    </form>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container" style="max-width:900px;">
+    
+    <!-- Create / Preview / Export Buttons -->
+    <div class="btn-group" role="group" style="margin-left:-610px; margin-top:10px;">
+        <a href="{{ path('teacher_create_question') }}" class="btn btn-primary" style= "margin-right:10px;"> <span class="glyphicon glyphicon-floppy-saved"></span>  Create Questions</a> 
+        <a href="{{ path('teacher_preview_question') }}" class="btn btn-default"> <span class="glyphicon glyphicon-floppy-save"></span>  Preview Questions</a>
+    </div>
+    
+    <a href="#" class="btn custom-btn">Export Questions</a>
+
+
+
+<div class="container" style="width:1000px; height:500px; overflow-y:scroll; overflow-x:hidden;margin-left:-80px;">
+    <!-- Question List -->
+  <table class="table table-striped table-hover mt-3">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>S/N</th>
+            <th>Question</th>
+            <th>Class(es)</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Answers</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for question in questions %}
+            <tr>
+                <td><input type="checkbox" class="select-question" value="{{ question.id }}"></td>
+                <td>{{ question.id }}</td>
+                <td>{{ question.content }}</td>
+                <td>
+                    {% if question.classrooms|length > 0 %}
+                        {{ question.classrooms|map(c => c.name)|join(', ') }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </td>
+                <td>{{ question.subject.course }}</td>
+                <td>
+                    {% set currentTerm = academicCalendar.term %}
+                    {% set currentSession = academicCalendar.session %}
+                    {% if question.term.id == currentTerm.id and question.session.id == currentSession.id %}
+                        <span class="badge bg-success">New</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Used</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if question.type == 'theory' %}
+                        <span class="text-muted">None available</span>
+                    {% else %}
+                        <button class="btn btn-link btn-sm show-answers" data-bs-toggle="collapse" data-bs-target="#answers-{{ question.id }}">
+                            Show All
+                        </button>
+                        <div id="answers-{{ question.id }}" class="collapse">
+                            {% if question.options|length > 0 %}
+                                <ul>
+                                    {% for option in question.options %}
+                                        <li>{{ option.label }}: {{ option.text }} {% if option.isCorrect %}<strong>(Correct)</strong>{% endif %}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">No options available</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="actionsMenu-{{ question.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            Actions
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="actionsMenu-{{ question.id }}">
+                            <li><a class="dropdown-item" href="#">Edit</a></li>
+                            <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="8" class="text-center">No questions available for you.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // Select all functionality
+    document.getElementById('select-all').addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('.select-question');
+        checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+    });
+</script>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+</div>
+</div>
+
+
+{% endblock %}

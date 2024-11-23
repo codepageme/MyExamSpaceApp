@@ -213,3 +213,18 @@ p{
 .message-item a:hover {
     text-decoration: underline;
 }
+
+.custom-btn {
+    background-color: #87CEEB; /* Sky blue color */
+    color: #2488af;
+    border-color: #87CEEB; /* Match border to background */
+    margin-top:10px;
+    margin-right: -80px; 
+    margin-left: 90px;
+    float:inline-end;
+  }
+
+  .custom-btn:hover {
+    background-color: #70B7D9; /* Slightly darker blue for hover effect */
+    border-color: #70B7D9;
+  }

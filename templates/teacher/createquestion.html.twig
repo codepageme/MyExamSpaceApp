@@ -1,6 +1,6 @@
 {% extends 'tdashbase.html.twig' %}
 
-{% block title %}Exam - MyExamSpace.Com{% endblock %}
+{% block title %}Create Question - MyExamSpace.Com{% endblock %}
 
 {% block stylesheets %}
      <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
@@ -14,7 +14,7 @@
         <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
 
         <li class="boton activa"><span class="glyphicon glyphicon-book glyph"></span>
-        <br><a href="{{ path('teacher_exam') }}">Exam</a></li>
+        <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
         <br><a href="#">Results</a></li>
@@ -35,34 +35,1267 @@
     </form>
 {% endblock %}
 
+
+
 {% block content %}
-<div class="container">
+
+<div class="container" style="max-width:900px;">
    
-    <div class="btn-group" role="group">
-        <a href= "{{ path('teacher_create_question') }}" class="btn btn-primary">Create Questions</a> 
-        <a href="{{ path('teacher_exam') }}" class="btn btn-primary">Preview Questions</a>
-    </div>
 
-    <div class="form-section">
-        <!-- Dropdown for subjects -->
-        <select id="subject-dropdown" class="form-control">
+    <div class="row">
+            <!-- Left Side with Button Group -->
+            <div class="col-md-10">
+
+                <div class="btn-group-horizontal" role="group" style="margin-left:-610px; margin-top:10px;">
+                    <a href="{{ path('teacher_create_question') }}" class="btn btn-default"> <span class="glyphicon glyphicon-floppy-saved"></span>  Create Questions</a>
+                    <a href="{{ path('teacher_preview_question') }}" class="btn btn-primary"> <span class="glyphicon glyphicon-floppy-save"></span>  Preview Questions</a>
+                </div>
+
+                   
+                    <h5 style="margin-left:610px;margin-top:-30px;"><strong>Term:</strong> {{ currentTerm ?? 'N/A' }}</h5>
+                    <h5 style="margin-left:600px;margin-top:-10px;"><strong>Session:</strong> {{ currentSession ?? 'N/A' }}</h5>
+                  
+
+<div class="row mb-3">
+    <!-- Subject Dropdown -->
+    <div class="col-md-4" style="margin-top:20px; margin-left:-158px;">
+        <label for="subject-select" class="form-label"></label>
+        <select id="subject-select" name="subject" class="form-select">
             <option value="">Select Subject</option>
-            <!-- To be dynamically filled with subjects related to the teacher -->
-        </select>
-
-        <!-- Dropdown for classes, will appear after subject is selected -->
-        <select id="class-dropdown" class="form-control" style="display:none;">
-            <option value="">Select Class</option>
-        </select>
-
-        <!-- Dropdown for question types, will appear after class is selected -->
-        <select id="question-type-dropdown" class="form-control" style="display:none;">
-            <option value="">Select Question Type</option>
+            {% for teacherSubject in teacherSubjects %}
+                <option value="{{ teacherSubject.id }}" 
+                        data-subject-id="{{ teacherSubject.subject.id }}" 
+                        data-teacher-subject-id="{{ teacherSubject.id }}">
+                    {{ teacherSubject.subject.course }}
+                </option>
+            {% endfor %}
         </select>
     </div>
 
-    <div id="preview-bar" class="right-preview">
-        <!-- Placeholder for dynamically displaying current questions being typed/inputted -->
+        <!-- Classroom Dropdown (Initially Hidden) -->
+    <div class="col-md-4" id="classroom-select-container" style="display: none; margin-top:20px; margin-left:-100px;">
+        <label for="classroom-select" class="form-label"></label>
+        <select id="classroom-select" name="classroom" class="form-select" multiple>
+            <option value="">Select Classroom</option>
+            <!-- Classroom options will be loaded here via jQuery -->
+        </select>
+    </div>
+
+    <!-- Exam Type Dropdown (Initially Hidden) -->
+    <div class="col-md-4" id="exam-type-container" style="display: none; margin-top:20px; margin-left:-85px;">
+        <label for="examTypeDropdown" class="form-label"></label>
+        <select id="examTypeDropdown" name="examType" class="form-select">
+            <option value="">Select Exam Type</option>
+            <!-- Exam Type options will be populated dynamically -->
+        </select>
     </div>
 </div>
+
+<!-- Summary Display -->
+<div class="row">
+    <div class="col-md-12" style="margin-top:5px; margin-left:-300px;">
+        <p id="selection-summary" class="mt-3 fw-bold"><strong>Selection Summary:</strong></p>
+    </div>
+</div>
+
+
+            <div id="question-type-container" style="display: none;">
+             <label for="questionTypeDropdown" class="form-label"></label>
+    
+            <!-- Icon button to trigger the dropdown -->
+            <button id="question-type-icon" type="button" class="btn btn-outline-secondary">
+                <span class="glyphicon glyphicon-open-file"></span>Create</button>
+            
+            <!-- Hidden Question Type Dropdown -->
+            <select id="questionTypeDropdown" name="questionType" class="form-select mt-2" style="display: none;">
+                <option value="">Select Question Type</option>
+                <!-- Question Type options will be populated dynamically -->
+            </select>
+            </div>
+
+
+
+
+        <!-- Question type structures ready-->
+    <div style="max-width:700px; height:300px; text-align:left; ">
+           
+             <!-- Radio button-->
+           <div id="radioButtonSetup" style="display: none;">
+            <form id="radioButtonForm">
+        <!-- Textarea for Question -->
+        <div class="form-group">
+            <label for="radioquestionText"> Question (Radio) : </label>
+            <textarea id="radioquestionText" name="radioquestionText" class="form-control" rows="3" placeholder="Enter your question"></textarea>
+        </div>
+
+       <div class="form-group">
+    <div class="row">
+        <!-- Option A -->
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text"> Option A :</span>
+                <input type="text" name="optionA" class="form-control" placeholder="Option A">
+            </div>
+        </div>
+        <!-- Option B -->
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text"> Option B :</span>
+                <input type="text" name="optionB" class="form-control" placeholder="Option B">
+            </div>
+        </div>
+        <!-- Option C -->
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text"> Option C :</span>
+                <input type="text" name="optionC" class="form-control" placeholder="Option C">
+            </div>
+        </div>
+        <!-- Option D -->
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text"> Option D :</span>
+                <input type="text" name="optionD" class="form-control" placeholder="Option D">
+            </div>
+        </div>
+        <!-- Option E (Full width on new row) -->
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text"> Option E :</span>
+                <input type="text" name="optionE" class="form-control" placeholder="Option E">
+            </div>
+        </div>
+    </div>
+</div>
+
+     <div class="form-group row">
+    <!-- Correct Answer Input -->
+    <div class="col-xs-6 col-sm-9">
+        <label for="correctAnswer">Correct Answer:</label>
+        <input type="text" id="correctAnswer" name="correctAnswer" class="form-control" placeholder="Enter Correct Answer (e.g., A)">
+    </div>
+
+    <!-- Submit Button -->
+    <div class="col-xs-6 col-sm-2" style="margin-top:22px;">
+    <button type="button" class="btn btn-primary" id="saveRadioQuestionButton">Save Question</button>
+    </div>
+</div>
+    </form>
+</div>
+
+
+
+
+          <!--Check box option-->
+       <!-- Checkbox Question Form (Initially Hidden) -->
+<form id="checkbox-question-form" style="display: none;" method="POST">
+    <!-- Question Textarea -->
+    <div class="form-group">
+        <label for="checkboxquestionText">Question (Checkbox):</label>
+        <textarea id="checkboxquestionText" name="checkboxquestionText" class="form-control" placeholder="Enter the question here"></textarea>
+    </div>
+
+    <!-- Options A to E with checkboxes -->
+    <div class="form-group">
+        <label>Options</label>
+        <div class="row">
+            <div class="col-xs-6 col-sm-6">
+                <label for="checkboxoptionA"><input type="checkbox" name="correctAnswers[]" value="A"> Correct Answer A</label>
+                <input type="text" name="checkboxoptionA" class="form-control" placeholder="Option A">
+               
+            </div>
+            <div class="col-xs-6 col-sm-6">
+                <label for="checkboxoptionB"><input type="checkbox" name="correctAnswers[]" value="B"> Correct Answer B</label>
+                <input type="text" name="checkboxoptionB" class="form-control" placeholder="Option B">
+               
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-6 col-sm-6">
+                <label for="checkboxoptionC"><input type="checkbox" name="correctAnswers[]" value="C"> Correct Answer C</label>
+                <input type="text" name="checkboxoptionC" class="form-control" placeholder="Option C">
+                
+            </div>
+            <div class="col-xs-6 col-sm-6">
+                <label for="checkboxoptionD"><input type="checkbox" name="correctAnswers[]" value="D"> Correct Answer D</label>
+                <input type="text" name="checkboxoptionD" class="form-control" placeholder="Option D">
+               
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-6 col-sm-6">
+                <label for="checkboxoptionE"><input type="checkbox" name="correctAnswers[]" value="E"> Correct Answer E</label>
+                <input type="text" name="checkboxoptionE" class="form-control" placeholder="Option E">
+               
+            </div>
+        </div>
+    </div>
+
+   <!-- Submit Button -->
+<button type="button" class="btn btn-primary" id="saveCheckboxQuestionButton">Save Question</button>
+</form>
+
+
+
+
+        <!--Boolean Question-->
+    <!-- Boolean Question Form (Initially Hidden) -->
+<form id="boolean-question-form" style="display: none;">
+    <!-- Question Textarea -->
+    <div class="form-group">
+        <label for="booleanQuestionText">Question (Boolean):</label>
+        <textarea id="booleanQuestionText" name="booleanQuestionText" class="form-control" placeholder="Enter the question here"></textarea>
+    </div>
+
+    <!-- Options for True/False -->
+    <div class="form-group">
+        <label>These Are Your options , Select Correct Answer:</label>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="correctAnswer" id="trueOption" value="true">
+            <label class="form-check-label" for="trueOption">True</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="correctAnswer" id="falseOption" value="false">
+            <label class="form-check-label" for="falseOption">False</label>
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="button" id="submit-boolean-question" class="btn btn-primary mt-3">Save Question</button>
+</form>
+
+
+
+
+
+        <!--German Question-->
+      <!-- German Question Form (Initially Hidden) -->
+<form id="german-question-form" style="display: none;">
+    <!-- Question Textarea -->
+    <div class="form-group">
+        <label for="germanQuestionText">Question (German):</label>
+        <textarea id="germanQuestionText" name="germanQuestionText" class="form-control" placeholder="Enter the question here"></textarea>
+    </div>
+
+    <!-- Correct Answer Input -->
+    <div class="form-group">
+        <label for="germanCorrectAnswer">Correct Answer:</label>
+        <input type="text" id="germanCorrectAnswer" name="germanCorrectAnswer" class="form-control" placeholder="Enter the correct answer">
+    </div>
+
+    <!-- Submit Button -->
+    <button id="saveGermanQuestionButton" type="button" class="btn btn-primary mt-3">Save Question</button>
+</form>
+
+
+
+
+
+    <!--dropdown question-->
+  <!-- Dropdown Question Form (Initially Hidden) -->
+<form id="dropdown-question-form" style="display: none;" method="POST">
+    <!-- Question Textarea with [ / ] for dropdown options -->
+    <div class="form-group">
+        <label for="dropdownQuestionText">Question (use [ / ] to mark your dropdown options):</label>
+        <textarea
+            id="dropdownQuestionText"
+            name="dropdownQuestionText"
+            class="form-control"
+            placeholder="Enter the question with Your options in this Format [dropdown / dopdown / downup / dupdap] for dropdown options. ">
+        </textarea>
+    </div>
+
+    <!-- Correct Answer Input -->
+    <div class="form-group">
+        <label for="dropdownCorrectAnswer">Correct Answer:</label>
+        <input
+            type="text"
+            id="dropdownCorrectAnswer"
+            name="dropdownCorrectAnswer"
+            class="form-control"
+            placeholder="Enter a correct answer from above option here e.g Dropdown.">
+    </div>
+
+    <!-- Submit Button -->
+    <button type="button" class="btn btn-primary mt-3" id="dropdownQuestionSubmit">Save Question</button>
+</form>
+
+
+
+
+    <!--Register Question-->
+    <!-- Register Question Form (Initially Hidden) -->
+<form id="register-question-form" style="display: none;" method="POST">
+    <!-- Question Textarea with [ / ] placeholders for dropdown options -->
+    <div class="form-group">
+        <label for="registerQuestionText">Question (use [ / ] to mark dropdown option areas):</label>
+        <textarea id="registerQuestionText" name="registerQuestionText" class="form-control" 
+            placeholder="Enter the question with Your options in this Format [dropdown / dopdown / downup / dupdap] this is a [regular / register / regstar / reg] question, it allows [many/much/more] input answers."></textarea>
+        <small class="form-text text-muted">
+           For each dropdown set in the question. Ensure at least 3 dropdown Options.
+        </small>
+    </div>
+
+    <!-- Correct Answers Input -->
+    <div class="form-group">
+        <label for="registerCorrectAnswers">Correct Answers:</label>
+        <input type="text" id="registerCorrectAnswers" name="registerCorrectAnswers" class="form-control" 
+            placeholder="Enter correct answers from the above option accordingly e.g., [dropdown , register, many ]">
+        <small class="form-text text-muted">
+            Enter the correct answers in the order they appear in the question.
+        </small>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="button" class="btn btn-primary mt-3" id="save-register-question">Save Question</button>
+</form>
+
+
+
+    <!--Image question-->
+   <!-- Images Question Form (Initially Hidden) -->
+<form id="images-question-form" style="display: none;" method="POST" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-sm-6">
+            <label for="imageUpload" class="form-label">Upload Image:</label>
+            <input type="file" id="imageUpload" name="imageUpload" class="form-control" accept="image/*">
+        </div>
+        <div class="col-sm-6">
+            <div id="imagePreview" style="display: none; margin-top: 15px;">
+                <img id="uploadedImage" src="" alt="Uploaded Image" class="img-thumbnail" style="max-width: 150px; height: 150px;">
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-sm-6">
+            <label for="additionalText">Additional Text:</label>
+            <textarea id="additionalText" name="additionalText" class="form-control"></textarea>
+        </div>
+        <div class="col-sm-6">
+            <label for="correctAnswer">Correct Answer:</label>
+           <input type="text" id="ImagecorrectAnswer" name="correctAnswer" class="form-control" placeholder="Enter the correct answer">
+        </div>
+    </div>
+    <br>
+    <button type="button" id="ImageQuestionSubmit" class="btn btn-primary mt-3">Save Question</button>
+</form>
+
+
+
+
+
+    <!--Theory Questions-->
+   <!-- Theory Question Form (Initially Hidden) -->
+<form id="theory-question-form" style="display: none;" method="POST">
+    <div class="form-group">
+        <!-- Question Textarea -->
+        <label for="theoryQuestion">Question:</label>
+        <textarea id="theoryQuestion" name="theoryQuestion" class="form-control" placeholder="Enter the question here..." required></textarea>
+    </div>
+
+    <div class="form-group mt-3">
+        <!-- Answer Textarea (Optional and Disabled) -->
+        <label for="theoryAnswer">Answer (Optional):</label>
+        <textarea id="theoryAnswer" name="theoryAnswer" class="form-control" placeholder="Enter the answer here (optional)..." disabled></textarea>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="button" id="TheoryQuestionSubmit" class="btn btn-primary mt-3">Save Question</button>
+
+    <h5>Note:</h5><p>Theory Exercises are only available for Examinations.</p>
+</form>
+
+
+
+        </div>
+            </div>
+            
+
+
+
+            <!-- Right Side Placeholder -->
+            <div class="col-md-2" style="border: 2px solid white; border-radius:10px; width:250px; height:500px; margin-top:10px; margin-right:-100px; text-align:left; overflow-y:scroll;background-color: rgb(245, 245, 245);">
+                <div class="content-placeholder">
+                 <h2>Preview Area</h2>
+                 <p>Loading latest questions...</p>
+                </div>
+            </div>
+        </div>
+
+
+
+</div>
+
+
+
+  <script>
+  $(document).ready(function() {
+    // Handle Subject Dropdown change
+    $('#subject-select').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const subjectId = selectedOption.data('subject-id');
+        const teacherSubjectId = selectedOption.data('teacher-subject-id');
+
+        if (teacherSubjectId) {
+            $.ajax({
+                url: '{{ path('teacher_get_classrooms', { teacherSubjectId: 'REPLACE_ID' }) }}'.replace('REPLACE_ID', teacherSubjectId),
+                method: 'GET',
+                success: function(classrooms) {
+                    let options = '<option value="">Select Classroom</option>';
+                    classrooms.forEach(function(classroom) {
+                        options += `<option value="${classroom.id}">${classroom.classname} (${classroom.department})</option>`;
+                    });
+                    $('#classroom-select').html(options);
+                    $('#classroom-select-container').show();
+                },
+                error: function() {
+                    alert('Error retrieving classrooms. Please try again.');
+                }
+            });
+        } else {
+            $('#classroom-select-container').hide();
+        }
+    });
+
+    // Handle Classroom Dropdown change
+    $('#classroom-select').on('change', function() {
+        const classroomId = $(this).val();
+
+        if (classroomId) {
+            // Fetch Exam Types
+            $.ajax({
+                url: '{{ path('teacher_get_examtype') }}',
+                method: 'GET',
+                success: function(examTypes) {
+                    let options = '<option value="">Select Exam Type</option>';
+                    examTypes.forEach(function(examType) {
+                        options += `<option value="${examType.id}">${examType.name}</option>`;
+                    });
+
+                    // Populate the Exam Type dropdown
+                    $('#examTypeDropdown').html(options);
+                    $('#exam-type-container').show(); // Show the Exam Type dropdown
+                },
+                error: function() {
+                    alert('Error retrieving exam types. Please try again.');
+                }
+            });
+        } else {
+            $('#exam-type-container').hide(); // Hide the Exam Type dropdown if no classroom is selected
+        }
+    });
+
+    // Handle Exam Type Dropdown change
+    $('#examTypeDropdown').on('change', function() {
+        const selectedExamTypeId = $(this).val(); // Get selected Exam Type ID
+        
+        if (selectedExamTypeId) {
+            // Fetch Question Types based on selected Exam Type
+            $.ajax({
+                url: '/teacher/get-questiontype', // API route to get Question Types
+                type: 'GET',
+                success: function(data) {
+                    // Populate the Question Type dropdown
+                    const questionTypeDropdown = $('#questionTypeDropdown');
+                    questionTypeDropdown.empty(); // Clear the existing options
+                    questionTypeDropdown.append('<option value="">Select Question Type</option>'); // Reset dropdown
+                    
+                    // Loop through the response data and add options to the dropdown
+                    data.forEach(function(questionType) {
+                        questionTypeDropdown.append('<option value="' + questionType.id + '">' + questionType.name + '</option>');
+                    });
+
+                    // Display the Question Type dropdown
+                    $('#question-type-container').show();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching question types: ', error);
+                }
+            });
+        } else {
+            // Hide the Question Type dropdown if no Exam Type is selected
+            $('#question-type-container').hide();
+        }
+    });
+});
+
+
+
+//create icon response
+
+$(document).ready(function() {
+    // Show the question type dropdown when the icon button is clicked
+    $('#question-type-icon').on('click', function() {
+        $('#questionTypeDropdown').toggle(); // Toggle visibility of the dropdown
+    });
+    
+});
+
+//the summary script
+
+$(document).ready(function() {
+    function updateSummary() {
+        const subject = $('#subject-select option:selected').text();
+        const classroom = $('#classroom-select option:selected').text();
+        const examType = $('#examTypeDropdown option:selected').text();
+
+        let summary = '';
+        if (subject) summary += subject;
+        if (classroom) summary += ` - ${classroom}`;
+        if (examType) summary += ` ${examType}`;
+
+        $('#selection-summary').text(` ${summary}`);
+    }
+
+    // Attach change events to dropdowns
+    $('#subject-select').on('change', function() {
+        updateSummary();
+    });
+
+    $('#classroom-select').on('change', function() {
+        updateSummary();
+    });
+
+    $('#examTypeDropdown').on('change', function() {
+        updateSummary();
+    });
+});
+
+
+
+// Question type script ready-->
+        // Radio button-->
+    $(document).ready(function() {
+    // Show the radio button setup form when "radio button" is selected
+    $('#questionTypeDropdown').change(function() {
+        if ($(this).val() === '1') { 
+            $('#radioButtonSetup').show();
+        } else {
+            $('#radioButtonSetup').hide();
+        }
+    });
+});
+
+
+        //checkbox button -->
+        $(document).ready(function() {
+    // Listen for change in the Question Type dropdown
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedQuestionType = $(this).val();
+
+        // Hide all question type forms by default
+        $('#checkbox-question-form').hide();
+
+        // Show the checkbox question form if 'checkbox' is selected
+        if (selectedQuestionType === '2') {
+            $('#checkbox-question-form').show();
+        }
+    });
+});
+
+
+
+//Boolean script -->
+$(document).ready(function() {
+    // Listen for changes in the Question Type dropdown
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedQuestionType = $(this).val();
+
+        // Hide all question type forms by default
+        $('#boolean-question-form').hide();
+
+        // Show the Boolean question form if 'Boolean' is selected
+        if (selectedQuestionType === '3') {
+            $('#boolean-question-form').show();
+        }
+    });
+});
+
+
+
+    //German script -->
+    $(document).ready(function() {
+    // Listen for changes in the Question Type dropdown
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedQuestionType = $(this).val();
+
+        // Hide all question type forms by default
+        $('#german-question-form').hide();
+
+        // Show the German question form if 'German' is selected
+        if (selectedQuestionType === '6') {
+            $('#german-question-form').show();
+        }
+    });
+});
+
+
+    //Dropdown script  -->
+$(document).ready(function() {
+    // Listen for changes in the Question Type dropdown
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedQuestionType = $(this).val();
+
+        // Hide all question type forms by default
+        $('#dropdown-question-form').hide();
+
+        // Show the Dropdown question form if 'Dropdown' is selected
+        if (selectedQuestionType === '5') {
+            $('#dropdown-question-form').show();
+        }
+    });
+});
+
+
+// register script-->
+ $(document).ready(function() {
+    // Listen for changes in the Question Type dropdown
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedQuestionType = $(this).val();
+
+        // Hide all question type forms by default
+        $('#register-question-form').hide();
+
+        // Show the Register question form if 'Register' is selected
+        if (selectedQuestionType === '4') {
+            $('#register-question-form').show();
+        }
+    });
+});
+
+//Images script-->
+$(document).ready(function() {
+    // Show/Hide the Images form based on question type selection
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedQuestionType = $(this).val();
+
+        // Hide all question type forms by default
+        $('#images-question-form').hide();
+
+        // Show the Images form if 'Images' is selected
+        if (selectedQuestionType === '7') {
+            $('#images-question-form').show();
+        }
+    });
+
+    // Display the image preview on file selection
+    $('#imageUpload').on('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#uploadedImage').attr('src', e.target.result);
+                $('#imagePreview').show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#imagePreview').hide();
+        }
+    });
+});
+
+
+//Theory script -->
+$(document).ready(function() {
+    // Hide the theory question form initially
+    $('#theory-question-form').hide();
+
+    // Listen for changes on the question type dropdown
+    $('#questionTypeDropdown').on('change', function() {
+        const selectedType = $(this).val();
+
+        // Show Theory form if "Theory" is selected, hide it otherwise
+        if (selectedType === '8') {
+            $('#theory-question-form').show();
+        } else {
+            $('#theory-question-form').hide();
+        }
+    });
+});
+
+
+
+
+  
+  // Ajax for submitting Forms -->
+    const termId = {{ termId|json_encode() }};
+    const sessionId = {{ sessionId|json_encode() }};
+    
+
+ // Radio option: Handle button click for saving question
+$('#saveRadioQuestionButton').on('click', function () {
+    let subjectId = $('#subject-select').find(':selected').data('subject-id');
+    let classroomIds = $('#classroom-select').val(); // Selected classroom IDs
+
+    // Prepare form data
+    const formData = {
+        content: $('#radioquestionText').val().trim(),
+        optionA: $('input[name="optionA"]').val().trim(),
+        optionB: $('input[name="optionB"]').val().trim(),
+        optionC: $('input[name="optionC"]').val().trim(),
+        optionD: $('input[name="optionD"]').val().trim(),
+        optionE: $('input[name="optionE"]').val().trim(),
+        correctAnswer: $('#correctAnswer').val().trim().toUpperCase(), // Ensure uppercase
+        subjectId: parseInt(subjectId) || null, // Fallback to null if invalid
+        classroomId: Array.isArray(classroomIds) ? classroomIds.map(Number) : [],
+        examTypeId: parseInt($('#examTypeDropdown').val()) || null,
+        questionTypeId: parseInt($('#questionTypeDropdown').val()) || null,
+        termId: parseInt(termId) || null,
+        sessionId: parseInt(sessionId) || null,
+    };
+
+    // Validation checks
+    if (!formData.content) {
+        alert('Please enter the question content.');
+        return;
+    }
+    if (!formData.optionA || !formData.optionB) {
+        alert('Please provide at least options A and B.');
+        return;
+    }
+    if (!['A', 'B', 'C', 'D', 'E'].includes(formData.correctAnswer)) {
+        alert('Correct answer must be one of A, B, C, D, or E.');
+        return;
+    }
+    if (!formData.subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+    if (formData.classroomId.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+    if (!formData.examTypeId || !formData.questionTypeId) {
+        alert('Please select both an exam type and question type.');
+        return;
+    }
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/save-question', // Backend endpoint for saving
+        type: 'POST',
+        data: JSON.stringify(formData),
+        contentType: 'application/json',
+        success: function (response) {
+            alert('Question saved successfully!');
+            $('#radioButtonForm')[0].reset(); // Clear the form
+        },
+        error: function (xhr, status, error) {
+            console.error('Error:', error);
+            alert('Error saving question. Please try again.');
+        },
+    });
+});
+
+
+
+
+
+
+
+    // Checkbox option: Handle button click for saving question
+$('#saveCheckboxQuestionButton').on('click', function () {
+    let subjectId = $('#subject-select').find(':selected').data('subject-id');
+    let classroomIds = $('#classroom-select').val(); // Selected classroom IDs
+
+    const data = {
+        content: $('#checkboxquestionText').val().trim(),
+        optionA: $('input[name="checkboxoptionA"]').val().trim(),
+        optionB: $('input[name="checkboxoptionB"]').val().trim(),
+        optionC: $('input[name="checkboxoptionC"]').val().trim(),
+        optionD: $('input[name="checkboxoptionD"]').val().trim(),
+        optionE: $('input[name="checkboxoptionE"]').val().trim(),
+        correctAnswers: $('input[name="correctAnswers[]"]:checked').map(function () {
+            return $(this).val();
+        }).get(), // Collect all checked values as an array
+        subjectId: parseInt(subjectId) || null, // Convert to integer or null
+        classroomId: Array.isArray(classroomIds) ? classroomIds.map(Number) : [],
+        examTypeId: parseInt($('#examTypeDropdown').val()) || null,
+        questionTypeId: parseInt($('#questionTypeDropdown').val()) || null,
+        termId: parseInt(termId) || null,  // Ensure integer
+        sessionId: parseInt(sessionId) || null,  // Ensure integer
+    };
+
+    // Validation checks
+    if (!data.content) {
+        alert('Please enter the question content.');
+        return;
+    }
+    if (!data.optionA || !data.optionB) {
+        alert('Please provide at least options A and B.');
+        return;
+    }
+    if (data.correctAnswers.length === 0) {
+        alert('Please select at least one correct answer.');
+        return;
+    }
+    if (!data.subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+    if (data.classroomId.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+    if (!data.examTypeId || !data.questionTypeId) {
+        alert('Please select both an exam type and question type.');
+        return;
+    }
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/savecheckbox-question', // Backend endpoint for saving checkbox questions
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            alert('Question saved successfully!');
+            $('#checkbox-question-form')[0].reset(); // Reset the form
+        },
+        error: function (xhr) {
+            console.error('Error:', xhr.responseJSON);
+            alert('Failed to save question: ' + (xhr.responseJSON?.message || 'Unknown error.'));
+        },
+    });
+});
+
+
+
+
+
+
+//Boolean option 
+   // Boolean question: Handle button click for saving question
+$('#submit-boolean-question').on('click', function () {
+    let subjectId = $('#subject-select').find(':selected').data('subject-id');
+    let classroomIds = $('#classroom-select').val(); // Selected classroom IDs
+
+    const data = {
+        content: $('#booleanQuestionText').val().trim(), // Question content
+        correctAnswer: $('input[name="correctAnswer"]:checked').val(), // Selected correct answer
+        subjectId: parseInt(subjectId) || null, // Convert to integer or null
+        classroomId: Array.isArray(classroomIds) ? classroomIds.map(Number) : [], // Convert to integers
+        examTypeId: parseInt($('#examTypeDropdown').val()) || null,
+        questionTypeId: parseInt($('#questionTypeDropdown').val()) || null,
+        termId: parseInt(termId) || null,  // Ensure integer
+        sessionId: parseInt(sessionId) || null,  // Ensure integer
+    };
+
+    // Validation checks
+    if (!data.content) {
+        alert('Please enter the question content.');
+        return;
+    }
+    if (!data.correctAnswer) {
+        alert('Please select a correct answer (True or False).');
+        return;
+    }
+    if (!data.subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+    if (data.classroomId.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+    if (!data.examTypeId || !data.questionTypeId) {
+        alert('Please select both an exam type and question type.');
+        return;
+    }
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/saveboolean-question', // Backend endpoint for saving boolean questions
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            alert('Boolean question saved successfully!');
+            $('#boolean-question-form')[0].reset(); // Reset the form
+        },
+        error: function (xhr) {
+            console.error('Error:', xhr.responseJSON);
+            alert('Failed to save question: ' + (xhr.responseJSON?.message || 'Unknown error.'));
+        },
+    });
+});
+
+
+
+
+
+
+//German
+$('#saveGermanQuestionButton').on('click', function () {
+    let subjectId = $('#subject-select').find(':selected').data('subject-id');
+    let classroomIds = $('#classroom-select').val(); // Selected classroom IDs
+
+    const data = {
+        content: $('#germanQuestionText').val().trim(),
+        correctAnswer: $('#germanCorrectAnswer').val().trim(),
+        subjectId: parseInt(subjectId) || null, // Convert to integer or null
+        classroomId: Array.isArray(classroomIds) ? classroomIds.map(Number) : [],
+        examTypeId: parseInt($('#examTypeDropdown').val()) || null,
+        questionTypeId: parseInt($('#questionTypeDropdown').val()) || null,
+        termId: parseInt(termId) || null, // Dynamically fetched term ID
+        sessionId: parseInt(sessionId) || null, // Dynamically fetched session ID
+    };
+
+    // Validation checks
+    if (!data.content) {
+        alert('Please enter the question content.');
+        return;
+    }
+    if (!data.correctAnswer) {
+        alert('Please provide the correct answer.');
+        return;
+    }
+    if (!data.subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+    if (data.classroomId.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+    if (!data.examTypeId || !data.questionTypeId) {
+        alert('Please select both an exam type and question type.');
+        return;
+    }
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/savegerman-question', // Backend endpoint for saving German questions
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            alert('German question saved successfully!');
+            $('#german-question-form')[0].reset(); // Reset the form
+        },
+        error: function (xhr) {
+            console.error('Error:', xhr.responseJSON);
+            alert('Failed to save question: ' + (xhr.responseJSON?.message || 'Unknown error.'));
+        },
+    });
+});
+
+
+
+
+//Dropdown
+$('#dropdownQuestionSubmit').on('click', function () {
+    // Gather data from the form
+    let subjectId = $('#subject-select').find(':selected').data('subject-id'); // Ensure this dropdown exists
+    let classroomIds = $('#classroom-select').val(); // Ensure classroom dropdown exists
+
+    const data = {
+        content: $('#dropdownQuestionText').val().trim(), // Question content
+        correctAnswer: $('#dropdownCorrectAnswer').val().trim(), // Correct answer
+        subjectId: parseInt(subjectId) || null, // Convert to integer or null
+        classroomId: Array.isArray(classroomIds) ? classroomIds.map(Number) : [], // Map classroom IDs to integers
+        examTypeId: parseInt($('#examTypeDropdown').val()) || null, // Selected exam type ID
+        questionTypeId: parseInt($('#questionTypeDropdown').val()) || null, // Selected question type ID
+        termId: typeof termId !== 'undefined' ? parseInt(termId) : null, // Ensure term ID is defined
+        sessionId: typeof sessionId !== 'undefined' ? parseInt(sessionId) : null, // Ensure session ID is defined
+    };
+
+    // Validation checks
+    if (!data.content) {
+        alert('Please enter the question content.');
+        return;
+    }
+
+    // Validate the presence of exactly one "[/]" using regex
+    const dropdownOptionPattern = /\[.*?\/.*?\]/g; // Matches content like [yes/yeh/yep/no]
+    const matchCount = (data.content.match(dropdownOptionPattern) || []).length;
+
+    if (matchCount !== 1) {
+        alert('The question content must contain exactly one "[/]" with options separated by "/".');
+        return;
+    }
+
+    if (!data.correctAnswer) {
+        alert('Please enter the correct answer.');
+        return;
+    }
+
+    if (!data.subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+
+    if (data.classroomId.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+
+    if (!data.examTypeId || !data.questionTypeId) {
+        alert('Please select both an exam type and question type.');
+        return;
+    }
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/savedropdown-question', // Backend endpoint for saving dropdown questions
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            if (response.status === 'success') {
+                alert('Dropdown question saved successfully!');
+                $('#dropdown-question-form')[0].reset(); // Reset the form
+            } else {
+                alert('Failed to save question: ' + response.message);
+            }
+        },
+        error: function (xhr) {
+            console.error('Error:', xhr.responseJSON);
+            alert('Failed to save question: ' + (xhr.responseJSON?.message || 'Unknown error.'));
+        },
+    });
+});
+
+
+
+
+
+
+
+//Register
+$(document).on('click', '#save-register-question', function (event) {
+    event.preventDefault();
+
+    // Gather data from the form
+    let subjectId = $('#subject-select').find(':selected').data('subject-id'); // Ensure this dropdown exists
+    let classroomIds = $('#classroom-select').val(); // Ensure classroom dropdown exists
+
+    // Handle correct answers input
+    let correctAnswersRaw = $('#registerCorrectAnswers').val().trim();
+    if (correctAnswersRaw === '') {
+        alert('Please provide correct answers as a comma-separated list (e.g., answer1, answer2).');
+        return;
+    }
+
+    // Convert comma-separated string into an array
+    let correctAnswers = correctAnswersRaw.split(',').map(answer => answer.trim());
+
+    const data = {
+        content: $('#registerQuestionText').val().trim(), // Question content
+        correctAnswers: correctAnswers, // Parsed array of answers
+        subjectId: parseInt(subjectId) || null, // Convert to integer or null
+        classroomId: Array.isArray(classroomIds) ? classroomIds.map(Number) : [], // Map classroom IDs to integers
+        examTypeId: parseInt($('#examTypeDropdown').val()) || null, // Selected exam type ID
+        questionTypeId: parseInt($('#questionTypeDropdown').val()) || null, // Selected question type ID
+        termId: typeof termId !== 'undefined' ? parseInt(termId) : null, // Ensure term ID is defined
+        sessionId: typeof sessionId !== 'undefined' ? parseInt(sessionId) : null, // Ensure session ID is defined
+    };
+
+    // Validate question content with at least 5 valid dropdown markers
+    const dropdownOptions = data.content.match(/\[(?:[^\/\]]+\/)+[^\/\]]+\]/g);
+    if (!dropdownOptions || dropdownOptions.length < 5) {
+        alert('The question must contain at least 5 valid dropdown markers in the format [option1/option2/...].');
+        return;
+    }
+
+    // AJAX request to the backend
+    $.ajax({
+        url: '/teacher/saveregister-question', // Confirm this URL is correct
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            if (response.status === 'success') {
+                alert('Register question saved successfully!');
+                // Optionally reset the form
+                $('#register-question-form')[0].reset();
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function (xhr) {
+            alert('An error occurred: ' + xhr.responseText);
+        }
+    });
+});
+
+
+
+
+
+
+
+
+//Images
+$('#ImageQuestionSubmit').on('click', function () {
+    // Fetch the necessary data
+    let subjectId = $('#subject-select').find(':selected').data('subject-id'); // Selected subject ID
+    let classroomIds = $('#classroom-select').val(); // Selected classroom IDs
+   
+
+
+    // Validate fields
+    if (!$('#additionalText').val().trim()) {
+        alert('Please enter the additional text for the question.');
+        return;
+    }
+
+    if (!$('#ImagecorrectAnswer').val().trim()) {
+        alert('Please provide the correct answer.');
+        return;
+    }
+
+    if (!subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+
+    if (!classroomIds || classroomIds.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+
+    if (!$('#examTypeDropdown').val() || !$('#questionTypeDropdown').val()) {
+        alert('Please select both an exam type and question type.');
+        return;
+    }
+
+    // Prepare FormData
+    let formData = new FormData();
+    formData.append('content', $('#additionalText').val().trim());
+    formData.append('correctAnswer', $('#ImagecorrectAnswer').val().trim());
+    formData.append('subjectId', subjectId);
+    formData.append('examTypeId', $('#examTypeDropdown').val());
+    formData.append('questionTypeId', $('#questionTypeDropdown').val());
+    formData.append('termId', termId);
+    formData.append('sessionId', sessionId);
+
+    // Append classroom IDs
+    classroomIds.forEach((id) => formData.append('classroomId[]', id));
+
+    // Append the uploaded image
+    let imageFile = $('#imageUpload')[0].files[0];
+    if (!imageFile) {
+        alert('Please upload an image for the question.');
+        return;
+    }
+    formData.append('imageUpload', imageFile);
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/saveimage-question',
+        type: 'POST',
+        data: formData,
+        processData: false, // Important for FormData
+        contentType: false, // Important for FormData
+        success: function (response) {
+            alert('Image question saved successfully!');
+            $('#images-question-form')[0].reset(); // Reset the form
+        },
+        error: function (xhr) {
+            console.error('Error:', xhr.responseJSON);
+            alert('Failed to save question: ' + (xhr.responseJSON?.message || 'Unknown error.'));
+        },
+    });
+});
+
+
+
+
+
+
+//Theory
+$('#TheoryQuestionSubmit').on('click', function () {
+    // Validate required fields
+    const question = $('#theoryQuestion').val().trim();
+    const subjectId = $('#subject-select').find(':selected').data('subject-id'); // Selected subject ID
+    const classroomIds = $('#classroom-select').val(); // Selected classroom IDs
+
+    if (!question) {
+        alert('Please enter the question.');
+        return;
+    }
+    if (!subjectId) {
+        alert('Please select a subject.');
+        return;
+    }
+    if (!classroomIds || classroomIds.length === 0) {
+        alert('Please select at least one classroom.');
+        return;
+    }
+
+    // Prepare data for submission
+    const data = {
+        question,
+        subjectId: parseInt(subjectId, 10),
+        classroomIds: classroomIds.map(Number),
+        termId, // Ensure this is provided dynamically
+        sessionId, // Ensure this is provided dynamically
+        examTypeId: 4, // Constant value
+        questionTypeId: 8, // Constant value
+    };
+
+    // Show a loading indicator (Optional, for better UX)
+    $('#TheoryQuestionSubmit').prop('disabled', true).text('Saving...');
+
+    // Send AJAX request
+    $.ajax({
+        url: '/teacher/save-theoryquestion',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (response) {
+            alert('Theory question saved successfully!');
+            $('#theory-question-form')[0].reset(); // Reset the form
+            $('#TheoryQuestionSubmit').prop('disabled', false).text('Save Question'); // Reset button
+        },
+        error: function (xhr) {
+            const errorMessage = xhr.responseJSON?.message || 'Unknown error occurred.';
+            console.error('Error:', errorMessage);
+            alert('Failed to save question: ' + errorMessage);
+            $('#TheoryQuestionSubmit').prop('disabled', false).text('Save Question'); // Reset button
+        },
+    });
+});
+
+
+
+
+//prev screen
+$(document).ready(function () {
+    // Fetch the preview questions on page load
+    $.ajax({
+        url: '/teacher/prev-question', // Update this URL as needed
+        method: 'GET',
+        success: function (data) {
+            const container = $('.content-placeholder');
+            container.empty(); // Clear existing content
+
+            // Append each question preview
+            data.forEach((question) => {
+                const questionHtml = `
+                    <div class="question-preview" style = "border-left:5px solid rgb(27, 46, 214); border-radius:5px; margin-right:10px;">
+                         <p style = "margin-top:10px; margin-left:10px;"><strong> ${question.subject}, ${question.class}, </strong></p>
+                        <h5 style = "margin-top:-10px; margin-left:10px;">${question.content}</h5>
+                        <p style = " margin-top:-10px; margin-left:10px;"><em>${question.createdAt}</em></p>
+                    </div>
+                    <hr>
+                `;
+                container.append(questionHtml);
+            });
+        },
+        error: function (xhr) {
+            console.error('Error fetching questions:', xhr.responseText);
+        },
+    });
+});
+
+
+
+
+
+
+  
+  </script>
+
 {% endblock %}

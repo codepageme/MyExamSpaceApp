@@ -39,6 +39,31 @@ delete_note:
     requirements:
         id: '\d+'
 
+teacher_preview_question:
+    path: /teacher/preview-question
+    controller: App\Controller\TeacherController::previewQuestions
+
+teacher_create_question:
+    path: /teacher/create-question
+    controller: App\Controller\TeacherController::createQuestion
+
+teacher_get_classrooms:
+    path: /teacher/get-classrooms/{teacherSubjectId}
+    controller: App\Controller\TeacherController::getClassrooms
+    methods: GET
+
+teacher_save_theoryquestion:
+    path: /teacher/save-theoryquestion
+    controller: App\Controller\TeacherController::saveTheoryQuestion
+    methods: POST
+
+
+
+
+
+
+
+
 
 
 
@@ -169,7 +194,24 @@ admin_create_student:
 
 admin_curriculum:
     path: /admin/curriculum
-    controller: App\Controller\AdminController::curriculumPage 
+    controller: App\Controller\AdminController::curriculumPage
+
+admin_add_classroom:
+    path: /admin/add-classroom
+    controller: App\Controller\AdminController::addclassroom
+    methods: POST
+
+admin_add_subject:
+    path: /admin/add-subject
+    controller: App\Controller\AdminController::addsubject
+    methods: POST
+
+
+
+
+
+
+
 
 
 
