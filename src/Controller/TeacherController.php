@@ -10,7 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Psr\Log\LoggerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+
 
 
 use App\Entity\TeacherSubject;
@@ -63,10 +64,13 @@ class TeacherController extends AbstractController
 {
 
     private $entityManager;
+    private $doctrine;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    // Updated constructor with both dependencies
+    public function __construct(EntityManagerInterface $entityManager, ManagerRegistry $doctrine)
     {
         $this->entityManager = $entityManager;
+        $this->doctrine = $doctrine; // Save the ManagerRegistry for later use
     }
 
 
@@ -183,7 +187,7 @@ public function authenticate(Request $request, TeacherRepository $teacherReposit
 
 
 
-//Teacher Account Controller / -------------------------------------------- ; Note ; starts here 
+//Teacher Account Controller  -------------------------------------------- ; Note ; starts here 
 
 #[Route('/teacher/account', name: 'teacher_account')]
 public function account(EntityManagerInterface $em, Request $request): Response
@@ -254,28 +258,177 @@ public function deleteNote(TeacherNote $note, EntityManagerInterface $em): Respo
 
 
 
-
-
-
 //Teacher Question logic -------------------------------------------------------------- Working
 
 //preview question
 
 #[Route('/teacher/preview-question', name: 'teacher_preview_question')]
-public function previewQuestions()
-{
-    // Access the logged-in user directly
-    $teacher = $this->getUser();
-    
-    // Fetch questions associated with this teacher
-    $questions = $this->entityManager->getRepository(Question::class)->findBy([
-        'teacher' => $teacher
-    ]);
+    public function previewQuestions(): Response
+    {
+        $teacher = $this->getUser(); // Get the currently logged-in teacher
 
-    return $this->render('teacher/previewquestion.html.twig', [
-        'questions' => $questions,
-    ]);
+        // Fetch the current academic term and session from the AcademicCalendar
+        $academicCalender = $this->entityManager->getRepository(AcademicCalender::class)
+            ->findOneBy([], ['id' => 'DESC']);  // Assuming latest record represents the current term/session
+        
+        if (!$academicCalender) {
+            throw $this->createNotFoundException('Academic Calendar not found');
+        }
+
+        $currentTerm = $academicCalender->getTerm();
+        $currentSession = $academicCalender->getSession();
+
+        // Fetch questions for the logged-in teacher using the EntityManager and JOIN with related options
+        $questions = $this->entityManager->getRepository(Question::class)
+            ->createQueryBuilder('q')
+            ->leftJoin('q.classrooms', 'c')->addSelect('c')
+            ->leftJoin('q.radioOption', 'ro')->addSelect('ro')
+            ->leftJoin('q.checkboxOption', 'co')->addSelect('co')
+            ->leftJoin('q.germanOption', 'go')->addSelect('go')
+            ->leftJoin('q.booleanOption', 'bo')->addSelect('bo')
+            ->leftJoin('q.dropdownOption', 'do')->addSelect('do')
+            ->leftJoin('q.registerOption', 'ropt')->addSelect('ropt')
+            ->leftJoin('q.imagesOption', 'io')->addSelect('io')
+            ->where('q.teacher = :teacher')
+            ->setParameter('teacher', $teacher)
+            ->orderBy('q.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        // Render the Twig template and pass the questions with related options
+        return $this->render('teacher/previewquestion.html.twig', [
+            'questions' => $questions,
+            'currentTerm' => $currentTerm,
+            'currentSession' => $currentSession,
+        ]);
+    }
+
+
+
+//Delete action ajax
+#[Route('/teacher/deletequestion/{id}', name: 'teacher_delete_question', methods: ['DELETE'])]
+public function deleteQuestion(Request $request, Question $question, EntityManagerInterface $entityManager): JsonResponse
+{
+    // Check if the request is AJAX
+    if ($request->isXmlHttpRequest()) {
+        try {
+            // Remove the question
+            $entityManager->remove($question);
+            $entityManager->flush();
+
+            return new JsonResponse(['status' => 'success', 'message' => 'Question deleted successfully.']);
+        } catch (\Exception $e) {
+            // Log the error for debugging if needed
+            return new JsonResponse(['status' => 'error', 'message' => 'Error deleting the question.']);
+        }
+    }
+
+    return new JsonResponse(['status' => 'error', 'message' => 'Invalid request.'], 400);
 }
+
+
+//Editquestion
+#[Route('/teacher/editquestion/{id}', name: 'teacher_edit_question', methods: ['POST'])]
+public function editQuestion(Request $request, Question $question, EntityManagerInterface $entityManager): JsonResponse
+{
+    // Ensure the request is AJAX
+    if ($request->isXmlHttpRequest()) {
+        $newContent = $request->request->get('content');
+
+        if ($newContent) {
+            try {
+                // Update the question content
+                $question->setContent($newContent);
+                $entityManager->flush();
+
+                return new JsonResponse(['status' => 'success', 'message' => 'Question updated successfully.']);
+            } catch (\Exception $e) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Error updating the question.']);
+            }
+        }
+
+        return new JsonResponse(['status' => 'error', 'message' => 'Invalid content.']);
+    }
+
+    return new JsonResponse(['status' => 'error', 'message' => 'Invalid request.'], 400);
+}
+
+
+
+//Export-Question
+#[Route('/teacher/exportquestions', name: 'teacher_export_questions', methods: ['POST'])]
+public function exportQuestions(Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    // Check if the request is AJAX
+    if ($request->isXmlHttpRequest()) {
+        // Decode the JSON payload
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['questionIds']) || !is_array($data['questionIds'])) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Invalid questionIds input.'], 400);
+        }
+
+        $questionIds = $data['questionIds'];
+
+        // Fetch selected questions from the database
+        $questions = $entityManager->getRepository(Question::class)->findBy(['id' => $questionIds]);
+
+        if (empty($questions)) {
+            return new JsonResponse(['status' => 'error', 'message' => 'No valid questions found.'], 404);
+        }
+
+        $fileContent = '';
+        foreach ($questions as $question) {
+            // Ensure only Radio-Button questions are exported
+            if ($question->getQuestionType()->getName() !== 'Radio-Button') {
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Export failed: This Questiontype isnt available; Only Radio-Button questions are Currently allowed.',
+                ], 400);
+            }
+
+            // Build the content for each question
+            $fileContent .= "Question: " . $question->getContent() . "\n";
+
+            $radioOptions = $question->getRadioOption(); // Assuming getRadioOption() fetches related options
+            if ($radioOptions) {
+                $fileContent .= "A: " . $radioOptions->getOptionA() . "\n";
+                $fileContent .= "B: " . $radioOptions->getOptionB() . "\n";
+                $fileContent .= "C: " . $radioOptions->getOptionC() . "\n";
+                $fileContent .= "D: " . $radioOptions->getOptionD() . "\n";
+                $fileContent .= "E: " . $radioOptions->getOptionE() . "\n";
+                $fileContent .= "Correct Answer: " . $radioOptions->getCorrectAnswer() . "\n";
+            }
+
+            $fileContent .= "\n"; // Add spacing between questions
+        }
+
+        // Return the generated content for the text file
+        return new JsonResponse(['status' => 'success', 'data' => $fileContent]);
+    }
+
+    // Return an error for non-AJAX requests
+    return new JsonResponse(['status' => 'error', 'message' => 'Invalid request.'], 400);
+}
+
+
+
+//filters
+//term
+#[Route('/teacher/getTerms', name: 'teacher_get_terms', methods: ['GET'])]
+public function getTerms(EntityManagerInterface $entityManager): JsonResponse
+{
+    // Use EntityManager to fetch terms
+    $query = $entityManager->createQuery('SELECT t.id, t.name FROM App\Entity\Term t');
+    $terms = $query->getResult();
+
+    return new JsonResponse(['terms' => $terms]);
+}
+
+
+
+
+
 
 
 

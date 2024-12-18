@@ -30,10 +30,17 @@ class Examtype
     #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'examType', orphanRemoval: true)]
     private Collection $theories;
 
+    /**
+     * @var Collection<int, Exam>
+     */
+    #[ORM\OneToMany(targetEntity: Exam::class, mappedBy: 'Examtype', orphanRemoval: true)]
+    private Collection $exams;
+
     public function __construct()
     {
         $this->questions = new ArrayCollection();
         $this->theories = new ArrayCollection();
+        $this->exams = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -107,6 +114,36 @@ class Examtype
             // set the owning side to null (unless already changed)
             if ($theory->getExamType() === $this) {
                 $theory->setExamType(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Exam>
+     */
+    public function getExams(): Collection
+    {
+        return $this->exams;
+    }
+
+    public function addExam(Exam $exam): static
+    {
+        if (!$this->exams->contains($exam)) {
+            $this->exams->add($exam);
+            $exam->setExamtype($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExam(Exam $exam): static
+    {
+        if ($this->exams->removeElement($exam)) {
+            // set the owning side to null (unless already changed)
+            if ($exam->getExamtype() === $this) {
+                $exam->setExamtype(null);
             }
         }
 

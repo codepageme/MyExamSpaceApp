@@ -70,6 +70,12 @@ class Question
     #[ORM\OneToOne(mappedBy: 'Question', cascade: ['persist', 'remove'])]
     private ?ImagesOption $imagesOption = null;
 
+    /**
+     * @var Collection<int, Responses>
+     */
+    #[ORM\OneToMany(targetEntity: Responses::class, mappedBy: 'Question', orphanRemoval: true)]
+    private Collection $responses;
+
 
     public function getId(): ?int
     {
@@ -127,6 +133,7 @@ class Question
     public function __construct()
     {
         $this->classrooms = new ArrayCollection();
+        $this->responses = new ArrayCollection();
     }
     
     public function getClassrooms(): Collection
@@ -314,6 +321,36 @@ public function setImagesOption(ImagesOption $imagesOption): static
     }
 
     $this->imagesOption = $imagesOption;
+
+    return $this;
+}
+
+/**
+ * @return Collection<int, Responses>
+ */
+public function getResponses(): Collection
+{
+    return $this->responses;
+}
+
+public function addResponse(Responses $response): static
+{
+    if (!$this->responses->contains($response)) {
+        $this->responses->add($response);
+        $response->setQuestion($this);
+    }
+
+    return $this;
+}
+
+public function removeResponse(Responses $response): static
+{
+    if ($this->responses->removeElement($response)) {
+        // set the owning side to null (unless already changed)
+        if ($response->getQuestion() === $this) {
+            $response->setQuestion(null);
+        }
+    }
 
     return $this;
 }

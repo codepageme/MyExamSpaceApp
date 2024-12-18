@@ -11,23 +11,26 @@
     <div class="loginform">
         <h1 id="who">Student Login</h1>
 
-        {# Display error messages if any #}
-        {% for flash_message in app.flashes('error') %}
-            <div class="alert alert-danger">{{ flash_message }}</div>
-        {% endfor %}
+       {# Display error message if present #}
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
 
         {# Form starts here #}
         <form action="{{ path('student_access') }}" method="POST">
             <div class="form-group">
                 <label for="firstname">First Name</label>
                 <span class="glyphicon glyphicon-user gly"></span>
-                <input type="text" name="_firstname" id="firstname" class="form-control signup" required>
+                <input type="text" name="_Firstname" id="firstname" class="form-control signup" 
+                 required pattern="[A-Za-z]+" title="Please enter only letters.">
             </div>
 
             <div class="form-group">
                 <label for="lastname">Last Name</label>
                 <span class="glyphicon glyphicon-user gly"></span>
-                <input type="text" name="_lastname" id="lastname" class="form-control signup" required>
+                <input type="text" name="_Lastname" id="lastname" class="form-control signup"
+                 required pattern="[A-Za-z]+" title="Please enter only letters.">
             </div>
 
 

@@ -45,99 +45,573 @@
         <a href="{{ path('teacher_preview_question') }}" class="btn btn-default"> <span class="glyphicon glyphicon-floppy-save"></span>  Preview Questions</a>
     </div>
     
-    <a href="#" class="btn custom-btn">Export Questions</a>
+    <a href="#"  id="exportQuestions" class="btn btn-info custom-btn">Export Questions</a>
+
+     <!-- Search / Sort /Filter --> 
+            <div class="container"  style="width:800px; margin-top:10px; margin-left:-120px;">
+                <div class="row">
+                    <!-- Search Bar Section -->
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="searchBar" 
+                                placeholder="Search for questions, classes, subjects, etc..."
+                            >
+                            <span class="input-group-addon">
+                                <i class="glyphicon glyphicon-search"></i> <!-- Search Icon -->
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                     <!--part 2-->
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col-md-4">
+                            <select id="termFilter" class="form-control">
+                                <option value="">Term</option>
+                                <!-- Options will be populated dynamically via AJAX -->
+                            </select>
+                        </div>
+                    </div>
+                                <!-- Filter by Classroom 
+                                <div class="form-group">
+                                    
+                                    <select id="classroomFilter" class="form-control">
+                                        <option value="">Class</option>
+                                        <!-- Populate dynamically 
+                                    </select>
+                                </div>
+
+                                <!-- Filter by Subject 
+                                <div class="form-group">
+                                    <select id="subjectFilter" class="form-control">
+                                        <option value="">Subject</option>
+                                        <!-- Populate dynamically 
+                                    </select>
+                                </div>
+
+                                <!-- Filter by Exam Type 
+                                <div class="form-group">
+                                    <select id="examTypeFilter" class="form-control">
+                                        <option value="">ExamTypes</option>
+                                        <!-- Populate dynamically 
+                                    </select>
+                                </div>
+
+                                <!-- Filter by Question Type 
+                                <div class="form-group">
+                                    <select id="questionTypeFilter" class="form-control">
+                                        <option value="">All Question Types</option>
+                                        <option value="1">Radio-Button</option>
+                                        <option value="2">Checkbox</option>
+                                        <!-- Add other question types
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        </div>
+
+                         <!--part 2-->
+                    </div>
+                </div>
+            </div>
 
 
 
-<div class="container" style="width:1000px; height:500px; overflow-y:scroll; overflow-x:hidden;margin-left:-80px;">
+    <div class="container table-responsive" style="width:1100px; height:380px; overflow-y:auto; overflow-x:hidden; margin-left:-110px; margin-top:50px;">
+    
     <!-- Question List -->
-  <table class="table table-striped table-hover mt-3">
+ <table class="table table-striped table-hover mt-3" id="questionsTable">
     <thead>
         <tr>
             <th><input type="checkbox" id="select-all"></th>
-            <th>S/N</th>
             <th>Question</th>
-            <th>Class(es)</th>
-            <th>Subject</th>
-            <th>Status</th>
-            <th>Answers</th>
-            <th>Actions</th>
+            <th style="text-align:center;">  Answer  </th>
+            <th style="text-align:center;">  Class(es)  </th>
+            <th style="text-align:center;">  Subject  </th>
+            <th style="text-align:center;">  Status  </th>
+            <th style="text-align:center;">  Actions  </th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="questionsTableBody">
+      
         {% for question in questions %}
             <tr>
+                <!-- Selection Checkbox -->
                 <td><input type="checkbox" class="select-question" value="{{ question.id }}"></td>
-                <td>{{ question.id }}</td>
-                <td>{{ question.content }}</td>
+
+                <!-- Snippet of the Question -->
+                <td>{{ question.content|slice(0, 50) }}{% if question.content|length > 50 %}...{% endif %}</td>
+
+                <!-- Answer Column -->
+                        <td>
+                            <p class="toggle-answer" style="cursor: pointer;" data-toggle="modal" data-target="#modal-{{ question.id }}-{{ question.questiontype.id }}">
+                                Show All
+                            </p>
+                        </td>
+
+
+                <!-- Class(es) -->
                 <td>
                     {% if question.classrooms|length > 0 %}
-                        {{ question.classrooms|map(c => c.name)|join(', ') }}
+                        {{ question.classrooms|map(c => c.classname)|join(', ') }}
                     {% else %}
                         None
                     {% endif %}
                 </td>
-                <td>{{ question.subject.course }}</td>
+
+                <!-- Subject -->
+                <td>{{ question.subject.course }}</td> 
+
+                <!-- Status -->
                 <td>
-                    {% set currentTerm = academicCalendar.term %}
-                    {% set currentSession = academicCalendar.session %}
                     {% if question.term.id == currentTerm.id and question.session.id == currentSession.id %}
-                        <span class="badge bg-success">New</span>
+                        <span class="label label-info">New</span>
                     {% else %}
-                        <span class="badge bg-secondary">Used</span>
+                        <span class="label label-default">Used</span>
                     {% endif %}
                 </td>
-                <td>
-                    {% if question.type == 'theory' %}
-                        <span class="text-muted">None available</span>
-                    {% else %}
-                        <button class="btn btn-link btn-sm show-answers" data-bs-toggle="collapse" data-bs-target="#answers-{{ question.id }}">
-                            Show All
-                        </button>
-                        <div id="answers-{{ question.id }}" class="collapse">
-                            {% if question.options|length > 0 %}
-                                <ul>
-                                    {% for option in question.options %}
-                                        <li>{{ option.label }}: {{ option.text }} {% if option.isCorrect %}<strong>(Correct)</strong>{% endif %}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <span class="text-muted">No options available</span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </td>
-                <td>
+
+                <!-- Actions -->
+                            <td>
                     <div class="dropdown">
-                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="actionsMenu-{{ question.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                            Actions
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="actionsMenu-{{ question.id }}">
-                            <li><a class="dropdown-item" href="#">Edit</a></li>
-                            <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                        <span class="glyphicon glyphicon-option-vertical" 
+                            type="button" id="actionsMenu-{{ question.id }}" 
+                            data-toggle="dropdown" aria-expanded="false" 
+                            style="cursor: pointer;">
+                        </span>
+                        <ul class="dropdown-menu dropdown-menu-right" 
+                            aria-labelledby="actionsMenu-{{ question.id }}">
+                            <li>
+                                <a href="#" class="dropdown-item edit-question" 
+                                    data-id="{{ question.id }}" data-content="{{ question.content }}">
+                                    <i class="glyphicon glyphicon-pencil"></i>   Edit
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="dropdown-item delete-question text-danger" 
+                                    data-id="{{ question.id }}">
+                                    <i class="glyphicon glyphicon-trash"></i>   Delete
+                                </a>
+                            </li>
+                            <hr>
+                            <li>
+                                <h4 class="qifo">Question-Card:</h4>
+                                <p class="difo">{{ question.session.name}} | {{ question.term.name}}</p>
+                                    <p class="difo">{{ question.examtype.name}}</p>
+                                    <p class="difo">{{ question.questiontype.name}}</p>
+                            </li>
                         </ul>
                     </div>
                 </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="8" class="text-center">No questions available for you.</td>
+                <td colspan="7" class="text-center">No questions available for you.</td>
             </tr>
         {% endfor %}
-    </tbody>
-</table>
+             </tbody>
+        </table>
+
+
+{% for question in questions %}
+    <!-- Modal -->
+    <div class="modal fade" id="modal-{{ question.id }}-{{ question.questiontype.id }}" tabindex="-1" role="dialog" aria-labelledby="modalLabel-{{ question.id }}-{{ question.questiontype.id }}">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modalLabel-{{ question.id }}-{{ question.questiontype.id }}">Question Details</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <p><strong style="font-size: 1.2em;">Full Question:</strong></p>
+                            <p style="font-size: 1.5em; font-weight: bold;">{{ question.content }}</p>
+                        </div>
+                    </div>
+
+                    {% if question.RadioOption is not null %}
+                        <!-- Display Radio Options -->
+                        <p><strong>Options:</strong></p>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <p><strong>A:</strong> {{ question.RadioOption.optionA }}</p>
+                                <p><strong>B:</strong> {{ question.RadioOption.optionB }}</p>
+                            </div>
+                            <div class="col-xs-6">
+                                <p><strong>C:</strong> {{ question.RadioOption.optionC }}</p>
+                                <p><strong>D:</strong> {{ question.RadioOption.optionD }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <p><strong>E:</strong> {{ question.RadioOption.optionE }}</p>
+                            </div>
+                        </div>
+                        <p><strong>Correct Answer:</strong> {{ question.RadioOption.correctAnswer }}</p>
+                    {% elseif question.CheckboxOption is not null %}
+                        <!-- Display Checkbox Options -->
+                        <p><strong>Options:</strong></p>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <p>A: {{ question.CheckboxOption.optionA }}</p>
+                                <p>B: {{ question.CheckboxOption.optionB }}</p>
+                            </div>
+                            <div class="col-xs-6">
+                                <p>C: {{ question.CheckboxOption.optionC }}</p>
+                                <p>D: {{ question.CheckboxOption.optionD }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <p><strong>E:</strong> {{ question.CheckboxOption.optionE }}</p>
+                            </div>
+                        </div>
+                        <p><strong>Correct Answers:</strong></p>
+                        <ul>
+                            {% for correctAnswer in question.CheckboxOption.correctAnswers %}
+                                <li style="margin-left:25px;">{{ correctAnswer }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% elseif question.GermanOption is not null %}
+                        <p><strong>Correct Answer:</strong> {{ question.GermanOption.correctAnswer }}</p>
+                  {% elseif question.booleanOption is not null %}
+                        <p><strong>Boolean Option:</strong> {{ question.booleanOption.correctAnswer ? 'True' : 'False' }}</p>
+                    {% elseif question.DropdownOption is not null %}
+                        <p><strong>Correct Answer:</strong> {{ question.DropdownOption.correctAnswer }}</p>
+                     {% elseif question.RegisterOption is not null %}
+                        <p><strong>Correct Answer:</strong>
+                         <ul>
+                            {% for correctAnswer in question.RegisterOption.correctAnswers %}
+                                <li style="margin-left:25px;">{{ correctAnswer }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% elseif question.ImagesOption is not null %}
+                        <p><strong>Correct Answer:</strong> {{ question.ImagesOption.correctAnswer }}</p>
+                    {% else %}
+                        <p class="text-muted">No options available.</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+ 
+
+<!-- Edit Question Modal -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1" role="dialog" aria-labelledby="editQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="editQuestionModalLabel">Edit Question</h4>
+            </div>
+            <div class="modal-body">
+                <form id="editQuestionForm">
+                    <input type="hidden" id="editQuestionId">
+                    <div class="form-group">
+                        <label for="editQuestionContent">Content</label>
+                        <textarea id="editQuestionContent" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveQuestionChanges">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
 
 <script>
-    // Select all functionality
+
+//Toggle action btn
+$(document).ready(function () {
+    // Toggle dropdown visibility on clicking the glyphicon
+    $(document).on('click', '.glyphicon-option-vertical', function (e) {
+        e.stopPropagation(); // Prevent event from bubbling to document
+        const dropdownMenu = $(this).siblings('.dropdown-menu');
+
+        // Hide any open dropdowns except the clicked one
+        $('.dropdown-menu').not(dropdownMenu).hide();
+
+        // Toggle the visibility of the associated dropdown
+        dropdownMenu.toggle();
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function () {
+        $('.dropdown-menu').hide();
+    });
+});
+
+
+
+
+//Actions
+$(document).ready(function () {
+    $(document).on('click', '.delete-question', function (e) {
+        e.preventDefault();
+
+        // Get the question ID from the data attribute
+        const questionId = $(this).data('id');
+        const rowToDelete = $(this).closest('tr');
+
+        // Confirm deletion
+        if (confirm("Are you sure you want to delete this question?")) {
+            $.ajax({
+                url: `/teacher/deletequestion/${questionId}`, // Adjust the URL to match your route
+                type: 'DELETE',
+                success: function (response) {
+                    if (response.status === 'success') {
+                        // Remove the row from the table
+                        rowToDelete.fadeOut(300, function () {
+                            $(this).remove();
+                        });
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting the question.');
+                }
+            });
+        }
+    });
+});
+
+
+
+//edit modal action
+$(document).ready(function () {
+    // Handle Edit Button Click
+    $('.edit-question').on('click', function (e) {
+        e.preventDefault();
+        
+        // Get the question data
+        const questionId = $(this).data('id');
+        const questionContent = $(this).data('content');
+        
+        // Populate the modal fields
+        $('#editQuestionId').val(questionId);
+        $('#editQuestionContent').val(questionContent);
+        
+        // Show the modal
+        $('#editQuestionModal').modal('show');
+    });
+    
+    // Handle Save Changes Button Click
+    $('#saveQuestionChanges').on('click', function () {
+        const questionId = $('#editQuestionId').val();
+        const questionContent = $('#editQuestionContent').val();
+        
+        // Send AJAX Request to Update Question
+        $.ajax({
+            url: `/teacher/editquestion/${questionId}`,
+            method: 'POST',
+            data: {
+                content: questionContent,
+            },
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            success: function (response) {
+                if (response.status === 'success') {
+                    alert(response.message);
+                    
+                    // Dynamically reload the page
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Error updating the question.');
+            },
+        });
+    });
+});
+
+
+
+
+//Export question
+$(document).ready(function () {
+    // Handle "Select All" functionality
+    $('#selectAll').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        $('.select-question').prop('checked', isChecked);
+    });
+
+    // Handle Export Questions button click
+    $('#exportQuestions').on('click', function (e) {
+        e.preventDefault();
+
+        // Collect selected question IDs
+        const selectedQuestions = [];
+
+        $('.select-question:checked').each(function () {
+            selectedQuestions.push($(this).val());
+        });
+
+        // Check if at least one question is selected
+        if (selectedQuestions.length === 0) {
+            alert('Please select at least one question to export.');
+            return;
+        }
+
+        // Send an AJAX POST request to export the questions
+        $.ajax({
+            url: '/teacher/exportquestions',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ questionIds: selectedQuestions }),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            success: function (response) {
+                if (response.status === 'success') {
+                    const blob = new Blob([response.data], { type: 'text/plain' });
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'questions.txt';
+                    link.click();
+                } else {
+                    alert('Error exporting questions: ' + response.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+                alert('An error occurred while processing your request; Please be sure to select Radio-Btn Questions only as Other Questiontypes are Currently unavailable for Export.');
+            },
+        });
+    });
+});
+
+
+
+
+//search btn
+$(document).ready(function() {
+    // Handle the search input
+    $('#searchBar').on('keyup', function() {
+        var searchTerm = $(this).val().toLowerCase(); // Get the search term
+        $('#questionsTable tbody tr').each(function() {
+            var rowText = $(this).text().toLowerCase(); // Get the text of the row
+            if (rowText.indexOf(searchTerm) !== -1) {
+                $(this).show(); // Show row if it matches the search term
+            } else {
+                $(this).hide(); // Hide row if it doesn't match the search term
+            }
+        });
+    });
+});
+
+
+
+// Select all functionality
     document.getElementById('select-all').addEventListener('change', function () {
         const checkboxes = document.querySelectorAll('.select-question');
         checkboxes.forEach(checkbox => checkbox.checked = this.checked);
     });
+
+
+
+
+
+
+
+
+
+
+
+
+//Filter btn
+//term
+$(document).ready(function () {
+    // Fetch terms on page load
+    $.ajax({
+        url: '/teacher/getTerms', // Backend route for fetching terms
+        method: 'GET',
+        success: function (response) {
+            if (response.terms && response.terms.length > 0) {
+                response.terms.forEach(function (term) {
+                    $('#termFilter').append(`<option value="${term.id}">${term.name}</option>`);
+                });
+            }
+        },
+        error: function () {
+            console.error('Failed to fetch terms.');
+        }
+    });
+});
+
+
+$(document).ready(function() {
+    // Handle term filter change
+    $('#termFilter').on('change', function () {
+        const selectedTerm = $(this).val(); // Get selected term
+
+        // Filter and sort table rows
+        filterAndSortTableByTerm(selectedTerm);
+    });
+
+    // Function to filter and sort the table rows based on selected term
+    function filterAndSortTableByTerm(termName) {
+        const tableBody = $('#questionsTableBody');
+        const rows = tableBody.find('tr').get();
+
+        rows.forEach(function (row) {
+            const termText = $(row).find('.term-name').text().trim(); // Extract term name from row
+
+            // Check if the term matches the selected term (or if no term is selected)
+            if (termName === "" || termText.toUpperCase().includes(termName.toUpperCase())) {
+                $(row).show(); // Show matching row
+            } else {
+                $(row).hide(); // Hide non-matching row
+            }
+        });
+
+        // Now sort the visible rows by term name
+        const visibleRows = tableBody.find('tr:visible').get(); // Get only visible rows
+
+        visibleRows.sort(function (a, b) {
+            const termA = $(a).find('.term-name').text().trim().toUpperCase();
+            const termB = $(b).find('.term-name').text().trim().toUpperCase();
+
+            if (termA < termB) return -1;
+            if (termA > termB) return 1;
+            return 0;
+        });
+
+        // Re-append the sorted rows back into the table body
+        $.each(visibleRows, function (index, row) {
+            tableBody.append(row);
+        });
+    }
+});
+
+
+
+
+
 </script>
 
-            {% endfor %}
-        </tbody>
-    </table>
+
+
 
 
 </div>

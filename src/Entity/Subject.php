@@ -42,6 +42,12 @@ class Subject
     #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'subject', orphanRemoval: true)]
     private Collection $theories;
 
+    /**
+     * @var Collection<int, Exam>
+     */
+    #[ORM\OneToMany(targetEntity: Exam::class, mappedBy: 'Subject', orphanRemoval: true)]
+    private Collection $exams;
+
    
 
     public function __construct()
@@ -50,6 +56,7 @@ class Subject
         $this->teacherSubjects = new ArrayCollection();
         $this->questions = new ArrayCollection();
         $this->theories = new ArrayCollection();
+        $this->exams = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -181,6 +188,36 @@ class Subject
             // set the owning side to null (unless already changed)
             if ($theory->getSubject() === $this) {
                 $theory->setSubject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Exam>
+     */
+    public function getExams(): Collection
+    {
+        return $this->exams;
+    }
+
+    public function addExam(Exam $exam): static
+    {
+        if (!$this->exams->contains($exam)) {
+            $this->exams->add($exam);
+            $exam->setSubject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExam(Exam $exam): static
+    {
+        if ($this->exams->removeElement($exam)) {
+            // set the owning side to null (unless already changed)
+            if ($exam->getSubject() === $this) {
+                $exam->setSubject(null);
             }
         }
 

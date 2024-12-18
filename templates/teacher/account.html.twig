@@ -37,6 +37,10 @@
 {% endblock %}
 
 {% block content %}
+
+
+ <div class="container" style="max-width:900px;">
+
  <h3 id="pagetag">My ACCOUNT</h3>
 
     <div class="container bracket">
@@ -96,6 +100,10 @@
             <a href="{{ path('delete_note', {'id': note.id}) }}">Delete</a>
         </div>
     {% endfor %}
+</div>
+
+
+
 </div>
 
 {% endblock %}

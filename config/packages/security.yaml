@@ -13,10 +13,7 @@ security:
                 class: App\Entity\Admin
                 property: username
 
-        students:
-            entity:
-                class: App\Entity\Student
-                property: firstname
+            #student provider
 
         classteachers:
             entity:
@@ -55,21 +52,9 @@ security:
                 invalidate_session: true
 
         # Student firewall configuration
-        student:
-            pattern: ^/student
-            #stateless: false
-            provider: students
-            form_login:
-                username_parameter: _firstname   # Custom username field
-                password_parameter: _password
-                login_path: student_login_form
-                check_path: student_access
-                default_target_path: student_dashboard
-                csrf_token_id: access
-            logout:
-                path: student_logout
-                target: student_login_form
-
+       
+        #classteacher
+        
         classteacher:
             lazy: true
             pattern: ^/classteacher
@@ -132,7 +117,7 @@ security:
 
         # Student access control
         - { path: ^/student/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/student/dashboard, roles: ROLE_STUDENT }
+        #- { path: ^/student/dashboard, roles: ROLE_STUDENT }
 
     role_hierarchy:
         ROLE_ADMIN: ROLE_USER

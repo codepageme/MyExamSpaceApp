@@ -102,11 +102,14 @@ body {
     font-size: small;
     margin-left: 40px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    margin-left: -90px;
 }
 
 .bracket{
     margin-top: 10px;
     text-align: left;
+    margin-left: -50px;
+    width:900px;
 }
 
 .prof {
@@ -215,16 +218,69 @@ p{
 }
 
 .custom-btn {
-    background-color: #87CEEB; /* Sky blue color */
-    color: #2488af;
-    border-color: #87CEEB; /* Match border to background */
     margin-top:10px;
     margin-right: -80px; 
     margin-left: 90px;
     float:inline-end;
   }
 
-  .custom-btn:hover {
-    background-color: #70B7D9; /* Slightly darker blue for hover effect */
-    border-color: #70B7D9;
-  }
+.difo{
+    color:#006AA5;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: left;
+    margin-left: 5px;
+}
+
+.qifo{
+    color: #333;
+    text-align: left;
+    margin-left:5px;
+}
+
+.table-responsive {
+    position: relative;
+}
+
+.table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: white; /* Adjust to match your design */
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+#spacenote{
+    height: 97%;
+    width: 98%;
+    background-color: rgb(247, 246, 246);
+    border-radius: 20px;
+      
+}
+
+
+#slogo{
+    border: 1px solid #16095f;
+    border-radius: 70%;
+    width: 70px;
+    height: 70px;
+    margin: 20px;
+}
+
+/* Custom styling for exam dates */
+.exam-date {
+    background-color: #024fc4 !important;
+    color: white !important;
+    border-radius: 50%;
+}
+
+/* Optionally, customize the size of the calendar */
+.calendar {
+    width: 100%;
+    display: inline-block;
+}
+
+.timecount{
+    color:#006AA5;
+    font-weight: bolder;
+}

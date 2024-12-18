@@ -1,0 +1,879 @@
+{% extends 'xbase.html.twig' %}
+
+{% block title %}Objective Questions{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+   
+    <noscript>
+        <div class="noscript-overlay">
+          <h1> ⚠️ </h1> 
+          <h4>Scripts are required for this exam. Please enable JavaScript to continue.</h4>
+        </div>
+    </noscript>
+
+
+    <!-- Fullscreen Warning -->
+    <div id="fullscreenWarning">
+        <h2>Please Enter Full screen to Proceed with the Exam</h2>
+        <p>Exams are only allowed on Full Screen Mode to avoid distractions</p>
+        <button id="fullscreenButton">Go To Full-screen</button>
+    </div>
+
+
+<div class="button-container">
+    <a href="/" class="btn btn-primary disabled"> <span class="glyphicon glyphicon-file"></span> Objectives</a>
+    <a href="/" class="btn btn-default disabled"> <span class="glyphicon glyphicon-file"></span> Theories</a>
+</div>
+
+
+<div class="exam-details" style="text-align:center;">
+    <h4 class="title"><strong>{{ exam.subject.course }} , {{ exam.duration|date('H:i') }} minutes</strong></h4>
+
+   <div id="countdown-timer">
+    <h2 id="time-remaining" class="timecount">Loading...</h2>
+   </div>
+
+    <p>Instruction: No available instructions.</p>
+</div>
+
+
+
+
+
+<div id="question-container" class="question-containeq">
+    <div id="question-text" class="question-text">Loading question...</div>
+</div>
+
+<div id="options-container" class="options-container">
+    <!-- Options will be dynamically populated here -->
+</div>
+
+<div id="student-response" class="response-container">
+    <!-- Student's response will be displayed here -->
+</div>
+
+
+
+
+<!-- Error message area -->
+<div id="error-message" style="display: none;"></div>
+
+
+
+<!-- Pagination controls (Previous, Page count, Next) -->
+<div class="pagination-container">
+  <div class="page-numbers-wrapper">
+    <div class="page-numbers">
+      <!-- Page numbers dynamically generated here -->
+    </div>
+  </div>
+  <div class="pagination-controls">
+    <button id="prev-button" class="btn btn-primary">&lt;</button>
+    <span id="page-info"> Page 1 of 20</span>
+    <button id="next-button" class="btn btn-primary">&gt;</button>
+     <button id="submit-button" class="btn btn-sm btn-danger" style="display: none; margin-left :5px; ">Submit</button>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+ <!-- Student Profile on the Left -->
+        <div class="col-xs-5 col-sm-5">
+            <div class="student-profile" style="text-align: left;">
+                <img src="/" alt="Profile Picture" class="img-thumbnail" style="width: 70px; height: 70px; border-radius: 50%;"/>
+                <p>{{ student.name }}</p>
+            </div>
+        </div>
+        <!-- Logout Button on the Right -->
+        <div class="col-xs-5 col-sm-5 text-right" style="margin-top:50px; margin-right:40px; ">
+            <a href="{{ path('student_logout') }}" class="glyphicon glyphicon-log-out" id="logout-button" >
+             Logout
+            </a>
+        </div>
+
+
+
+
+
+</div>
+
+<script>
+const duration = {{ durationInSeconds }}; // Total duration in seconds
+const timerElement = document.getElementById('time-remaining');
+const theoryPageUrl = "{{ theoryPageUrl }}";
+const resultPageUrl = "{{ resultPageUrl }}";
+const examType = "{{ examType }}"; // 'Examination' or another type
+const studentId = "{{ studentId }}";  // Unique student ID (passed dynamically from backend)
+const examToken = "{{ examToken }}";  // Unique exam token (passed dynamically from backend)
+
+// Unique keys
+const storageKey = `examEndTime_${studentId}_${examToken}`;
+const tamperKey = `tamperFlag_${studentId}_${examToken}`;
+
+// Utility: Set a cookie
+function setCookie(name, value, expirationInSeconds) {
+    const date = new Date();
+    date.setTime(date.getTime() + expirationInSeconds * 1000);
+    document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+}
+
+// Utility: Get a cookie
+function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const [key, value] = cookies[i].trim().split('=');
+        if (key === name) return value;
+    }
+    return null;
+}
+
+// Utility: Delete a cookie
+function deleteCookie(name) {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+}
+
+// Handle tampering detection
+function monitorLocalStorage() {
+    const originalValue = localStorage.getItem(storageKey);
+
+    setInterval(() => {
+        const currentValue = localStorage.getItem(storageKey);
+        if (currentValue !== originalValue) {
+            persistTamperingState();
+            displayTamperingWarning();
+        }
+    }, 1000);
+}
+
+// Persist tampering state in both localStorage and cookie
+function persistTamperingState() {
+    localStorage.setItem(tamperKey, 'true');
+    setCookie(tamperKey, 'true', 24 * 60 * 60); // 24-hour cookie
+}
+
+// Check for tampering state on page load
+function checkTamperingOnLoad() {
+    const tamperedLocal = localStorage.getItem(tamperKey) === 'true';
+    const tamperedCookie = getCookie(tamperKey) === 'true';
+
+    if (tamperedLocal || tamperedCookie) {
+        persistTamperingState(); // Re-sync if only one is set
+        displayTamperingWarning();
+    }
+}
+
+// Display tampering warning overlay
+function displayTamperingWarning() {
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'white';
+    overlay.style.zIndex = '9999';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+
+    const warningMessage = document.createElement('div');
+    warningMessage.style.color = 'red';
+    warningMessage.style.fontSize = '3rem';
+    warningMessage.style.textAlign = 'center';
+    warningMessage.innerHTML = `
+        <h1> How Did You Even Get Here !</h1>
+         <h2> What did You Do ??</h2>
+        <h5>Warning: Timer tampering detected!</p>
+        <h5>The page has been locked.</p>
+    `;
+    overlay.appendChild(warningMessage);
+
+    document.body.appendChild(overlay);
+}
+
+// Start the countdown timer
+function startCountdown(duration) {
+    let endTime = Date.now() + duration * 1000;
+
+    // Check if localStorage already has an endTime
+    const storedData = JSON.parse(localStorage.getItem(storageKey));
+    if (storedData) {
+        endTime = storedData.endTime; // Use stored end time
+    } else {
+        const expirationTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+        localStorage.setItem(
+            storageKey,
+            JSON.stringify({ endTime, expirationTime })
+        );
+    }
+
+    function updateTimer() {
+        const now = Date.now();
+        const remainingTime = Math.max(0, Math.floor((endTime - now) / 1000));
+
+        const hours = Math.floor(remainingTime / 3600);
+        const minutes = Math.floor((remainingTime % 3600) / 60);
+        const seconds = remainingTime % 60;
+
+        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            redirectToNextPage();
+        }
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+}
+
+// Automatically clear expired localStorage keys
+function clearExpiredStorage() {
+    const storedData = JSON.parse(localStorage.getItem(storageKey));
+    if (storedData && Date.now() > storedData.expirationTime) {
+        localStorage.removeItem(storageKey);
+        deleteCookie(tamperKey); // Clear tampering flag
+    }
+}
+
+// Handle redirection when the timer ends
+function redirectToNextPage() {
+    if (examType === 'Examination') {
+        window.location.href = theoryPageUrl;
+    } else {
+        window.location.href = resultPageUrl;
+    }
+}
+
+// Attach the logic to run on page load
+document.addEventListener("DOMContentLoaded", () => {
+    clearExpiredStorage(); // Clear expired keys
+    checkTamperingOnLoad(); // Check tampering state
+    startCountdown(duration);
+    monitorLocalStorage(); // Detect tampering
+});
+
+
+
+
+
+
+
+  // Function to request fullscreen mode
+        function enterFullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                document.documentElement.msRequestFullscreen();
+            } else {
+                console.error("Fullscreen is not supported in this browser.");
+            }
+        }
+
+        // Check if fullscreen mode is active
+        function isFullscreen() {
+            return document.fullscreenElement || 
+                document.mozFullScreenElement || 
+                document.webkitFullscreenElement || 
+                document.msFullscreenElement;
+        }
+
+        // Handle fullscreen button click
+        document.getElementById('fullscreenButton').addEventListener('click', function () {
+            enterFullscreen();
+        });
+
+        // Monitor fullscreen changes
+        document.addEventListener('fullscreenchange', toggleExamAccess);
+        document.addEventListener('webkitfullscreenchange', toggleExamAccess);
+        document.addEventListener('mozfullscreenchange', toggleExamAccess);
+        document.addEventListener('msfullscreenchange', toggleExamAccess);
+
+        // Toggle visibility of the exam content and fullscreen warning
+        function toggleExamAccess() {
+            if (isFullscreen()) {
+                document.getElementById('fullscreenWarning').style.display = 'none';
+                document.getElementById('examContent').style.display = 'block';
+            } else {
+                // If fullscreen is exited, block the page again
+                document.getElementById('fullscreenWarning').style.display = 'flex';
+                document.getElementById('examContent').style.display = 'none';
+                enterFullscreen();  // Re-enter fullscreen if the user exits it
+            }
+        }
+
+        // Enforce fullscreen every few seconds
+        setInterval(function () {
+            if (!isFullscreen()) {
+                enterFullscreen();  // Re-enter fullscreen if not in fullscreen mode
+            }
+        }, 2000);  // Check every 2 seconds
+
+
+
+
+
+
+
+
+
+
+
+
+$(document).ready(function () {
+    const examToken = "{{ examToken }}"; // Token passed from the backend
+    const theoryPageUrl = "{{ theoryPageUrl }}"; // Backend-passed URL for theory page
+    const resultPageUrl = "{{ resultPageUrl }}"; // Backend-passed URL for result page
+    const examType = "{{ examType }}"; // Backend-passed exam type: "examination" or others
+    let currentPage = 1;
+    let totalPages = 1;
+
+    // Fetch a question for the current page
+    function fetchQuestion(page, retryCount = 3) {
+        $.ajax({
+            url: `/student/${examToken}/questions`,
+            type: "GET",
+            data: { page: page },
+            dataType: "json",
+            beforeSend: function () {
+                $("#spinner").show();
+                $("#error-message").hide();
+                $("#question-text").hide();
+                $("#options-container").empty();
+                $("#student-response").empty();
+            },
+            success: function (response) {
+                $("#spinner").hide();
+                $("#question-text").show();
+
+                if (response.error) {
+                    $("#error-message").text(response.error).show();
+                    return;
+                }
+
+                // Update question and options
+                $("#question-text").html(renderQuestionWithDropdowns(response.question));
+                renderOptions(response);
+
+                // Update pagination state
+                currentPage = response.currentPage;
+                totalPages = response.totalPages;
+
+                // Update the pagination controls
+                updatePaginationControls();
+            },
+            error: function () {
+                if (retryCount > 0) {
+                    fetchQuestion(page, retryCount - 1);
+                } else {
+                    $("#spinner").hide();
+                    $("#error-message").text("An error occurred while fetching the question. Please try again.").show();
+                }
+            },
+        });
+    }
+
+    // Update pagination controls
+    function updatePaginationControls() {
+        const prevButton = $("#prev-button");
+        const nextButton = $("#next-button");
+        const submitButton = $("#submit-button");
+        const paginationInfo = $("#page-info");
+
+        // Enable/Disable Previous button
+        prevButton.prop("disabled", currentPage <= 1);
+
+        // Update "Page X of Y" text
+        paginationInfo.text(` Page ${currentPage} of ${totalPages}`);
+
+        // Show or hide Next/Submit button
+        if (currentPage < totalPages) {
+            nextButton.show();
+            submitButton.hide();
+        } else {
+            nextButton.hide();
+            submitButton.show();
+        }
+
+        // Update page numbers dynamically
+        const pageNumbersDiv = $(".page-numbers");
+        pageNumbersDiv.empty(); // Clear existing numbers
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = $("<span>")
+                .addClass("page-item")
+                .text(i)
+                .attr("data-page", i)
+                .css({
+                    padding: "10px 15px",
+                    borderRadius: i === currentPage ? "50%" : "10px",
+                    backgroundColor: i === currentPage ? "#0056b3" : "#e0e0e0",
+                    color: i === currentPage ? "white" : "black",
+                    margin: "5px",
+                    cursor: "pointer",
+                });
+
+            if (i === currentPage) {
+                pageButton.addClass("active");
+            }
+
+            pageNumbersDiv.append(pageButton);
+        }
+
+        // Hover effect for better UX
+        $(".page-item").hover(
+            function () {
+                $(this).css({ backgroundColor: "#007bff", color: "white" });
+            },
+            function () {
+                if (!$(this).hasClass("active")) {
+                    $(this).css({ backgroundColor: "#e0e0e0", color: "black" });
+                }
+            }
+        );
+    }
+
+    // Render question options based on the type
+    function renderOptions(response) {
+        const responseContainer = $("#student-response");
+
+        switch (response.options.type) {
+            case "RadioOption":
+                renderRadioOptions(response.options.options);
+                break;
+            case "CheckboxOption":
+                renderCheckboxOptions(response.options.options);
+                break;
+            case "GermanOption":
+                renderGermanOption();
+                break;
+            case "BooleanOption":
+                renderBooleanOption(response.options.options);
+                break;
+            case "DropdownOption":
+            case "RegisterOption":
+                 renderDropdownsInQuestion(); 
+                break;
+            case "ImagesOption":
+                renderImageOption(response.options.options);
+                break;
+            default:
+                $("#options-container").html("<p>No valid options available.</p>");
+        }
+
+        // Attach response input event
+        $("#options-container").on("change", "input, select", function () {
+            const studentResponse = getStudentResponse();
+            responseContainer.text("Your Response: " + studentResponse);
+        });
+    }
+
+    function renderRadioOptions(options) {
+        const optionsContainer = $("#options-container");
+        Object.keys(options).forEach(function (key) {
+            optionsContainer.append(`
+                <div>
+                    <input type="radio" name="option" value="${key}" id="${key}">
+                    <label for="${key}">${options[key]}</label>
+                </div>
+            `);
+        });
+    }
+
+    function renderCheckboxOptions(options) {
+        const optionsContainer = $("#options-container");
+        Object.keys(options).forEach(function (key) {
+            optionsContainer.append(`
+                <div>
+                    <input type="checkbox" name="option" value="${key}" id="${key}">
+                    <label for="${key}">${options[key]}</label>
+                </div>
+            `);
+        });
+    }
+
+    function renderGermanOption() {
+        const optionsContainer = $("#options-container");
+        optionsContainer.append(`
+            <div>
+                <label for="germanResponse">Your Answer:</label>
+                <input type="text" id="germanResponse" name="germanResponse" placeholder="Enter your answer here">
+            </div>
+        `);
+    }
+
+    function renderBooleanOption(options) {
+        const optionsContainer = $("#options-container");
+        Object.keys(options).forEach(function (key) {
+            optionsContainer.append(`
+                <div>
+                    <input type="radio" name="booleanOption" value="${key}" id="${key}">
+                    <label for="${key}">${options[key]}</label>
+                </div>
+            `);
+        });
+    }
+
+    function renderImageOption(options) {
+        const optionsContainer = $("#options-container");
+        optionsContainer.append(`
+            <div>
+                <img src="${options.imagePath}" alt="Question Image" style="max-width: 100%; max-height: 300px; marign-botton:5px;">
+                <div>
+                    <label for="imageResponse">Your Answer:</label>
+                    <input type="text" id="imageResponse" name="imageResponse" placeholder="Enter your answer here">
+                </div>
+            </div>
+        `);
+    }
+
+
+
+    // Embed dropdowns into the question text
+    function renderDropdownsInQuestion() {
+        $("#question-text").on("change", ".dynamic-dropdown", function () {
+            const studentResponse = getStudentResponse();
+            $("#student-response").text("Your Response: " + studentResponse);
+        });
+    }
+
+
+    function renderQuestionWithDropdowns(questionText) {
+        const regex = /\[(.*?)\]/g;
+
+        // Replace placeholders with dropdowns
+        return questionText.replace(regex, function (match, options) {
+            const optionList = options.split("/").map(option => option.trim());
+
+            let dropdownHtml = `<select class="dynamic-dropdown">`;
+            dropdownHtml += `<option value="">Select an option</option>`; // Default option
+            optionList.forEach(option => {
+                dropdownHtml += `<option value="${option}">${option}</option>`;
+            });
+            dropdownHtml += `</select>`;
+
+            return dropdownHtml; // Replace the placeholder with the dropdown
+        });
+    }
+
+    function getStudentResponse() {
+        const response = [];
+
+        // Iterate through all inputs and dropdowns
+        $("#options-container select, input").each(function () {
+            const inputType = $(this).attr("type");
+            const value = $(this).val();
+
+            if (inputType === "checkbox" || inputType === "radio") {
+                if ($(this).is(":checked")) response.push(value);
+            } else if ($(this).is("select")) {
+                const selectedValue = $(this).find(":selected").val();
+                if (selectedValue) response.push(selectedValue);
+            } else {
+                if (value) response.push(value);
+            }
+        });
+
+        return response.join(", ");
+    }
+
+    // Pagination and event bindings
+    $("#prev-button").on("click", function () {
+        const selectedAnswer = getStudentResponse();
+        saveStudentResponse(currentPage, examToken, selectedAnswer); // Save current response
+
+        if (currentPage > 1) {
+            currentPage--;
+            fetchQuestion(currentPage);
+        }
+    });
+
+    $("#next-button").on("click", function () {
+        const selectedAnswer = getStudentResponse();
+        saveStudentResponse(currentPage, examToken, selectedAnswer); // Save current response
+
+        if (currentPage < totalPages) {
+            currentPage++;
+            fetchQuestion(currentPage);
+        }
+    });
+
+    $("#submit-button").on("click", function () {
+        const url = examType === "examination" ? theoryPageUrl : resultPageUrl;
+        window.location.href = url;
+    });
+
+    $(".page-numbers").on("click", ".page-item", function () {
+        const selectedAnswer = getStudentResponse();
+        saveStudentResponse(currentPage, examToken, selectedAnswer); // Save current response
+
+        const page = $(this).data("page");
+        if (page !== currentPage) {
+            fetchQuestion(page);
+        }
+    });
+
+    // Initial load
+    fetchQuestion(currentPage);
+});
+
+
+
+
+
+
+
+ // Function to save response dynamically
+    function saveStudentResponse(questionId, examToken, answer) {
+        $.ajax({
+            url: '/student/save-response',
+            method: 'POST',
+            data: {
+                questionId: questionId,
+                examId: examToken,
+                answer: answer
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Response saved successfully.');
+                } else {
+                    console.error('Failed to save response: ' + response.message);
+                }
+            },
+            error: function() {
+                console.error('An error occurred while saving the response.');
+            }
+        });
+    }
+
+
+
+
+// Example of retrieving the saved response
+function getStudentResponse(questionId, examId) {
+    $.ajax({
+        url: '/student/get-response',
+        method: 'GET',
+        data: {
+            questionId: questionId,
+            examId: examId
+        },
+        success: function(response) {
+            if (response.success) {
+                console.log('Saved answer:', response.answer);
+                // Use response.answer to pre-fill the form if necessary
+            }
+        },
+        error: function() {
+            console.error('An error occurred while retrieving the response.');
+        }
+    });
+}
+
+        
+</script>
+
+ <style>
+        /* Optional styling for your overlay */
+        .noscript-overlay {
+            position: fixed;
+            margin:10px;
+            width: 95%;
+            height: 95%;
+            background: white;
+            color: red;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            font-size: 2rem;
+        }
+
+        h1,h4{
+            font-size:100px;
+        }
+
+
+        #fullscreenWarning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 1.50);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 9999;
+        }
+
+        #examContent {
+            display: none; /* Initially hidden until fullscreen is entered */
+        }
+
+        #fullscreenButton {
+            padding: 10px 20px;
+            background-color: blue;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #fullscreenButton:hover {
+            background-color: white;
+            color:blue;
+        }
+
+
+        /* Container to align the buttons inline */
+.button-container {
+    position: absolute;
+    top: 20px; /* Adjust the top margin as needed */
+    left: 30px; /* Adjust the left margin as needed */
+    display: flex;
+    gap: 10px; /* Space between the buttons */
+}
+
+/* Apply a little margin-top and margin-left for spacing */
+.button-container .btn {
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+/* Make sure buttons are disabled and not clickable */
+.disabled {
+    pointer-events: none;
+    opacity: 0.5; /* Make the disabled buttons look grayed out */
+}
+ 
+.title{
+    font-size:20px;
+    font-weight:bold;
+    margin-top:50px;
+    text-align:center;
+}
+
+.timecount{
+    font-size:50px;
+    margin-top:-10px;
+}
+
+
+
+.pagination-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.page-numbers-wrapper {
+    overflow-x: hidden;
+    white-space: nowrap;
+    border: 1px solid #ccc;
+    border-radius: 40px;
+    padding: 10px;
+    margin: 20px auto;
+    max-width: 80%;
+}
+
+.page-numbers {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-numbers .page-item {
+    display: inline-block;
+    min-width: 40px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    margin-top: 10px;
+}
+
+#prev-button,
+#next-button {
+    margin: 0 15px;
+}
+
+#page-info {
+    font-size: 16px;
+}
+
+
+
+/* Basic styling for question container */
+.question-containeq {
+    background-color: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* Styling for question text */
+.question-text {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Basic styling for options container */
+.options-container {
+    background-color: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* Styling for the individual option items */
+.options-container div {
+    margin-bottom: 10px;
+}
+
+/* Styling for the response container */
+.response-container {
+    background-color: white;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: left;
+    font-style: italic;
+}
+
+/* Styling for option labels */
+label {
+    margin-left: 10px;
+}
+
+
+</style>
+
+{% endblock %}

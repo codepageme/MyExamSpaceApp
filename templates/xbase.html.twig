@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student - MyExamSpace.Com{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('Css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ asset('Css/bootstrap-datepicker.min.css') }}">
+     <script src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
+     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
+     <script src="{{ asset('js/bootstrap-datepicker.min.js') }}"></script>
+    
+    {% block stylesheets %}
+       
+    {% endblock %}
+</head>
+<body>  
+
+    <div id="spacenote">
+        {% block content %}
+        <!-- Default content, can be overridden in child templates -->
+        {% endblock %}
+        <br>
+        <hr>
+        <footer>
+            <p class="footsign">- Copyright &copy; <a href="https://codepagehere.github.io/happycode/">HappyCode</a> / <a href="https://codepagehere.github.io/graphitie/">Graphitie</a>; MyExamspaceApp. 2024 - {{ "now"|date("Y") }} | All Rights Reserved -</p>
+            <p><i> *MyExamSpaceApp* is licensed to @newuser for [specific use cases], with HappyCode / Graphitie retaining the right to license the product to third parties. </i></p>
+         </footer>
+    </div>
+
+   
+</body>
+</html>

@@ -45,12 +45,6 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $teacherNotes;
 
     /**
-     * @var Collection<int, Exam>
-     */
-    #[ORM\OneToMany(targetEntity: Exam::class, mappedBy: 'teacher')]
-    private Collection $exams;
-
-    /**
      * @var Collection<int, Question>
      */
     #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'teacher')]
@@ -80,7 +74,6 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->teacherNotes = new ArrayCollection();
-        $this->exams = new ArrayCollection();
         $this->questions = new ArrayCollection();
         $this->teacherSubjects = new ArrayCollection();
         $this->teacherClassrooms = new ArrayCollection();
@@ -227,35 +220,6 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->username; // or return $this->email if that's your identifier
     }
 
-    /**
-     * @return Collection<int, Exam>
-     */
-    public function getExams(): Collection
-    {
-        return $this->exams;
-    }
-
-    public function addExam(Exam $exam): static
-    {
-        if (!$this->exams->contains($exam)) {
-            $this->exams->add($exam);
-            $exam->setTeacher($this);
-        }
-
-        return $this;
-    }
-
-    public function removeExam(Exam $exam): static
-    {
-        if ($this->exams->removeElement($exam)) {
-            // set the owning side to null (unless already changed)
-            if ($exam->getTeacher() === $this) {
-                $exam->setTeacher(null);
-            }
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Question>
