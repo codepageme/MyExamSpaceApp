@@ -67,7 +67,7 @@
 
 
 <!-- Pagination controls (Previous, Page count, Next) -->
-<div class="pagination-container">
+<div class="pagination-container" style="overflow-x:hidden;">
   <div class="page-numbers-wrapper">
     <div class="page-numbers">
       <!-- Page numbers dynamically generated here -->
@@ -110,10 +110,11 @@
 
 
 
-
 </div>
 
+
 <script>
+
 const duration = {{ durationInSeconds }}; // Total duration in seconds
 const timerElement = document.getElementById('time-remaining');
 const theoryPageUrl = "{{ theoryPageUrl }}";
@@ -338,8 +339,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
-
 $(document).ready(function () {
     const examToken = "{{ examToken }}"; // Token passed from the backend
     const theoryPageUrl = "{{ theoryPageUrl }}"; // Backend-passed URL for theory page
@@ -347,6 +346,7 @@ $(document).ready(function () {
     const examType = "{{ examType }}"; // Backend-passed exam type: "examination" or others
     let currentPage = 1;
     let totalPages = 1;
+    let currentQuestionId = null; // Store the current question ID
 
     // Fetch a question for the current page
     function fetchQuestion(page, retryCount = 3) {
@@ -372,8 +372,11 @@ $(document).ready(function () {
                 }
 
                 // Update question and options
-                $("#question-text").html(renderQuestionWithDropdowns(response.question));
+                $("#question-text").html(renderQuestionWithDropdowns(response.question, response.questionId));
                 renderOptions(response);
+
+                // Store the current question ID
+                currentQuestionId = response.questionId;
 
                 // Update pagination state
                 currentPage = response.currentPage;
@@ -404,7 +407,7 @@ $(document).ready(function () {
         prevButton.prop("disabled", currentPage <= 1);
 
         // Update "Page X of Y" text
-        paginationInfo.text(` Page ${currentPage} of ${totalPages}`);
+        paginationInfo.text(`Page ${currentPage} of ${totalPages}`);
 
         // Show or hide Next/Submit button
         if (currentPage < totalPages) {
@@ -472,7 +475,7 @@ $(document).ready(function () {
                 break;
             case "DropdownOption":
             case "RegisterOption":
-                 renderDropdownsInQuestion(); 
+                renderDropdownsInQuestion();
                 break;
             case "ImagesOption":
                 renderImageOption(response.options.options);
@@ -491,65 +494,62 @@ $(document).ready(function () {
     function renderRadioOptions(options) {
         const optionsContainer = $("#options-container");
         Object.keys(options).forEach(function (key) {
-            optionsContainer.append(`
-                <div>
+            optionsContainer.append(
+                `<div>
                     <input type="radio" name="option" value="${key}" id="${key}">
                     <label for="${key}">${options[key]}</label>
-                </div>
-            `);
+                </div>`
+            );
         });
     }
 
     function renderCheckboxOptions(options) {
         const optionsContainer = $("#options-container");
         Object.keys(options).forEach(function (key) {
-            optionsContainer.append(`
-                <div>
+            optionsContainer.append(
+                `<div>
                     <input type="checkbox" name="option" value="${key}" id="${key}">
                     <label for="${key}">${options[key]}</label>
-                </div>
-            `);
+                </div>`
+            );
         });
     }
 
     function renderGermanOption() {
         const optionsContainer = $("#options-container");
-        optionsContainer.append(`
-            <div>
+        optionsContainer.append(
+            `<div>
                 <label for="germanResponse">Your Answer:</label>
                 <input type="text" id="germanResponse" name="germanResponse" placeholder="Enter your answer here">
-            </div>
-        `);
+            </div>`
+        );
     }
 
     function renderBooleanOption(options) {
         const optionsContainer = $("#options-container");
         Object.keys(options).forEach(function (key) {
-            optionsContainer.append(`
-                <div>
+            optionsContainer.append(
+                `<div>
                     <input type="radio" name="booleanOption" value="${key}" id="${key}">
                     <label for="${key}">${options[key]}</label>
-                </div>
-            `);
+                </div>`
+            );
         });
     }
 
     function renderImageOption(options) {
         const optionsContainer = $("#options-container");
-        optionsContainer.append(`
-            <div>
-                <img src="${options.imagePath}" alt="Question Image" style="max-width: 100%; max-height: 300px; marign-botton:5px;">
+        optionsContainer.append(
+            `<div>
+                <img src="${options.imagePath}" alt="Question Image" style="max-width: 100%; max-height: 300px; margin-bottom: 5px;">
                 <div>
                     <label for="imageResponse">Your Answer:</label>
                     <input type="text" id="imageResponse" name="imageResponse" placeholder="Enter your answer here">
                 </div>
-            </div>
-        `);
+            </div>`
+        );
     }
 
-
-
-    // Embed dropdowns into the question text
     function renderDropdownsInQuestion() {
         $("#question-text").on("change", ".dynamic-dropdown", function () {
             const studentResponse = getStudentResponse();
@@ -557,29 +557,30 @@ $(document).ready(function () {
         });
     }
 
+    function renderQuestionWithDropdowns(questionText, questionId) {
+        const regex = /\[(.*?)\]/g; // Regex to find placeholders in the question
 
-    function renderQuestionWithDropdowns(questionText) {
-        const regex = /\[(.*?)\]/g;
-
-        // Replace placeholders with dropdowns
-        return questionText.replace(regex, function (match, options) {
-            const optionList = options.split("/").map(option => option.trim());
+        let questionHtml = questionText.replace(regex, function (match, options) {
+            const optionList = options.split("/").map(option => option.trim()); // Split options
 
             let dropdownHtml = `<select class="dynamic-dropdown">`;
             dropdownHtml += `<option value="">Select an option</option>`; // Default option
             optionList.forEach(option => {
-                dropdownHtml += `<option value="${option}">${option}</option>`;
+                dropdownHtml += `<option value="${option}">${option}</option>`; // Add each option
             });
             dropdownHtml += `</select>`;
 
-            return dropdownHtml; // Replace the placeholder with the dropdown
+            return dropdownHtml; // Replace the placeholder with dropdown
         });
+
+        $("#question-container").html(
+            `<div id="question-text" class="question-text">${questionHtml}</div>`
+        ).data("question-id", questionId); // Store the questionId in the container as a data attribute
     }
 
     function getStudentResponse() {
         const response = [];
 
-        // Iterate through all inputs and dropdowns
         $("#options-container select, input").each(function () {
             const inputType = $(this).attr("type");
             const value = $(this).val();
@@ -597,10 +598,10 @@ $(document).ready(function () {
         return response.join(", ");
     }
 
-    // Pagination and event bindings
+
     $("#prev-button").on("click", function () {
         const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, examToken, selectedAnswer); // Save current response
+        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
 
         if (currentPage > 1) {
             currentPage--;
@@ -610,7 +611,7 @@ $(document).ready(function () {
 
     $("#next-button").on("click", function () {
         const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, examToken, selectedAnswer); // Save current response
+        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
 
         if (currentPage < totalPages) {
             currentPage++;
@@ -625,7 +626,7 @@ $(document).ready(function () {
 
     $(".page-numbers").on("click", ".page-item", function () {
         const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, examToken, selectedAnswer); // Save current response
+        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
 
         const page = $(this).data("page");
         if (page !== currentPage) {
@@ -633,7 +634,6 @@ $(document).ready(function () {
         }
     });
 
-    // Initial load
     fetchQuestion(currentPage);
 });
 
@@ -643,34 +643,53 @@ $(document).ready(function () {
 
 
 
- // Function to save response dynamically
-    function saveStudentResponse(questionId, examToken, answer) {
-        $.ajax({
-            url: '/student/save-response',
-            method: 'POST',
-            data: {
-                questionId: questionId,
-                examId: examToken,
-                answer: answer
-            },
-            success: function(response) {
-                if (response.success) {
-                    console.log('Response saved successfully.');
-                } else {
-                    console.error('Failed to save response: ' + response.message);
-                }
-            },
-            error: function() {
-                console.error('An error occurred while saving the response.');
-            }
-        });
+// Function to save response dynamically
+function saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer) {
+    // Skip submission if no answer is selected
+    if (selectedAnswer === null || selectedAnswer === undefined || selectedAnswer === "" || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) {
+        console.log("No answer selected, skipping submission.");
+        return; // Exit the function without making the AJAX call
     }
+
+    // Ensure selectedAnswer is formatted correctly (e.g., JSON string for arrays)
+    if (Array.isArray(selectedAnswer)) {
+        selectedAnswer = JSON.stringify(selectedAnswer);
+    }
+
+    // Submit response via AJAX
+    $.ajax({
+        url: `/student/save-response`,
+        method: "POST",
+        data: {
+            questionId: currentQuestionId, // Consistent name
+            examId: examToken,
+            answer: selectedAnswer,
+        },
+        success: function (response) {
+            if (response.success) {
+                console.log("Response saved successfully:", response);
+                
+            } else {
+                console.error("Failed to save response:", response.message);
+                
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("Error saving response:", error);
+            alert("An error occurred while saving your response. Please try again.");
+        },
+    });
+}
+
+
 
 
 
 
 // Example of retrieving the saved response
 function getStudentResponse(questionId, examId) {
+
+    
     $.ajax({
         url: '/student/get-response',
         method: 'GET',
@@ -689,6 +708,8 @@ function getStudentResponse(questionId, examId) {
         }
     });
 }
+
+
 
         
 </script>

@@ -12,6 +12,8 @@ use App\Entity\GermanOption;
 use App\Entity\BooleanOption;
 use App\Entity\DropdownOption;
 use App\Entity\Results;
+use App\Entity\Term;
+use App\Entity\AcademicCalender;
 use App\Entity\Question;
 use App\Entity\Responses;
 use App\Repository\ClassroomRepository;
@@ -276,6 +278,8 @@ public function fetchTodayExams(Request $request, ExamRepository $examRepository
 
 
 
+
+
 #[Route('/student/examobjective/{examToken}', name: 'student_examobjective', methods: ['GET'])]
 public function getExamobjective(
     string $examToken,
@@ -311,24 +315,48 @@ public function getExamobjective(
         $studentClassroomId = $student['classroom']['id'];
 
         // Validate the student and exam context
-        $examClassroomId = $exam->getClassroom()->getId(); // Get the single classroom ID
+        $examClassroomId = $exam->getClassroom()->getId();
 
-            if (
-                $examClassroomId !== $studentClassroomId || // Compare the classroom IDs
-                $examDate->format('Y-m-d') !== $today->format('Y-m-d') // Compare the dates
-            ) {
-                $tokenStorage->setToken(null);
-                $_SESSION = [];
-                session_destroy();
-                return $this->redirectToRoute('student_login_form');
+        if (
+            $examClassroomId !== $studentClassroomId || // Compare the classroom IDs
+            $examDate->format('Y-m-d') !== $today->format('Y-m-d') // Compare the dates
+        ) {
+            $tokenStorage->setToken(null);
+            $_SESSION = [];
+            session_destroy();
+            return $this->redirectToRoute('student_login_form');
+        }
+
+        // Fetch the current term and session from AcademicCalender
+        $academicCalenderRepo = $entityManager->getRepository(AcademicCalender::class);
+        $currentAcademicCalender = $academicCalenderRepo->findOneBy([], ['id' => 'DESC']); // Last row is current
+
+        if (!$currentAcademicCalender) {
+            throw new \Exception('Current academic term and session not found.');
+        }
+
+        $currentTerm = $currentAcademicCalender->getTerm(); // e.g., "First Term," "Second Term"
+        $currentTermId = $currentTerm->getId();
+
+        // Determine applicable terms for filtering
+        $termRepository = $entityManager->getRepository(Term::class);
+        $termsForQuery = [$currentTermId]; // Always include the current term
+        if ($currentTerm->getName() === 'Second Term') {
+            $firstTerm = $termRepository->findOneBy(['name' => 'First Term']);
+            if ($firstTerm) {
+                $termsForQuery[] = $firstTerm->getId();
             }
+        } elseif ($currentTerm->getName() === 'Third Term') {
+            $allTerms = $termRepository->findAll();
+            $termsForQuery = array_map(fn($term) => $term->getId(), $allTerms);
+        }
 
-
-        // Fetch questions for the given context
+        // Fetch questions based on term and other filters
         $queryBuilder = $entityManager->createQueryBuilder();
         $queryBuilder
             ->select('q', 'ro', 'co', 'go', 'bo', 'do', 'imgo', 'rego')
             ->from(Question::class, 'q')
+            ->leftJoin('q.Term', 't')  // Join the Term relation
             ->leftJoin('q.classrooms', 'c')
             ->leftJoin('q.radioOption', 'ro')
             ->leftJoin('q.checkboxOption', 'co')
@@ -339,9 +367,11 @@ public function getExamobjective(
             ->leftJoin('q.registerOption', 'rego')
             ->where('q.Subject = :SubjectId')
             ->andWhere('q.examtype = :ExamTypeId')
+            ->andWhere('t.id IN (:terms)') // Filter by term
             ->andWhere('c.id = :ClassroomId')
             ->setParameter('SubjectId', $exam->getSubject()->getId())
             ->setParameter('ExamTypeId', $exam->getExamtype()->getId())
+            ->setParameter('terms', $termsForQuery)  // Set terms array parameter
             ->setParameter('ClassroomId', $studentClassroomId)
             ->setMaxResults($exam->getTotalQuestions()); // Limit by totalQuestions in Exam
 
@@ -398,8 +428,10 @@ public function getExamobjective(
         'examToken' => $examToken,
         'currentPage' => $currentPage,
         'totalPages' => $totalPages,
+        'questionIds' => array_map(function($question) { return $question->getId(); }, $paginatedQuestions), // Include question IDs
     ]);
 }
+
 
 
 
@@ -435,6 +467,20 @@ public function fetchQuestions(
     $student = $_SESSION['student'];
     $examId = $this->decryptExamToken($examToken);
 
+    // Validate the exam
+    $entityManager = $doctrine->getManager();
+    $exam = $entityManager->getRepository(Exam::class)->find($examId);
+    if (!$exam) {
+        return new JsonResponse(['error' => 'Exam not found'], 404);
+    }
+
+    // Validate session and exam context
+    $studentClassroomId = $student['classroom']['id'];
+    $examClassroomId = $exam->getClassroom()->getId();
+    if ($examClassroomId !== $studentClassroomId) {
+        return new JsonResponse(['error' => 'Unauthorized access to exam'], 403);
+    }
+
     $studentId = $student['id'];
     $examNamespace = $_SESSION['student_data'][$studentId]['exam'][$examId] ?? null;
 
@@ -453,9 +499,8 @@ public function fetchQuestions(
 
     $currentPageIds = array_slice($questionOrder, ($currentPage - 1) * $questionsPerPage, $questionsPerPage);
 
-    $entityManager = $doctrine->getManager();
-
     try {
+        // Fetch questions and options
         $queryBuilder = $entityManager->createQueryBuilder();
         $queryBuilder
             ->select('q', 'ro', 'co', 'go', 'bo', 'do', 'imgo', 'rego')
@@ -490,6 +535,7 @@ public function fetchQuestions(
         $options = $this->getOptionsForQuestion($question);
 
         return new JsonResponse([
+            'questionId' => $question->getId(),
             'question' => $question->getContent(),
             'options' => $options,
             'currentPage' => $currentPage,
@@ -537,8 +583,8 @@ private function getOptionsForQuestion(Question $question): array {
         return [
             'type' => 'BooleanOption',
             'options' => [
-                'True' => 'True',
-                'False' => 'False',
+                1 => 'True',
+                0 => 'False',
             ],
         ];
     } elseif ($question->getDropdownOption()) {
@@ -610,71 +656,92 @@ private function decryptExamToken(string $token): int
         $examId = $request->request->get('examId');
         $responseValue = $request->request->get('answer'); // Student's response
     
-        if (!$questionId || !$examId || $responseValue === null) {
-            return new JsonResponse(['success' => false, 'message' => 'Invalid data provided.'], 400);
+        // Skip processing if no valid answer is provided
+        if (!$questionId || !$examId || $responseValue === null || (is_array($responseValue) && empty($responseValue)) || trim((string)$responseValue) === '') {
+            return new JsonResponse(['success' => false, 'message' => 'No answer provided. Skipping save.']);
+        }
+    
+        // Normalize the response: convert to uppercase and remove spaces
+        if (is_array($responseValue)) {
+            $responseValue = array_map(fn($value) => strtoupper(str_replace(' ', '', $value)), $responseValue);
+        } else {
+            $responseValue = strtoupper(str_replace(' ', '', $responseValue));
         }
     
         try {
-            // Get the question type from the Question table
-            $question = $this->entityManager->getRepository(Question::class)->find($questionId);
+            // Decrypt the examId
+            $examId = $this->decryptExamToken($examId);
     
+            // Fetch the entities
+            $student = $this->entityManager->getRepository(Student::class)->find($studentId);
+            if (!$student) {
+                return new JsonResponse(['success' => false, 'message' => 'Student not found.'], 404);
+            }
+    
+            $question = $this->entityManager->getRepository(Question::class)->find($questionId);
             if (!$question) {
                 return new JsonResponse(['success' => false, 'message' => 'Question not found.'], 404);
             }
     
-            $questionType = $question->getQuestionType()->getName(); // Example: "radio", "checkbox", etc.
+            $exam = $this->entityManager->getRepository(Exam::class)->find($examId);
+            if (!$exam) {
+                return new JsonResponse(['success' => false, 'message' => 'Exam not found.'], 404);
+            }
     
-            // Get correct answer(s) based on the question type
+            $questionType = $question->getQuestionType()->getName();
+    
+            // Determine correct answers
             $correctAnswer = null;
             $correctAnswers = [];
     
             switch ($questionType) {
-                case 'radio':
-                case 'german':
-                case 'boolean':
-                case 'images':
-                case 'dropdown':
+                case 'Radio-Button':
+                case 'German':
+                case 'Boolean':
+                case 'Images':
+                case 'Dropdown':
                     $optionTable = $this->getOptionTableRepository($questionType);
-                    $option = $optionTable->findOneBy(['questionId' => $questionId]);
-                    $correctAnswer = $option ? $option->getCorrectAnswer() : null;
+                    $option = $optionTable->findOneBy(['Question' => $question]);
+                    $correctAnswer = $option ? strtoupper(str_replace(' ', '', $option->getCorrectAnswer())) : null;
                     break;
     
-                case 'checkbox':
-                case 'register':
+                case 'Check-Box':
+                case 'Register':
                     $optionTable = $this->getOptionTableRepository($questionType);
-                    $option = $optionTable->findOneBy(['questionId' => $questionId]);
-                    $correctAnswers = $option ? $option->getCorrectAnswers() : [];
+                    $option = $optionTable->findOneBy(['Question' => $question]);
+                    $correctAnswers = $option ? array_map(fn($value) => strtoupper(str_replace(' ', '', $value)), $option->getCorrectAnswers()) : [];
                     break;
     
                 default:
                     return new JsonResponse(['success' => false, 'message' => 'Unsupported question type.'], 400);
             }
     
-            // Compare student response with correct answer(s)
-            $isCorrect = false;
+            // Compare response with correct answers
+            $iscorrect = false;
     
             if ($correctAnswer !== null) {
-                $isCorrect = $responseValue === $correctAnswer;
+                $iscorrect = $responseValue === $correctAnswer;
             } elseif (!empty($correctAnswers)) {
-                $isCorrect = empty(array_diff((array) $responseValue, $correctAnswers)); // Check all match
+                $responseValue = (array)$responseValue;
+                $iscorrect = empty(array_diff($responseValue, $correctAnswers));
             }
     
-            // Find existing response or create a new one
+            // Find or create response
             $response = $this->entityManager->getRepository(Responses::class)->findOneBy([
-                'studentId' => $studentId,
-                'questionId' => $questionId,
-                'examId' => $examId,
+                'Student' => $student,
+                'Question' => $question,
+                'Exam' => $exam,
             ]);
     
             if (!$response) {
                 $response = new Responses();
-                $response->setStudentId($studentId);
-                $response->setQuestionId($questionId);
-                $response->setExamId($examId);
+                $response->setStudent($student);
+                $response->setQuestion($question);
+                $response->setExam($exam);
             }
     
             $response->setResponse($responseValue);
-            $response->setIsCorrect($isCorrect);
+            $response->setIscorrect($iscorrect);
     
             $this->entityManager->persist($response);
             $this->entityManager->flush();
@@ -682,37 +749,46 @@ private function decryptExamToken(string $token): int
             return new JsonResponse([
                 'success' => true,
                 'message' => 'Response saved successfully.',
-                'isCorrect' => $isCorrect,
+                'iscorrect' => $iscorrect,
             ]);
         } catch (\Exception $e) {
+            error_log("Exception in saveResponse: " . $e->getMessage());
+            error_log($e->getTraceAsString());
             return new JsonResponse(['success' => false, 'message' => 'Failed to save response.'], 500);
         }
     }
     
+    
+       
+
+
+    
     /**
      * Get the repository for the correct option table based on question type.
      */
+
     private function getOptionTableRepository(string $questionType)
     {
         switch ($questionType) {
-            case 'radio':
+            case 'Radio-Button':
                 return $this->entityManager->getRepository(RadioOption::class);
-            case 'checkbox':
+            case 'Check-Box':
                 return $this->entityManager->getRepository(CheckboxOption::class);
-            case 'german':
+            case 'German':
                 return $this->entityManager->getRepository(GermanOption::class);
-            case 'boolean':
+            case 'Boolean':
                 return $this->entityManager->getRepository(BooleanOption::class);
-            case 'images':
+            case 'Images':
                 return $this->entityManager->getRepository(ImagesOption::class);
-            case 'dropdown':
+            case 'Dropdown':
                 return $this->entityManager->getRepository(DropdownOption::class);
-            case 'register':
+            case 'Register':
                 return $this->entityManager->getRepository(RegisterOption::class);
             default:
-                throw new \InvalidArgumentException("Unsupported question type: $questionType");
+                throw new \InvalidArgumentException("Unsupportedd  question type: $questionType");
         }
     }
+    
     
 
 

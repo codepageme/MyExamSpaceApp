@@ -21,8 +21,8 @@ class Responses
     #[ORM\JoinColumn(nullable: false)]
     private ?Question $Question = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $Response = null;
+    #[ORM\Column(type: "json", nullable: true)]
+    private mixed $Response = null; // Use `mixed` for flexible data types
 
     #[ORM\Column]
     private ?bool $iscorrect = null;
@@ -60,24 +60,24 @@ class Responses
         return $this;
     }
 
-    public function getResponse(): ?string
+     public function getResponse(): mixed
     {
         return $this->Response;
     }
 
-    public function setResponse(string $Response): static
+    public function setResponse(mixed $Response): static
     {
         $this->Response = $Response;
 
         return $this;
     }
 
-    public function iscorrect(): ?bool
+    public function getiscorrect(): ?bool
     {
         return $this->iscorrect;
     }
 
-    public function setCorrect(bool $iscorrect): static
+    public function setisCorrect(bool $iscorrect): static
     {
         $this->iscorrect = $iscorrect;
 
