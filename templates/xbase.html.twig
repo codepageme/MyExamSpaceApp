@@ -23,12 +23,79 @@
         {% endblock %}
         <br>
         <hr>
-        <footer>
-            <p class="footsign">- Copyright &copy; <a href="https://codepagehere.github.io/happycode/">HappyCode</a> / <a href="https://codepagehere.github.io/graphitie/">Graphitie</a>; MyExamspaceApp. 2024 - {{ "now"|date("Y") }} | All Rights Reserved -</p>
-            <p><i> *MyExamSpaceApp* is licensed to @newuser for [specific use cases], with HappyCode / Graphitie retaining the right to license the product to third parties. </i></p>
-         </footer>
+                <!-- Footer container -->
+            <div id="footer-container" class="footer-container">
+                <!-- Toggle button -->
+                <button id="footer-toggle" class="footer-toggle btn btn-primary">
+                    <span class="glyphicon glyphicon-question-sign"> Click-Me </span>
+                </button>
+                <!-- Footer content -->
+                <div id="footer-content" class="footer-content">
+                    <!-- Your footer content here -->
+                       <footer>
+                        <p class="footsign">- Copyright &copy; <a href="https://codepagehere.github.io/happycode/">HappyCode</a> / <a href="https://codepagehere.github.io/graphitie/">Graphitie</a>; MyExamspaceApp. 2024 - {{ "now"|date("Y") }} | All Rights Reserved -</p>
+                        <p><i> MyExamSpaceApp is licensed to @newuser for [specific use cases], with HappyCode / Graphitie retaining the right to license the product to third parties. </i></p>
+                    </footer>
+                </div>
+            </div>
     </div>
 
+    <script>
+ // Get footer toggle button and content elements
+var footerToggle = $('#footer-toggle');
+var footerContent = $('#footer-content');
+
+// Toggle footer content on button click
+footerToggle.on('click', function () {
+    if (footerContent.hasClass('footer-content-scroll-in')) {
+        footerContent.removeClass('footer-content-scroll-in');
+        footerContent.addClass('footer-content-scroll-out');
+        setTimeout(function () {
+            footerContent.slideUp();
+        }, 500);
+    } else {
+        footerContent.slideDown();
+        footerContent.removeClass('footer-content-scroll-out');
+        footerContent.addClass('footer-content-scroll-in');
+    }
+});
+
+
+</script>
+
+<style>
+
+/* Footer container styles */
+.footer-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* Ensure footer is above all other elements */
+}
+
+/* Toggle button styles */
+.footer-toggle {
+    position: absolute;
+    bottom: 25px;
+    left: 15px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Footer content styles */
+.footer-content {
+    display: none;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    width:97%;
+    margin-left:25px;
+}
+
+
+</style>
    
 </body>
 </html>

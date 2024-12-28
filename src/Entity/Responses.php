@@ -31,6 +31,9 @@ class Responses
     #[ORM\JoinColumn(nullable: false)]
     private ?Exam $Exam = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $detail = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -92,6 +95,18 @@ class Responses
     public function setExam(?Exam $Exam): static
     {
         $this->Exam = $Exam;
+
+        return $this;
+    }
+
+    public function getDetail(): ?string
+    {
+        return $this->detail;
+    }
+
+    public function setDetail(?string $detail): static
+    {
+        $this->detail = $detail;
 
         return $this;
     }

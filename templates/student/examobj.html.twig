@@ -255,11 +255,7 @@ function clearExpiredStorage() {
 
 // Handle redirection when the timer ends
 function redirectToNextPage() {
-    if (examType === 'Examination') {
         window.location.href = theoryPageUrl;
-    } else {
-        window.location.href = resultPageUrl;
-    }
 }
 
 // Attach the logic to run on page load
@@ -487,7 +483,7 @@ $(document).ready(function () {
         // Attach response input event
         $("#options-container").on("change", "input, select", function () {
             const studentResponse = getStudentResponse();
-            responseContainer.text("Your Response: " + studentResponse);
+            responseContainer.text("Your Selected Answer is : " + studentResponse);
         });
     }
 
@@ -548,94 +544,113 @@ $(document).ready(function () {
                 </div>
             </div>`
         );
-    }
+     }
+
+    let selectedOptions = {};
 
     function renderDropdownsInQuestion() {
-        $("#question-text").on("change", ".dynamic-dropdown", function () {
-            const studentResponse = getStudentResponse();
-            $("#student-response").text("Your Response: " + studentResponse);
-        });
+    $("#question-text").on("change", ".dynamic-dropdown", function() {
+        const selectedOption = $(this).val();
+        const dropdownIndex = $(this).data("dropdown-index");
+        selectedOptions[dropdownIndex] = selectedOption;
+        const jointInput = Object.values(selectedOptions).join(", ");
+        renderStudentResponse(jointInput);
+    });
     }
+
+    function renderStudentResponse(jointInput) {
+    const studentResponseHtml = `
+        <div class="student-response-container">
+        <span>Selected options: ${jointInput}</span>
+        </div>
+    `;
+    $("#student-response").html(studentResponseHtml);
+    }
+
 
     function renderQuestionWithDropdowns(questionText, questionId) {
-        const regex = /\[(.*?)\]/g; // Regex to find placeholders in the question
-
-        let questionHtml = questionText.replace(regex, function (match, options) {
-            const optionList = options.split("/").map(option => option.trim()); // Split options
-
-            let dropdownHtml = `<select class="dynamic-dropdown">`;
-            dropdownHtml += `<option value="">Select an option</option>`; // Default option
-            optionList.forEach(option => {
-                dropdownHtml += `<option value="${option}">${option}</option>`; // Add each option
-            });
-            dropdownHtml += `</select>`;
-
-            return dropdownHtml; // Replace the placeholder with dropdown
+    const regex = /\[(.*?)\]/g; // Regex to find placeholders in the question
+    let dropdownIndex = 0; // Initialize dropdown index counter
+    let questionHtml = questionText.replace(regex, function (match, options) {
+        const optionList = options.split("/").map(option => option.trim()); // Split options
+        let dropdownHtml = `<select class="dynamic-dropdown" data-dropdown-index="${dropdownIndex}">`;
+        dropdownHtml += `<option value=""> --- </option>`; // Default option
+        optionList.forEach(option => {
+        dropdownHtml += `<option value="${option}">${option}</option>`; // Add each option
         });
-
-        $("#question-container").html(
-            `<div id="question-text" class="question-text">${questionHtml}</div>`
-        ).data("question-id", questionId); // Store the questionId in the container as a data attribute
+        dropdownHtml += `</select>`;
+        dropdownHtml += `<span class="selected-option"></span>`; // Add a span to display the selected option
+        dropdownIndex++; // Increment dropdown index counter
+        return dropdownHtml; // Replace the placeholder with dropdown
+    });
+    $("#question-container").html(`
+        <div id="question-text" class="question-text">${questionHtml}</div>
+    `).data("question-id", questionId); // Store the questionId in the container as a data attribute
     }
+
+
+
 
     function getStudentResponse() {
-        const response = [];
-
-        $("#options-container select, input").each(function () {
-            const inputType = $(this).attr("type");
-            const value = $(this).val();
-
-            if (inputType === "checkbox" || inputType === "radio") {
-                if ($(this).is(":checked")) response.push(value);
-            } else if ($(this).is("select")) {
-                const selectedValue = $(this).find(":selected").val();
-                if (selectedValue) response.push(selectedValue);
-            } else {
-                if (value) response.push(value);
-            }
-        });
-
-        return response.join(", ");
+  const response = [];
+  $("#options-container select, input").each(function () {
+    const inputType = $(this).attr("type");
+    const value = $(this).val();
+    if (inputType === "checkbox" || inputType === "radio") {
+      if ($(this).is(":checked")) response.push(value);
+    } else if ($(this).is("select")) {
+      const selectedValue = $(this).find(":selected").val();
+      if (selectedValue) response.push(selectedValue);
+    } else {
+      if (value) response.push(value);
     }
+  });
+  // Add the selected options from the dropdowns
+  response.push(...Object.values(selectedOptions));
+  return response.join(", ");
+}
 
-
-    $("#prev-button").on("click", function () {
+        $("#prev-button").on("click", function () {
         const selectedAnswer = getStudentResponse();
         saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
-
+        selectedOptions = []; // Clear the selectedOptions array
         if (currentPage > 1) {
             currentPage--;
             fetchQuestion(currentPage);
         }
-    });
+        });
 
-    $("#next-button").on("click", function () {
+            $("#next-button").on("click", function () {
         const selectedAnswer = getStudentResponse();
         saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
-
+        selectedOptions = []; // Clear the selectedOptions array
         if (currentPage < totalPages) {
             currentPage++;
             fetchQuestion(currentPage);
         }
-    });
+        });
 
-    $("#submit-button").on("click", function () {
-        const url = examType === "examination" ? theoryPageUrl : resultPageUrl;
-        window.location.href = url;
-    });
+       $("#submit-button").on("click", function () {
+         const selectedAnswer = getStudentResponse();
+        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer, function () {
+         const url = theoryPageUrl;
+         window.location.href = url;
+         });
+            });
 
-    $(".page-numbers").on("click", ".page-item", function () {
+
+        $(".page-numbers").on("click", ".page-item", function () {
         const selectedAnswer = getStudentResponse();
         saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
-
+        selectedOptions = []; // Clear the selectedOptions array
         const page = $(this).data("page");
         if (page !== currentPage) {
             fetchQuestion(page);
         }
-    });
+        });
 
-    fetchQuestion(currentPage);
-});
+            fetchQuestion(currentPage);
+ });
 
 
 
@@ -644,7 +659,7 @@ $(document).ready(function () {
 
 
 // Function to save response dynamically
-function saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer) {
+function saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer, callback) {
     // Skip submission if no answer is selected
     if (selectedAnswer === null || selectedAnswer === undefined || selectedAnswer === "" || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) {
         console.log("No answer selected, skipping submission.");
@@ -658,28 +673,31 @@ function saveStudentResponse(currentPage, currentQuestionId, examToken, selected
 
     // Submit response via AJAX
     $.ajax({
-        url: `/student/save-response`,
-        method: "POST",
-        data: {
-            questionId: currentQuestionId, // Consistent name
-            examId: examToken,
-            answer: selectedAnswer,
-        },
+    url: `/student/save-response`,
+    method: "POST",
+    data: {
+      questionId: currentQuestionId,
+      examId: examToken,
+      answer: selectedAnswer,
+    },
         success: function (response) {
-            if (response.success) {
-                console.log("Response saved successfully:", response);
-                
-            } else {
-                console.error("Failed to save response:", response.message);
-                
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("Error saving response:", error);
-            alert("An error occurred while saving your response. Please try again.");
-        },
-    });
+    if (response.success) {
+        console.log("Response saved successfully:", response.message);
+        if (callback) {
+        console.log("Calling callback function...");
+        callback();
+        }
+    } else {
+        console.error("Error saving response:", response.message);
+    }
+    },
+    error: function (xhr, status, error) {
+      console.error("Error saving response:", error);
+      alert("An error occurred while saving your response. Please try again.");
+    },
+  });
 }
+
 
 
 

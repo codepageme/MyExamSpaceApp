@@ -640,126 +640,185 @@ private function decryptExamToken(string $token): int
 
 
     // Route to save response dynamically (AJAX request)
-    #[Route('/student/save-response', name: 'student_save_response', methods: ['POST'])]
-    public function saveResponse(Request $request): JsonResponse
-    {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+   #[Route('/student/save-response', name: 'student_save_response', methods: ['POST'])]
+public function saveResponse(Request $request): JsonResponse {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    if (!isset($_SESSION['student'])) {
+        return new JsonResponse(['success' => false, 'message' => 'Unauthorized access.'], 401);
+    }
+
+    $studentId = $_SESSION['student']['id'];
+    $questionId = $request->request->get('questionId');
+    $examId = $request->request->get('examId');
+    $responseValue = $request->request->get('answer');
+
+    // Skip processing if no valid answer is provided
+    if (!$questionId || !$examId || $responseValue === null || (is_array($responseValue) && empty($responseValue)) || trim((string)$responseValue) === '') {
+        return new JsonResponse(['success' => false, 'message' => 'No answer provided. Skipping save.']);
+    }
+
+    try {
+        // Decrypt the examId
+        $examId = $this->decryptExamToken($examId);
+
+        // Fetch the entities
+        $student = $this->entityManager->getRepository(Student::class)->find($studentId);
+        if (!$student) {
+            return new JsonResponse(['success' => false, 'message' => 'Student not found.'], 404);
         }
-    
-        if (!isset($_SESSION['student'])) {
-            return new JsonResponse(['success' => false, 'message' => 'Unauthorized access.'], 401);
+        $question = $this->entityManager->getRepository(Question::class)->find($questionId);
+        if (!$question) {
+            return new JsonResponse(['success' => false, 'message' => 'Question not found.'], 404);
         }
-    
-        $studentId = $_SESSION['student']['id'];
-        $questionId = $request->request->get('questionId');
-        $examId = $request->request->get('examId');
-        $responseValue = $request->request->get('answer'); // Student's response
-    
-        // Skip processing if no valid answer is provided
-        if (!$questionId || !$examId || $responseValue === null || (is_array($responseValue) && empty($responseValue)) || trim((string)$responseValue) === '') {
-            return new JsonResponse(['success' => false, 'message' => 'No answer provided. Skipping save.']);
+        $exam = $this->entityManager->getRepository(Exam::class)->find($examId);
+        if (!$exam) {
+            return new JsonResponse(['success' => false, 'message' => 'Exam not found.'], 404);
         }
-    
-        // Normalize the response: convert to uppercase and remove spaces
-        if (is_array($responseValue)) {
-            $responseValue = array_map(fn($value) => strtoupper(str_replace(' ', '', $value)), $responseValue);
-        } else {
-            $responseValue = strtoupper(str_replace(' ', '', $responseValue));
-        }
-    
-        try {
-            // Decrypt the examId
-            $examId = $this->decryptExamToken($examId);
-    
-            // Fetch the entities
-            $student = $this->entityManager->getRepository(Student::class)->find($studentId);
-            if (!$student) {
-                return new JsonResponse(['success' => false, 'message' => 'Student not found.'], 404);
-            }
-    
-            $question = $this->entityManager->getRepository(Question::class)->find($questionId);
-            if (!$question) {
-                return new JsonResponse(['success' => false, 'message' => 'Question not found.'], 404);
-            }
-    
-            $exam = $this->entityManager->getRepository(Exam::class)->find($examId);
-            if (!$exam) {
-                return new JsonResponse(['success' => false, 'message' => 'Exam not found.'], 404);
-            }
-    
-            $questionType = $question->getQuestionType()->getName();
-    
-            // Determine correct answers
-            $correctAnswer = null;
-            $correctAnswers = [];
-    
-            switch ($questionType) {
+        $questionType = $question->getQuestionType()->getName();
+
+        // Determine correct answers and student's response handling
+        $correctAnswers = [];
+        $responsesToSave = [];
+
+        switch ($questionType) {
                 case 'Radio-Button':
                 case 'German':
-                case 'Boolean':
                 case 'Images':
                 case 'Dropdown':
+                    // Preprocess response value
+                    $responseValue = strtoupper(trim(preg_replace('/[^\w]/', '', $responseValue)));
+                
+                    // Fetch the correct answer
                     $optionTable = $this->getOptionTableRepository($questionType);
                     $option = $optionTable->findOneBy(['Question' => $question]);
-                    $correctAnswer = $option ? strtoupper(str_replace(' ', '', $option->getCorrectAnswer())) : null;
+                    $correctAnswer = $option ? strtoupper(trim(preg_replace('/[^\w]/', '', $option->getCorrectAnswer()))) : null;
+                
+                    // Check if correct answer is not empty
+                    if (empty($correctAnswer)) {
+                        $isCorrect = false;
+                    } else {
+                        $isCorrect = $responseValue === $correctAnswer;
+                    }
+                
+                    $responsesToSave[] = [
+                        'Response' => $responseValue,
+                        'Detail' => 0,
+                        'IsCorrect' => $isCorrect,
+                    ];
                     break;
-    
-                case 'Check-Box':
-                case 'Register':
-                    $optionTable = $this->getOptionTableRepository($questionType);
-                    $option = $optionTable->findOneBy(['Question' => $question]);
-                    $correctAnswers = $option ? array_map(fn($value) => strtoupper(str_replace(' ', '', $value)), $option->getCorrectAnswers()) : [];
-                    break;
-    
-                default:
-                    return new JsonResponse(['success' => false, 'message' => 'Unsupported question type.'], 400);
-            }
-    
-            // Compare response with correct answers
-            $iscorrect = false;
-    
-            if ($correctAnswer !== null) {
-                $iscorrect = $responseValue === $correctAnswer;
-            } elseif (!empty($correctAnswers)) {
-                $responseValue = (array)$responseValue;
-                $iscorrect = empty(array_diff($responseValue, $correctAnswers));
-            }
-    
-            // Find or create response
-            $response = $this->entityManager->getRepository(Responses::class)->findOneBy([
-                'Student' => $student,
-                'Question' => $question,
-                'Exam' => $exam,
-            ]);
-    
-            if (!$response) {
-                $response = new Responses();
-                $response->setStudent($student);
-                $response->setQuestion($question);
-                $response->setExam($exam);
-            }
-    
-            $response->setResponse($responseValue);
-            $response->setIscorrect($iscorrect);
-    
-            $this->entityManager->persist($response);
-            $this->entityManager->flush();
-    
-            return new JsonResponse([
-                'success' => true,
-                'message' => 'Response saved successfully.',
-                'iscorrect' => $iscorrect,
-            ]);
-        } catch (\Exception $e) {
-            error_log("Exception in saveResponse: " . $e->getMessage());
-            error_log($e->getTraceAsString());
-            return new JsonResponse(['success' => false, 'message' => 'Failed to save response.'], 500);
+                
+                
+            case 'Boolean':
+                // Assuming the method to get the correct answer is 'isCorrectAnswer'
+                $optionTable = $this->getOptionTableRepository($questionType);
+                $option = $optionTable->findOneBy(['Question' => $question]);
+                $correctAnswer = $option ? $option->isCorrectAnswer() : null;
+
+                // Normalize the response as boolean (if it's coming as a string)
+                $isCorrect = (bool)$responseValue === (bool)$correctAnswer;
+                $responsesToSave[] = [
+                    'Response' => (bool)$responseValue,
+                    'Detail' => 0,
+                    'IsCorrect' => $isCorrect,
+                ];
+                break;
+
+            case 'Register':
+                // Split the response string into an array of words
+                $responseArray = preg_split('/\W+/', strtoupper($responseValue), -1, PREG_SPLIT_NO_EMPTY);
+
+                // Fetch multiple correct answers
+                $optionTable = $this->getOptionTableRepository($questionType);
+                $option = $optionTable->findOneBy(['Question' => $question]);
+                $correctAnswers = $option ? array_map(fn($value) => strtoupper(str_replace(' ', '', $value)), $option->getCorrectAnswers()) : [];
+
+                // Save each word in the response array separately
+                foreach ($responseArray as $index => $word) {
+                    $responsesToSave[] = [
+                        'Response' => $word,
+                        'Detail' => $index,
+                        'IsCorrect' => in_array($word, $correctAnswers),
+                    ];
+                }
+                break; 
+
+               case 'Check-Box':
+    // Fetch multiple correct answers
+    $optionTable = $this->getOptionTableRepository($questionType);
+    $option = $optionTable->findOneBy(['Question' => $question]);
+    $correctAnswers = $option ? array_map(fn($value) => strtoupper(str_replace(' ', '', $value)), $option->getCorrectAnswers()) : [];
+
+    // Split the response string into individual values
+    $responseValues = array_map('trim', explode(',', $responseValue));
+
+    // Initialize scores
+    $scores = array_fill(0, count($responseValues), 0);
+
+    // Iterate through response values and correct answers
+    foreach ($responseValues as $index => $answer) {
+        if (isset($correctAnswers[$index]) && $answer === $correctAnswers[$index]) {
+            $scores[$index] = 1;
         }
     }
+
+    // Save response data
+    foreach ($responseValues as $index => $answer) {
+        $responsesToSave[] = [
+            'Response' => $answer,
+            'Detail' => $index,
+            'IsCorrect' => $scores[$index] === 1,
+            'Score' => $scores[$index],
+        ];
+    }
+    break;
+
+      default:
+            return new JsonResponse(['success' => false, 'message' => 'Unsupported question type.'], 400);
+    }
+
+    // Save responses in the database
+    foreach ($responsesToSave as $responseData) {
+        $response = $this->entityManager->getRepository(Responses::class)->findOneBy([
+            'Student' => $student,
+            'Question' => $question,
+            'Exam' => $exam,
+            'detail' => $responseData['Detail'],
+        ]);
+
+        if (!$response) {
+            $response = new Responses();
+            $response->setStudent($student);
+            $response->setQuestion($question);
+            $response->setExam($exam);
+        }
+
+        $response->setResponse($responseData['Response']);
+        $response->setDetail($responseData['Detail']);
+        $response->setIscorrect($responseData['IsCorrect']);
+        $this->entityManager->persist($response);
+    }
+
+    $this->entityManager->flush();
+
+    return new JsonResponse([
+        'success' => true,
+        'message' => 'Response saved successfully.',
+    ]);
+} catch (\Exception $e) {
+    error_log("Exception in saveResponse: " . $e->getMessage());
+    error_log($e->getTraceAsString());
+
+    return new JsonResponse(['success' => false, 'message' => 'Failed to save response.'], 500);
+}
+
+}
+
+
     
     
-       
 
 
     
