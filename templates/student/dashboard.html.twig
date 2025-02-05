@@ -8,23 +8,26 @@
 
 {% block content %}
 
-<div class="container-fluid">
-    <div class="row">
+<div class="full container-fluid"  style="max-width: 100vw; overflow: hidden;" >
 
-        <!-- Left Grid -->
-        <div class="col-md-8">
-            <div id="slogo">
+
+   <div class="row">
+            <!-- Left Side:-->
+            <div class="col-sm-9 col-md-9" style="padding: 20px;">
+
+
+            <div id="slogo" style="text-align: center; margin-bottom: 20px;">
                 <!-- Put logo here -->
                 <img src="uploads\Schoollogo\window.jpg" alt="Logo" class="img-fluid">
             </div>
             
-            <div id="container" style="margin-left:250px">
-            <div class="centered-section" style="margin-top:10px; width:700px;">
+            <div id="container" style="margin: auto; margin-top: 50px; max-width: 700px;">
+            <div class="centered-section" style=" width:700px;">
              {% if hasExamToday and exams is not empty %}
             <h5><strong>You Have (Atleast) An Exam Today.</strong></h5>
-            <div class="exam-container" style="display: flex; overflow-x: auto; gap: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+            <div class="exam-container" style="display: flex; overflow-x: auto; gap: 10px; padding: 1px;">
                {% for examData in exams %}
-                    <div class="exam-card" style="flex: 0 0 auto; padding: 15px; border: 1px solid #007bff; border-radius: 5px; min-width: 250px; background-color: #f9f9f9;">
+                    <div class="exam-card" style="flex: 0 0 auto; padding: 4px; border: 1px solid #007bff; border-radius: 5px; min-width: 250px; background-color: #f9f9f9;">
                         <h4><strong>{{ examData.exam.subject.course }}</strong></h4>
                         <p><strong>{{ examData.exam.classroom.classname }} - {{ examData.exam.examtype.name }}</strong></p>
             
@@ -44,37 +47,38 @@
 
         
 
-        <!-- Right Grid -->
-        <div class="col-md-3" style="background-color:white; padding: 10px; margin-bottom:-20px; margin-top:10px; border-radius:10px; margin-left:100px;"> <!-- White background for right grid -->
+        <!-- Right Side: Exam Content -->
+            <div class="col-sm-3 col-md-3" style="background-color: white; padding: 20px; border-radius: 10px; height: 95vh; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);"> <!-- White background for right grid -->
             
-            <strong><p style="text-align:left; font-size:11px; margin-top:-5px;"> Exam Date</p></strong>
-           <div class="calendar-section text-center">
-             <!-- Calendar Section -->
-             <div id="examCalendar" class="calendar"  style=" margin-top:-15px;"></div>
+            <strong><p style="text-align:left; font-size:12px; font-family:inter; margin-top: 10px; margin-left:5px;"> Exam / Test Date </p></strong>
+          
+            <div class="calender-section">
+             <div id="examCalendar" class="calendar"  style=" margin-top:-10px; margin-left:30px;"></div>
+                </div>
 
-             <div id="examDetails" class="exam-details-section" style="white-space: nowrap; overflow-x: auto; display: flex; padding: 10px; gap: 15px; background-color: #f9f9f9; border-radius: 10px;">
+           <div class="cal-section">
+             <div id="examDetails" class="exam-details-section" style="white-space: nowrap; overflow-x: auto; display: flex; padding: 1px; gap: 10px; background-color: #f9f9f9; border-radius: 10px;">
                     <!-- Exam cards will be dynamically inserted here -->
                 </div>
 
             </div>
             <hr>
 
-    <div class="row">
+    
         <!-- Student Profile on the Left -->
-        <div class="col-xs-5 col-sm-5">
-            <div class="student-profile" style="text-align: left;">
-                <img src="/" alt="Profile Picture" class="img-thumbnail" style="width: 70px; height: 70px; border-radius: 50%;"/>
+       
+            <div class="student-profile" style="text-align: center; margin-top:100px;">
+                <img src="/" alt="Profile Picture" class="img-thumbnail" style="width: 50px; height: 50px; border-radius: 50%;"/>
                 <p>{{ student.name }}</p>
             </div>
-        </div>
+        
         <!-- Logout Button on the Right -->
-        <div class="col-xs-5 col-sm-5 text-right" style="margin-top:50px; margin-right:40px; ">
             <a href="{{ path('student_logout') }}" class="glyphicon glyphicon-log-out">
              Logout
             </a>
+
+
         </div>
-    </div>
-</div>
 
 
 
@@ -187,12 +191,9 @@ $(document).ready(function () {
 }
 
 
-.calendar-section {
+.cal-section {
     max-width: 250px;        /* Limit the width */
-    margin: 0 auto;    
-    margin-left:40px;
 }
-
 
 .current-exam p {
     margin-top:10px;
@@ -209,16 +210,14 @@ $(document).ready(function () {
 .calendar {
     text-align: center; /* Center the calendar */
     background-color: #ffffff; /* White background for calendar */
-    padding: 10px;
     border-radius: 5px;
-   
 }
 
 /* General styling for the datepicker container */
     .datepicker {
         font-size: 9px; /* Smaller font size */
-        width: 300px; /* Adjust width */
-        padding: 3px; /* Adjust padding */
+        width: 200px; /* Adjust width */
+        padding: 1px; /* Adjust padding */
     }
 
     /* Adjust the header (month and year) */
@@ -231,7 +230,7 @@ $(document).ready(function () {
     .datepicker table tr td,
     .datepicker table tr th {
         width: 30px; /* Adjust day cell width */
-        height: 15px; /* Adjust day cell height */
+        height: 10px; /* Adjust day cell height */
         text-align: center; /* Center align text */
         color:#007bff ;
         padding: 3px; /* Adjust padding */
@@ -241,7 +240,9 @@ $(document).ready(function () {
     .datepicker table tr td.today {
         background-color: #007bff ;
         color: white;
-        border-radius: 100%; /* Circular highlight */
+        border-radius: 100%; 
+        width:15px;
+        height:15px;/* Circular highlight */
     }
 
     /* Adjust the navigation arrows */
@@ -256,7 +257,7 @@ $(document).ready(function () {
         background-color: #007bff !important;
         color: white !important;
         width:10px;
-        height:10px;
+        height:20px;
         border-radius: 100% !important; /* Circular shape */
     }
 
@@ -264,9 +265,17 @@ $(document).ready(function () {
         background-color: darkblue !important; /* Darker on hover */
     }
     .glyphicon-log-out{
-        font-size:20px;
-       
+        text-align:center;
+        font-size:15px;
+        
     }
+
+    .table-condensed{
+        margin-left:40px;
+    }
+ 
+
+ 
 </style>
 
 {% endblock %}

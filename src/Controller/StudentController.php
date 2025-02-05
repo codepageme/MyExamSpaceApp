@@ -12,6 +12,8 @@ use App\Entity\GermanOption;
 use App\Entity\BooleanOption;
 use App\Entity\DropdownOption;
 use App\Entity\Results;
+use App\Entity\Theory;
+use App\Entity\Grade;
 use App\Entity\Term;
 use App\Entity\AcademicCalender;
 use App\Entity\Question;
@@ -377,39 +379,59 @@ public function getExamobjective(
 
         $questions = $queryBuilder->getQuery()->getResult();
 
-        // Generate and store question order specific to this student and exam
-        $studentId = $student['id'];
-        if (!isset($_SESSION['student_data'][$studentId]['exam'][$examId]['question_order'])) {
-            shuffle($questions);
-            $_SESSION['student_data'][$studentId]['exam'][$examId]['question_order'] = array_map(function ($question) {
-                return $question->getId();
-            }, $questions);
-        }
+      // Filter Register questions to only include those for the English subject
+      $registerQuestions = array_filter($questions, function ($question) {
+        return $question->getQuestionType()->getName() === 'Register' && $question->getSubject()->getCourse() === 'English';
+    });
+// Generate and store question order specific to this student and exam
+$studentId = $student['id'];
+if (!isset($_SESSION['student_data'][$studentId]['exam'][$examId]['question_order'])) {
+    // Ensure only one Register question is included
+    $questionsWithRegister = array_merge($registerQuestions, array_filter($questions, function ($question) 
+    { return $question->getQuestionType()->getName() !== 'Register'; }));
 
-        // Retrieve and reorder questions based on stored order
-        $questionOrder = $_SESSION['student_data'][$studentId]['exam'][$examId]['question_order'];
-        $orderedQuestions = [];
-        foreach ($questionOrder as $questionId) {
-            foreach ($questions as $question) {
-                if ($question->getId() === $questionId) {
-                    $orderedQuestions[] = $question;
-                    break;
-                }
-            }
-        }
+    shuffle($questionsWithRegister);
+    $_SESSION['student_data'][$studentId]['exam'][$examId]['question_order'] = array_map(function ($question) {
+        return $question->getId();
+    }, $questionsWithRegister);
+}
 
-        $connection->commit();
-    } catch (\Exception $e) {
-        $connection->rollBack();
-        throw $e;
+// Retrieve and reorder questions based on stored order
+$questionOrder = $_SESSION['student_data'][$studentId]['exam'][$examId]['question_order'];
+$orderedQuestions = [];
+foreach ($questionOrder as $questionId) {
+    foreach ($questions as $question) {
+        if ($question->getId() === $questionId) {
+            $orderedQuestions[] = $question;
+            break;
+        }
     }
+}
 
-    // Paginate questions
-    $currentPage = max(1, (int)$request->query->get('page', 1));
-    $questionsPerPage = 1;
-    $totalQuestionsExpected = $exam->getTotalQuestions();
-    $totalPages = (int)ceil($totalQuestionsExpected / $questionsPerPage);
-    $paginatedQuestions = array_slice($orderedQuestions, ($currentPage - 1) * $questionsPerPage, $questionsPerPage);
+$connection->commit();
+} catch (\Exception $e) {
+$connection->rollBack();
+throw $e;
+}
+
+// Paginate questions
+$currentPage = max(1, (int)$request->query->get('page', 1));
+$questionsPerPage = 1;
+$totalQuestionsExpected = $exam->getTotalQuestions();
+
+// Adjust total questions expected if a Register question is included
+if (in_array('Register', array_column($orderedQuestions, 'type'))) {
+    $totalQuestionsExpected -= 9;
+}
+
+$totalPages = (int)ceil(count($orderedQuestions) / $questionsPerPage);
+
+
+if (in_array('Register', array_column($orderedQuestions, 'type'))) {
+    $totalPages = (int)ceil(($totalQuestionsExpected + 9) / $questionsPerPage);
+}
+$paginatedQuestions = array_slice($orderedQuestions, ($currentPage - 1) * $questionsPerPage, $questionsPerPage);
+
 
     // Calculate exam duration
     $durationInSeconds = $this->calculateDurationInSeconds($exam->getDuration());
@@ -431,7 +453,6 @@ public function getExamobjective(
         'questionIds' => array_map(function($question) { return $question->getId(); }, $paginatedQuestions), // Include question IDs
     ]);
 }
-
 
 
 
@@ -853,116 +874,278 @@ public function saveResponse(Request $request): JsonResponse {
 
 
 
-    // Route to get a student's saved response
-    #[Route('/student/get-response', name: 'student_get_response', methods: ['GET'])]
-    public function getResponse(Request $request): JsonResponse
+    #[Route('/student/examtheory/{examToken}', name: 'student_examtheory', methods: ['GET'])]
+    public function examTheory(string $examToken, ManagerRegistry $doctrine): Response
     {
         // Start session if not already started
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
-
+    
         if (!isset($_SESSION['student'])) {
-            return new JsonResponse(['success' => false, 'message' => 'Unauthorized access.'], 401);
+            return $this->redirectToRoute('student_login_form');
         }
-
-        $studentId = $_SESSION['student']['id']; // Retrieve student ID from session
-        $questionId = $request->query->get('questionId');
-        $examId = $request->query->get('examId');
-
-        if (!$questionId || !$examId) {
-            return new JsonResponse(['success' => false, 'message' => 'Invalid data provided.'], 400);
+    
+        $student = $_SESSION['student'];
+    
+        // Decrypt the exam token
+        $examId = $this->decryptExamToken($examToken); // Ensure decrypt logic handles invalid cases
+    
+        // Fetch the exam details
+        $examRepository = $doctrine->getRepository(Exam::class);
+        $exam = $examRepository->find($examId);
+    
+        if (!$exam) {
+            throw $this->createNotFoundException('Exam not found.');
         }
+    
+        // Ensure the exam matches the student's class and other validations
+        if ($exam->getClassroom()->getId() !== $student['classroom']['id']) {
+            return $this->redirectToRoute('student_login_form');
+        }
+    
+        // Validate exam date
+        $today = new \DateTime('today');
+        if ($exam->getDate() != $today) {
+            session_destroy(); // Destroy the session to log out the student
+            return $this->redirectToRoute('student_login_form');
+        }
+    
+        // Fetch the current term from the AcademicCalender table
+        $academicCalendarRepository = $doctrine->getRepository(AcademicCalender::class);
+        $currentCalendar = $academicCalendarRepository->createQueryBuilder('a')
+            ->orderBy('a.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    
+        if (!$currentCalendar) {
+            throw $this->createNotFoundException('Current academic calendar not found.');
+        }
+    
+        $currentTermId = $currentCalendar->getTerm()->getId();
+    
+        // Fetch theory questions based on the criteria
+        $theoryRepository = $doctrine->getRepository(Theory::class);
+        $questions = $theoryRepository->createQueryBuilder('t')
+            ->join('t.classrooms', 'c') // Join the classrooms relationship
+            ->where('t.subject = :subjectId')
+            ->andWhere(':classroomId MEMBER OF t.classrooms') // Use MEMBER OF for ManyToMany
+            ->andWhere('t.term = :currentTermId')
+            ->andWhere('t.examType = :examTypeId')
+            ->setParameter('subjectId', $exam->getSubject()->getId())
+            ->setParameter('classroomId', $exam->getClassroom()->getId()) // Use the ID explicitly
+            ->setParameter('currentTermId', $currentTermId) // Term from AcademicCalender
+            ->setParameter('examTypeId', $exam->getExamType()->getId())
+            ->setMaxResults($exam->getTheoryQuestions() ?? 5)
+            ->getQuery()
+            ->getResult();
+            
 
-        $response = $this->entityManager->getRepository(Response::class)->findOneBy([
-            'studentId' => $studentId,
-            'questionId' => $questionId,
-            'examId' => $examId,
+            $theoryDuration = $exam->getTheoryDuration();
+
+            if ($theoryDuration instanceof \DateTime) {
+                // Extract hours, minutes, and seconds from the DateTime object
+                $hours = (int) $theoryDuration->format('H');
+                $minutes = (int) $theoryDuration->format('i');
+                $seconds = (int) $theoryDuration->format('s');
+                $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
+            } else {
+                // Fallback for unexpected cases, assuming $theoryDuration is a string in "H:i:s" format
+                [$hours, $minutes, $seconds] = explode(':', $theoryDuration);
+                $totalSeconds = ((int) $hours * 3600) + ((int) $minutes * 60) + (int) $seconds;
+            }
+
+
+    
+        // Render the template with theory questions
+        return $this->render('student/examtheory.html.twig', [
+            'exam' => $exam,
+            'questions' => $questions,
+            'student' => $student,
+            'formattedDuration' => $totalSeconds,
+            'currentTermName' => $currentCalendar->getTerm()->getName(), 
+            'resultPageUrl' => $this->generateUrl('student_examresult', ['examToken' => $examToken]),
+            'examToken' => $examToken,
         ]);
+    }
+    
+ 
 
-        $answer = $response ? $response->getAnswer() : null;
 
-        return new JsonResponse(['success' => true, 'answer' => $answer]);
+
+
+
+
+    #[Route('/student/examresult/{examToken}', name: 'student_examresult', methods: ['GET'])]
+    public function processResult(string $examToken, ManagerRegistry $doctrine): Response
+    {
+        $em = $doctrine->getManager();
+        $connection = $em->getConnection();
+        
+        // Start session if not already started
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+    
+        // Check if the student is logged in
+        if (!isset($_SESSION['student'])) {
+            return $this->redirectToRoute('student_login_form');
+        }
+    
+        $student = $_SESSION['student'];
+        $studentRepository = $doctrine->getRepository(Student::class);
+    
+        // Fetch the student entity
+        $studentEntity = $studentRepository->find($student['id']);
+        if (!$studentEntity) {
+            throw $this->createNotFoundException('Student not found.');
+        }
+    
+        // Decrypt the exam token
+        $examId = $this->decryptExamToken($examToken);
+    
+        // Fetch the exam
+        $examRepository = $doctrine->getRepository(Exam::class);
+        $exam = $examRepository->find($examId);
+    
+        if (!$exam) {
+            throw $this->createNotFoundException('Exam not found.');
+        }
+    
+        // Validate student classroom and exam date
+        $today = new \DateTime('today');
+        if (
+            $exam->getClassroom()->getId() !== $student['classroom']['id'] ||
+            $exam->getDate() != $today
+        ) {
+            session_destroy(); // Log the student out
+            return $this->redirectToRoute('student_login_form');
+        }
+    
+        // Fetch the current academic calendar
+        $academicCalendarRepository = $doctrine->getRepository(AcademicCalender::class);
+        $currentCalendar = $academicCalendarRepository->createQueryBuilder('a')
+            ->orderBy('a.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    
+        if (!$currentCalendar) {
+            throw $this->createNotFoundException('Current academic calendar not found.');
+        }
+    
+        // Fetch student responses
+        $responseRepository = $doctrine->getRepository(Responses::class);
+        $responses = $responseRepository->findBy(['Student' => $studentEntity, 'Exam' => $exam]);
+    
+        // Begin Transaction
+        $em->getConnection()->beginTransaction();
+        try {
+            // Calculate correct and incorrect answers
+            $correctAnswers = 0;
+            $answeredQuestions = count($responses);
+    
+            foreach ($responses as $response) {
+                if ($response->getIsCorrect()) {
+                    $correctAnswers++;
+                }
+            }
+    
+            $totalQuestions = $exam->getTotalQuestions();
+            $totalMark = $exam->getTotalMarks();
+    
+            // Compute metrics
+            $percentage = ($correctAnswers / $totalQuestions) * 100;
+            $score = ($correctAnswers / $totalQuestions) * $totalMark;
+
+             // Fetch the leaderboard: all students who took the exam, ordered by score
+            $leaderboardRepository = $doctrine->getRepository(Results::class);
+            $leaderboard = $leaderboardRepository->createQueryBuilder('r')
+                ->innerJoin('r.Student', 's')
+                ->where('r.Exam = :exam')
+                ->setParameter('exam', $exam)
+                ->orderBy('r.Score', 'DESC')
+                ->getQuery()
+                ->getResult();
+    
+            // Fetch grade based on percentage
+            $gradeRepository = $doctrine->getRepository(Grade::class);
+            $grade = $gradeRepository->createQueryBuilder('g')
+                ->where(':percentage BETWEEN g.minPercentage AND g.maxPercentage')
+                ->setParameter('percentage', $percentage)
+                ->getQuery()
+                ->getOneOrNullResult();
+    
+            if (!$grade) {
+                throw $this->createNotFoundException('Grade not found for this percentage.');
+            }
+    
+            // Check if the result already exists
+            $resultRepository = $doctrine->getRepository(Results::class);
+            $existingResult = $resultRepository->findOneBy([
+                'Student' => $studentEntity,
+                'Exam' => $exam,
+            ]);
+    
+            if ($existingResult) {
+                // Update the existing result
+                $existingResult->setCorrectAnswers($correctAnswers);
+                $existingResult->setAnsweredQuestions($answeredQuestions);
+                $existingResult->setPercentage(round($percentage, 2));
+                $existingResult->setScore(round($score, 2));
+                $existingResult->setTotalQuestions($totalQuestions);
+                $existingResult->setGrade($grade); // Relationship
+                $existingResult->setAcademicCalender($currentCalendar); // Relationship
+                $existingResult->setDate(new \DateTimeImmutable()); // Update date field to current date
+    
+                $em->flush(); // Commit the changes
+            } else {
+                // If no result exists, create a new one
+                $result = new Results();
+                $result->setStudent($studentEntity); // Relationship
+                $result->setExam($exam); // Relationship
+                $result->setCorrectAnswers($correctAnswers);
+                $result->setAnsweredQuestions($answeredQuestions);
+                $result->setPercentage(round($percentage, 2));
+                $result->setScore(round($score, 2));
+                $result->setTotalQuestions($totalQuestions);
+                $result->setGrade($grade); // Relationship
+                $result->setAcademicCalender($currentCalendar); // Relationship
+                $result->setDate(new \DateTimeImmutable()); // Assign current date
+    
+                $em->persist($result); // Persist a new result
+                $em->flush();
+            }
+    
+            // Commit Transaction
+            $em->getConnection()->commit();
+        } catch (\Exception $e) {
+            // Rollback Transaction on Failure
+            $em->getConnection()->rollBack();
+            throw $e;
+        }
+    
+        // Redirect to the result page or render it
+        return $this->render('student/examresult.html.twig', [
+            'student' => $studentEntity,
+            'exam' => $exam,
+            'totalQuestions' => $totalQuestions,
+            'answeredQuestions' => $answeredQuestions,
+            'correctAnswers' => $correctAnswers,
+            'incorrectAnswers' => $totalQuestions - $correctAnswers,
+            'score' => round($score, 2),
+            'percentage' => round($percentage, 2),
+            'grade' => $grade,
+            'leaderboard' => $leaderboard,
+        ]);
     }
 
 
 
-
-
-#[Route('/student/examtheory/{examToken}', name: 'student_examtheory', methods: ['GET'])]
-public function examTheory(string $examToken, ManagerRegistry $doctrine): Response
-{
-    // Start session if not already started
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-
-    if (!isset($_SESSION['student'])) {
-        return $this->redirectToRoute('student_login_form');
-    }
-
-    $student = $_SESSION['student'];
-
-    // Decrypt the exam token
-    $examId = $this->decryptExamToken($examToken); // Implement your decrypt logic
-
-    // Fetch the exam details
-    $examRepository = $doctrine->getRepository(Exam::class);
-    $exam = $examRepository->find($examId);
-
-    if (!$exam) {
-        throw $this->createNotFoundException('Exam not found.');
-    }
-
-    // Ensure the exam matches the student's class and other validations
-    if ($exam->getClassroom()->getId() !== $student['classroom']['id']) {
-        return $this->redirectToRoute('student_login_form');
-    }
-
-    // Load theory-specific data and render the template
-    return $this->render('student/examtheory.html.twig', [
-        'exam' => $exam,
-    ]);
-}
-
-
-
-#[Route('/student/examresult/{examToken}', name: 'student_examresult', methods: ['GET'])]
-public function examResult(string $examToken, ManagerRegistry $doctrine): Response
-{
-    // Start session if not already started
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-
-    if (!isset($_SESSION['student'])) {
-        return $this->redirectToRoute('student_login_form');
-    }
-
-    $student = $_SESSION['student'];
-
-    // Decrypt the exam token
-    $examId = $this->decryptExamToken($examToken); // Implement your decrypt logic
-
-    // Fetch the exam details
-    $examRepository = $doctrine->getRepository(Exam::class);
-    $exam = $examRepository->find($examId);
-
-    if (!$exam) {
-        throw $this->createNotFoundException('Exam not found.');
-    }
-
-    // Ensure the exam matches the student's class and other validations
-    if ($exam->getClassroom()->getId() !== $student['classroom']['id']) {
-        return $this->redirectToRoute('student_login_form');
-    }
-
-    // Load theory-specific data and render the template
-    return $this->render('student/examresult.html.twig', [
-        'exam' => $exam,
-    ]);
-}
-
+    
+        
+        
 
 
 

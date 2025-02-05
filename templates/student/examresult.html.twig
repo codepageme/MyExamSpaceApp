@@ -1,4 +1,188 @@
-<h1> This is the result page</h1>
+{% extends 'xbase.html.twig' %}
 
- <p><strong>Classroom:</strong> {{ exam.classroom.classname }}</p>
-    <p><strong>Exam Type:</strong> {{ exam.Examtype.name }}</p>
+{% block title %} My Result {% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/student.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="full container-fluid">
+    
+
+
+<div class="button-container">
+    <a  class="btn btn-default btm"> <span class="glyphicon glyphicon-file"></span> Objective</a>
+    <a  class="btn btn-default btm"> <span class="glyphicon glyphicon-file"></span> Theory</a>
+    <a  class="btn btn-primary btm"> <span class="glyphicon glyphicon-file"></span> Result</a>
+</div>
+
+
+
+<div id="student-card" class="card student-info-card" data-grade="{{ grade.grade }}">
+    <div class="card-body">
+        <div class="row">
+    <div class="col-md-4">
+        <h1><span class="grade buff">{{ grade.grade }}</span></h1>
+    </div>
+    <div class="col-md-4">
+        <h1><span class="score fat">{{ score }}/{{ exam.totalMarks }}</span></h1>
+    </div>
+    <div class="col-md-4">
+        <h1><span class="percentage buff">{{ percentage }}%</span></h1>
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<!-- Feedback Section -->
+<div class="alert alert-info text-center mt-4 feedback">
+    {% if percentage >= 90 %}
+        🎉 Excellent performance {{student.lastname}} ! Keep it up!
+    {% elseif percentage >= 70 %}
+        👍 Good job {{student.lastname}} ! You're doing well.
+    {% elseif percentage >= 50 %}
+        👏 Not bad {{student.lastname}} ! You’re getting there, keep it up.
+    {% else %}
+        📚 Keep practicing {{student.lastname}} ! You've got this. Every step counts.
+    {% endif %}
+</div>
+
+<div class="row">
+    <!-- Left Column: Student Performance Breakdown -->
+   <div class="col-md-6">
+    <div class="performance-breakdown">
+        <!-- Dropdowns -->
+        <div class="form-inline mb-3">
+            <select id="subject" class="form-control form-control-sm mr-3" disabled>
+                <option>{{ exam.subject.course }}</option>
+            </select>
+            <select id="class" class="form-control form-control-sm mr-3" disabled>
+                <option>{{ exam.classroom.classname }}</option>
+            </select>
+            <select id="examType" class="form-control form-control-sm" disabled>
+                <option>{{ exam.examType.name }}</option>
+            </select>
+        </div>
+
+      <!-- Performance Rings -->
+<div class="ring-container">
+    <!-- Total Questions -->
+    <div class="ring-wrapper">
+        <div class="ring" style="border-color: green;">
+            <span class="ring-text">{{ totalQuestions }}</span>
+        </div>
+        <p class="ring-label">Total</p>
+    </div>
+
+    <!-- Total Answered -->
+    <div class="ring-wrapper">
+        <div class="ring" style="border-color: blue;">
+            <span class="ring-text">{{ answeredQuestions }}</span>
+        </div>
+        <p class="ring-label">Answered</p>
+    </div>
+
+    <!-- Correct Answers -->
+    <div class="ring-wrapper">
+        <div class="ring" style="border-color: green;">
+            <span class="ring-text">{{ correctAnswers }}</span>
+        </div>
+        <p class="ring-label">Correct</p>
+    </div>
+
+    <!-- Incorrect Answers -->
+    <div class="ring-wrapper">
+        <div class="ring" style="border-color: red;">
+            <span class="ring-text">{{ incorrectAnswers }}</span>
+        </div>
+        <p class="ring-label">Incorrect</p>
+    </div>
+
+    <!-- Unattempted -->
+    <div class="ring-wrapper">
+        <div class="ring" style="border-color: grey;">
+            <span class="ring-text">{{ totalQuestions - answeredQuestions }}</span>
+        </div>
+        <p class="ring-label">Unattempted</p>
+    </div>
+</div>
+</div>
+</div>
+
+
+
+    <!-- Right Column: Class Leaderboard -->
+    <div class="col-md-6">
+        <div class="leaderboard">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Student</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leaderboardEntry in leaderboard %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ leaderboardEntry.student.lastname }}</td>
+                        <td>{{ leaderboardEntry.percentage }}%</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">No leaderboard data available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h5 style="align:inline-start">Class Leaderboard</h5> | <a href="{{ path('student_logout') }}" class="glyphicon glyphicon-log-out">  Logout</a>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+    $(document).ready(function () {
+        const grade = $('#student-card').data('grade').toUpperCase();
+
+        let colorClass = '';
+        switch (grade) {
+            case 'A1':
+            case 'A2':
+                colorClass = 'bg-success text-white'; // Green for excellent grades
+                break;
+            case 'B3':
+            case 'B4':
+            case 'C5':
+                colorClass = 'bg-primary text-white'; // Blue for good grades
+                break;
+            case 'C6':
+            case 'D7':
+                colorClass = 'bg-warning text-dark'; // Yellow for average grades
+                break;
+            case 'E8':
+            case 'F9':
+                colorClass = 'bg-danger text-white'; // Red for failing grades
+                break;
+            default:
+                colorClass = 'bg-secondary text-white'; // Grey for undefined grades
+        }
+
+        $('#student-card').addClass(colorClass);
+    });
+</script>
+
+</div>
+
+{% endblock %}
+
+
+

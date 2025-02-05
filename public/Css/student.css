@@ -1,0 +1,434 @@
+/* Import the Inter font */
+@font-face {
+    font-family: 'inter';
+    src: url('/Css/inter/inter-Regular.woff2') format('woff2'),
+         url('/Css/inter/inter-Regular.woff') format('woff'),
+         url('/Css/inter/inter-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Import additional weights if needed */
+@font-face {
+    font-family: 'inter';
+    src: url('/Css/inter/inter-Bold.woff2') format('woff2'),
+         url('/Css/inter/inter-Bold.woff') format('woff'),
+         url('/Css/inter/inter-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* Set Inter as the default font */
+body {
+    font-family: 'inter', Arial, sans-serif;
+}
+
+
+ .button-container {
+    position: fixed; /* Fixes the container to the screen */
+    top: 30px; /* Distance from the top of the screen */
+    left: 30px; /* Distance from the left of the screen */
+    z-index: 1000; /* Ensures it's above other content */
+}
+
+.button-container .btn {
+    font-weight: light; 
+    margin-bottom: 10px; /* Adds some space between the buttons */
+}
+
+.btm{
+    margin-right: 10px;
+}
+
+
+.bg-success {
+    background-color: #0f6122 !important;
+    color: white;
+}
+
+.bg-primary {
+    background-color: #0a3b70 !important;
+    color: white;
+}
+
+.bg-warning {
+    background-color: #916e07 !important;
+    color: white !important;
+}
+
+.bg-danger {
+    background-color: #810c18 !important;
+    color: white;
+}
+
+.bg-secondary {
+    background-color: #5e6469 !important;
+}
+
+
+#student-card{
+    border-radius: 20px;
+    margin-top: 70px;
+    width: 100%;
+
+}
+
+.buff{
+    font-family: inter, calibri;
+    font-size: 50px;
+    margin-bottom: 2px;
+}
+
+.fat{
+    font-family: inter, calibri;
+    font-size: 90px;
+    font-weight: bolder;
+    margin-bottom: 2px;
+}
+
+.feedback{
+    margin-top: 20px;
+}
+
+
+.row {
+    margin: 20px;
+}
+
+.performance-breakdown, .leaderboard {
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.performance-breakdown h3, .leaderboard h3 {
+    color: #333;
+    font-size: 1.5em;
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    font-size: 1.1em;
+    
+}
+
+th {
+    background-color: #f0f0f0;
+}
+
+td, th {
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    font-weight: bold;
+}
+
+td {
+    background-color: black;
+    color: white;
+}
+
+table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #e9e9e9;
+}
+
+
+.performance-breakdown .form-inline {
+    display: flex;
+    align-items: center;
+}
+
+.performance-breakdown .form-inline select {
+    width: 100px;
+    margin-left: 10px; /* Adjust the width of dropdowns if needed */
+    height: 30px;
+}
+
+.performance-breakdown select {
+    max-width: 150px; /* Adjust dropdown width as needed */
+}
+
+
+
+
+.performance-breakdown {
+    padding: 20px;
+}
+
+.form-inline select {
+    width: 150px;
+    margin-bottom: 10px;
+}
+
+/* Ring Container */
+.ring-container {
+    display: flex;
+    flex-direction: row; /* Stacks items horizontally */
+    align-items: center; /* Aligns items in a straight line */
+    gap: 10px; /* Reduced space between each ring-wrapper */
+    flex-wrap: nowrap; /* Wraps to the next row if necessary */
+}
+
+/* Ring Wrapper */
+.ring-wrapper {
+    display: flex;
+    flex-direction: column; /* Stacks the ring and label vertically within each wrapper */
+    align-items: center; /* Centers the label with the ring */
+    gap: 3px; /* Slightly reduced space between the ring and the label */
+}
+
+/* Rings */
+.ring {
+    width: 60px;
+    height: 60px;
+    border: 5px solid transparent;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Ring Text */
+.ring-text {
+    font-size: 16px;
+    position: absolute;
+}
+
+/* Ring Label */
+.ring-label {
+    font-size: 14px; /* Adjust the text size of the label */
+    color: #333; /* Label color */
+    margin: 0; /* Removes extra spacing */
+    text-align: center; /* Centers the label text */
+}
+
+/* Styling for dropdowns */
+.form-inline {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.form-control {
+    width: auto;
+}
+
+
+/* Leaderboard Styling */
+.leaderboard {
+    max-height: 400px; /* Adjust height to fit your design */
+    overflow-y: auto; /* Enables vertical scrolling */
+    border: 1px solid #ccc; /* Optional: Adds a border for separation */
+    padding: 5px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+/* Table Container Styling */
+.table-container {
+    max-height: 300px; /* Adjust the height for the scrollable area */
+    overflow-y: auto; /* Enables vertical scrolling within the table container */
+}
+
+/* Table Styling */
+.table {
+    margin: 0; /* Remove default margin to ensure proper alignment */
+    width: 100%; /* Ensure the table takes the full width */
+}
+
+.table thead th {
+    position: sticky; /* Keeps the header visible while scrolling */
+    top: 0;
+    background-color: #fff; /* Same color as the table header background */
+    z-index: 1;
+}
+
+/* Optional: Scrollbar Styling for Modern Browsers */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa;
+}
+
+
+
+       
+
+
+
+        /* Theorypage styles here */
+     
+.title{
+    font-size:20px;
+    font-weight:bold;
+    margin-top:50px;
+    text-align:center;
+}
+
+.timecount{
+    font-size:50px;
+    margin-top:-10px;
+}
+
+
+
+
+.question {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    padding: 10px;
+    position: relative;
+    text-align: left; /* Align question text to the left */
+}
+
+h5.text-primary {
+    font-weight: bold;
+    margin: 10px 0;
+    text-align: left; /* Ensure the index is left-aligned */
+}
+
+.question p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+
+.container {
+    margin-top: 20px;
+}
+
+hr {
+    border-top: 1px solid #ddd;
+}
+
+ /* Optional styling for your overlay */
+ .noscript-overlay {
+    position: fixed;
+    margin:10px;
+    width: 95%;
+    height: 95%;
+    background: white;
+    color: red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+    font-size: 2rem;
+}
+
+h1,h4{
+    font-size:100px;
+}
+
+
+#fullscreenWarning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 1.50);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 5000;
+}
+
+#examContent {
+    display: none; /* Initially hidden until fullscreen is entered */
+}
+
+#fullscreenButton {
+    padding: 10px 20px;
+    background-color: blue;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    font-family:inter;
+}
+
+#fullscreenButton:hover {
+    background-color: white;
+    color:blue;
+}
+
+
+.question-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    overflow-y: auto; /* Enables vertical scrolling */
+    max-height: 30%; /* Limits the height */
+}
+
+.question-text {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.options-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    overflow-y: auto; /* Enables vertical scrolling */
+    max-height: 40%; /* Limits the height */
+}
+
+.response-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    overflow-y: auto; /* Enables vertical scrolling */
+    max-height: 20%; /* Limits the height */
+}
+
+/* Optional: Add a scrollbar style */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa;
+}
+
+

@@ -3,12 +3,25 @@
 {% block title %}Objective Questions{% endblock %}
 
 {% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+   <link rel="stylesheet" href="{{ asset('css/student.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<div class="container-fluid">
+<div class="full container-fluid">
+    
+
+ <div class="row">
+            <!-- Left Side: Student Profile -->
+            <div class="col-sm-9 col-md-9">
+
+
+<div class="button-container">
+    <a  class="btn btn-primary btm"> <span class="glyphicon glyphicon-file"></span> Objective</a>
+    <a  class="btn btn-default btm"> <span class="glyphicon glyphicon-file"></span> Theory</a>
+    <a  class="btn btn-default btm"> <span class="glyphicon glyphicon-file"></span> Result</a>
+</div>
+
    
     <noscript>
         <div class="noscript-overlay">
@@ -25,11 +38,6 @@
         <button id="fullscreenButton">Go To Full-screen</button>
     </div>
 
-
-<div class="button-container">
-    <a href="/" class="btn btn-primary disabled"> <span class="glyphicon glyphicon-file"></span> Objectives</a>
-    <a href="/" class="btn btn-default disabled"> <span class="glyphicon glyphicon-file"></span> Theories</a>
-</div>
 
 
 <div class="exam-details" style="text-align:center;">
@@ -82,39 +90,57 @@
 </div>
 
 
+</div>
 
 
+<!-- Right Side: Exam Content -->
+            <div class="col-sm-3 col-md-3">
 
+<!-- Full Page Layout -->
+<div class="d-flex flex-column align-items-left" style="height: 80vh; justify-content: space-between;">
 
+    <!-- Top Section: Profile Picture, Name, and Logo -->
+    <div class="text-center" style="margin-top: 30px;">
+        <!-- Student Profile Picture -->
+        <img 
+            src="/" 
+            alt="student dp"
+            style="width: 250px; height: 250px; border-radius: 70%;"
+        />
+        
+        <!-- Student Name -->
+        <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 35px;">{{ student.name }}</p>
+        
+        <!-- School Logo -->
+        <img 
+            src="/path-to-school-logo.png" 
+            alt="School Logo" 
+            style="width: 250px; height: 250px; border-radius: 100%;"
+        />
+    </div>
 
+    <!-- Bottom Section: Logout Button -->
+    <div class="text-center" style="margin-top: 400px;">
+        <a 
+            href="{{ path('student_logout') }}" 
+            style="padding: 10px 20px; font-size: 1.5rem;"
+        >
+            <span class="glyphicon glyphicon-log-out"></span> Logout
+        </a>
+    </div>
+</div>
+</div>
 
-
-
-
-
-
- <!-- Student Profile on the Left -->
-        <div class="col-xs-5 col-sm-5">
-            <div class="student-profile" style="text-align: left;">
-                <img src="/" alt="Profile Picture" class="img-thumbnail" style="width: 70px; height: 70px; border-radius: 50%;"/>
-                <p>{{ student.name }}</p>
-            </div>
-        </div>
-        <!-- Logout Button on the Right -->
-        <div class="col-xs-5 col-sm-5 text-right" style="margin-top:50px; margin-right:40px; ">
-            <a href="{{ path('student_logout') }}" class="glyphicon glyphicon-log-out" id="logout-button" >
-             Logout
-            </a>
-        </div>
 
 
 
 
 </div>
+</div>
+
 
 
 <script>
-
 const duration = {{ durationInSeconds }}; // Total duration in seconds
 const timerElement = document.getElementById('time-remaining');
 const theoryPageUrl = "{{ theoryPageUrl }}";
@@ -335,344 +361,737 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-$(document).ready(function () {
-    const examToken = "{{ examToken }}"; // Token passed from the backend
-    const theoryPageUrl = "{{ theoryPageUrl }}"; // Backend-passed URL for theory page
-    const resultPageUrl = "{{ resultPageUrl }}"; // Backend-passed URL for result page
-    const examType = "{{ examType }}"; // Backend-passed exam type: "examination" or others
-    let currentPage = 1;
-    let totalPages = 1;
-    let currentQuestionId = null; // Store the current question ID
-
-    // Fetch a question for the current page
-    function fetchQuestion(page, retryCount = 3) {
-        $.ajax({
-            url: `/student/${examToken}/questions`,
-            type: "GET",
-            data: { page: page },
-            dataType: "json",
-            beforeSend: function () {
-                $("#spinner").show();
-                $("#error-message").hide();
-                $("#question-text").hide();
-                $("#options-container").empty();
-                $("#student-response").empty();
-            },
-            success: function (response) {
-                $("#spinner").hide();
-                $("#question-text").show();
-
-                if (response.error) {
-                    $("#error-message").text(response.error).show();
-                    return;
-                }
-
-                // Update question and options
-                $("#question-text").html(renderQuestionWithDropdowns(response.question, response.questionId));
-                renderOptions(response);
-
-                // Store the current question ID
-                currentQuestionId = response.questionId;
-
-                // Update pagination state
-                currentPage = response.currentPage;
-                totalPages = response.totalPages;
-
-                // Update the pagination controls
-                updatePaginationControls();
-            },
-            error: function () {
-                if (retryCount > 0) {
-                    fetchQuestion(page, retryCount - 1);
-                } else {
-                    $("#spinner").hide();
-                    $("#error-message").text("An error occurred while fetching the question. Please try again.").show();
-                }
-            },
-        });
-    }
-
-    // Update pagination controls
-    function updatePaginationControls() {
-        const prevButton = $("#prev-button");
-        const nextButton = $("#next-button");
-        const submitButton = $("#submit-button");
-        const paginationInfo = $("#page-info");
-
-        // Enable/Disable Previous button
-        prevButton.prop("disabled", currentPage <= 1);
-
-        // Update "Page X of Y" text
-        paginationInfo.text(`Page ${currentPage} of ${totalPages}`);
-
-        // Show or hide Next/Submit button
-        if (currentPage < totalPages) {
-            nextButton.show();
-            submitButton.hide();
-        } else {
-            nextButton.hide();
-            submitButton.show();
-        }
-
-        // Update page numbers dynamically
-        const pageNumbersDiv = $(".page-numbers");
-        pageNumbersDiv.empty(); // Clear existing numbers
-
-        for (let i = 1; i <= totalPages; i++) {
-            const pageButton = $("<span>")
-                .addClass("page-item")
-                .text(i)
-                .attr("data-page", i)
-                .css({
-                    padding: "10px 15px",
-                    borderRadius: i === currentPage ? "50%" : "10px",
-                    backgroundColor: i === currentPage ? "#0056b3" : "#e0e0e0",
-                    color: i === currentPage ? "white" : "black",
-                    margin: "5px",
-                    cursor: "pointer",
-                });
-
-            if (i === currentPage) {
-                pageButton.addClass("active");
-            }
-
-            pageNumbersDiv.append(pageButton);
-        }
-
-        // Hover effect for better UX
-        $(".page-item").hover(
-            function () {
-                $(this).css({ backgroundColor: "#007bff", color: "white" });
-            },
-            function () {
-                if (!$(this).hasClass("active")) {
-                    $(this).css({ backgroundColor: "#e0e0e0", color: "black" });
-                }
-            }
-        );
-    }
-
-    // Render question options based on the type
-    function renderOptions(response) {
-        const responseContainer = $("#student-response");
-
-        switch (response.options.type) {
-            case "RadioOption":
-                renderRadioOptions(response.options.options);
-                break;
-            case "CheckboxOption":
-                renderCheckboxOptions(response.options.options);
-                break;
-            case "GermanOption":
-                renderGermanOption();
-                break;
-            case "BooleanOption":
-                renderBooleanOption(response.options.options);
-                break;
-            case "DropdownOption":
-            case "RegisterOption":
-                renderDropdownsInQuestion();
-                break;
-            case "ImagesOption":
-                renderImageOption(response.options.options);
-                break;
-            default:
-                $("#options-container").html("<p>No valid options available.</p>");
-        }
-
-        // Attach response input event
-        $("#options-container").on("change", "input, select", function () {
-            const studentResponse = getStudentResponse();
-            responseContainer.text("Your Selected Answer is : " + studentResponse);
-        });
-    }
-
-    function renderRadioOptions(options) {
-        const optionsContainer = $("#options-container");
-        Object.keys(options).forEach(function (key) {
-            optionsContainer.append(
-                `<div>
-                    <input type="radio" name="option" value="${key}" id="${key}">
-                    <label for="${key}">${options[key]}</label>
-                </div>`
-            );
-        });
-    }
-
-    function renderCheckboxOptions(options) {
-        const optionsContainer = $("#options-container");
-        Object.keys(options).forEach(function (key) {
-            optionsContainer.append(
-                `<div>
-                    <input type="checkbox" name="option" value="${key}" id="${key}">
-                    <label for="${key}">${options[key]}</label>
-                </div>`
-            );
-        });
-    }
-
-    function renderGermanOption() {
-        const optionsContainer = $("#options-container");
-        optionsContainer.append(
-            `<div>
-                <label for="germanResponse">Your Answer:</label>
-                <input type="text" id="germanResponse" name="germanResponse" placeholder="Enter your answer here">
-            </div>`
-        );
-    }
-
-    function renderBooleanOption(options) {
-        const optionsContainer = $("#options-container");
-        Object.keys(options).forEach(function (key) {
-            optionsContainer.append(
-                `<div>
-                    <input type="radio" name="booleanOption" value="${key}" id="${key}">
-                    <label for="${key}">${options[key]}</label>
-                </div>`
-            );
-        });
-    }
-
-    function renderImageOption(options) {
-        const optionsContainer = $("#options-container");
-        optionsContainer.append(
-            `<div>
-                <img src="${options.imagePath}" alt="Question Image" style="max-width: 100%; max-height: 300px; margin-bottom: 5px;">
-                <div>
-                    <label for="imageResponse">Your Answer:</label>
-                    <input type="text" id="imageResponse" name="imageResponse" placeholder="Enter your answer here">
-                </div>
-            </div>`
-        );
-     }
-
-    let selectedOptions = {};
-
-    function renderDropdownsInQuestion() {
-    $("#question-text").on("change", ".dynamic-dropdown", function() {
-        const selectedOption = $(this).val();
-        const dropdownIndex = $(this).data("dropdown-index");
-        selectedOptions[dropdownIndex] = selectedOption;
-        const jointInput = Object.values(selectedOptions).join(", ");
-        renderStudentResponse(jointInput);
-    });
-    }
-
-    function renderStudentResponse(jointInput) {
-    const studentResponseHtml = `
-        <div class="student-response-container">
-        <span>Selected options: ${jointInput}</span>
-        </div>
-    `;
-    $("#student-response").html(studentResponseHtml);
-    }
-
-
-    function renderQuestionWithDropdowns(questionText, questionId) {
-    const regex = /\[(.*?)\]/g; // Regex to find placeholders in the question
-    let dropdownIndex = 0; // Initialize dropdown index counter
-    let questionHtml = questionText.replace(regex, function (match, options) {
-        const optionList = options.split("/").map(option => option.trim()); // Split options
-        let dropdownHtml = `<select class="dynamic-dropdown" data-dropdown-index="${dropdownIndex}">`;
-        dropdownHtml += `<option value=""> --- </option>`; // Default option
-        optionList.forEach(option => {
-        dropdownHtml += `<option value="${option}">${option}</option>`; // Add each option
-        });
-        dropdownHtml += `</select>`;
-        dropdownHtml += `<span class="selected-option"></span>`; // Add a span to display the selected option
-        dropdownIndex++; // Increment dropdown index counter
-        return dropdownHtml; // Replace the placeholder with dropdown
-    });
-    $("#question-container").html(`
-        <div id="question-text" class="question-text">${questionHtml}</div>
-    `).data("question-id", questionId); // Store the questionId in the container as a data attribute
-    }
 
 
 
 
-    function getStudentResponse() {
-  const response = [];
-  $("#options-container select, input").each(function () {
-    const inputType = $(this).attr("type");
-    const value = $(this).val();
-    if (inputType === "checkbox" || inputType === "radio") {
-      if ($(this).is(":checked")) response.push(value);
-    } else if ($(this).is("select")) {
-      const selectedValue = $(this).find(":selected").val();
-      if (selectedValue) response.push(selectedValue);
-    } else {
-      if (value) response.push(value);
-    }
+
+
+let isFetchingQuestion = false;
+let currentPage = 1;
+let totalPages = 1;
+let currentQuestionId = null;
+let selectedOptions = {};
+let student =  "{{ studentId }}";
+
+
+
+$(document).on("change", ".dynamic-dropdown", function () {
+    const dropdownIndex = $(this).data("dropdown-index");
+    selectedOptions[dropdownIndex] = $(this).val();
+});
+
+//Question Rendering Functions
+
+/**
+ * Renders radio button options
+ * @param {object} options - Radio button options
+ */
+function renderRadioOptions(options) {
+  const optionsContainer = $("#options-container");
+  Object.keys(options).forEach((key) => {
+    optionsContainer.append(`
+      <div>
+        <input type="radio" name="option" value="${key}" id="${key}">
+        <label for="${key}">${options[key]}</label>
+      </div>
+    `);
   });
-  // Add the selected options from the dropdowns
-  response.push(...Object.values(selectedOptions));
-  return response.join(", ");
 }
 
-        $("#prev-button").on("click", function () {
-        const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
-        selectedOptions = []; // Clear the selectedOptions array
-        if (currentPage > 1) {
-            currentPage--;
-            fetchQuestion(currentPage);
+/**
+ * Renders checkbox options
+ * @param {object} options - Checkbox options
+ */
+function renderCheckboxOptions(options) {
+  const optionsContainer = $("#options-container");
+  Object.keys(options).forEach((key) => {
+    optionsContainer.append(`
+      <div>
+        <input type="checkbox" name="option" value="${key}" id="${key}">
+        <label for="${key}">${options[key]}</label>
+      </div>
+    `);
+  });
+}
+
+/**
+ * Renders German language question option
+ */
+function renderGermanOption() {
+  const optionsContainer = $("#options-container");
+  optionsContainer.append(`
+    <div>
+      <label for="germanResponse">Type Answer Here: </label>
+      <input type="text" id="germanResponse" name="germanResponse" placeholder="Answer here">
+    </div>
+  `);
+}
+
+/**
+ * Renders boolean question option
+ * @param {object} options - Boolean options
+ */
+function renderBooleanOption(options) {
+  const optionsContainer = $("#options-container");
+  Object.keys(options).forEach((key) => {
+    optionsContainer.append(`
+      <div>
+        <input type="radio" name="booleanOption" value="${key}" id="${key}">
+        <label for="${key}">${options[key]}</label>
+      </div>
+    `);
+  });
+}
+
+/**
+ * Renders image question option
+ * @param {object} options - Image options
+ */
+function renderImageOption(options) {
+  const optionsContainer = $("#options-container");
+  optionsContainer.append(`
+    <div>
+      <img src="${options.imagePath}" alt="Question Image" style="max-width: 80%; max-height: 200px; margin-bottom: 5px;">
+      <div>
+        <label for="imageResponse">Type Answer Here:</label>
+        <input type="text" id="imageResponse" name="imageResponse" placeholder="Answer here">
+      </div>
+    </div>
+  `);
+}
+
+
+//Question Fetching and Rendering
+
+/**
+ * Fetches a question and renders it
+ * @param {number} page - Page number
+ */
+function fetchQuestion(page) {
+  return new Promise((resolve, reject) => {
+    if (isFetchingQuestion) {
+      reject();
+      return;
+    }
+    isFetchingQuestion = true;
+    $.ajax({
+      url: `/student/${examToken}/questions`,
+      type: "GET",
+      data: { page: page },
+      dataType: "json",
+      beforeSend: function () {
+        $("#spinner").show();
+        $("#error-message").hide();
+        $("#question-text").hide();
+        $("#options-container").empty();
+        $("#student-response").empty();
+      },
+      success: function (response) {
+        $("#spinner").hide();
+        $("#question-text").show();
+        if (response.error) {
+          $("#error-message").text(response.error).show();
+          isFetchingQuestion = false;
+          reject();
+          return;
         }
-        });
-
-            $("#next-button").on("click", function () {
-        const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
-        selectedOptions = []; // Clear the selectedOptions array
-        if (currentPage < totalPages) {
-            currentPage++;
-            fetchQuestion(currentPage);
+        // Update question and options
+        $("#question-text").html(renderQuestionWithDropdowns(response.question, response.questionId));
+        renderQuestionOptions(response);
+        // Store the current question ID
+        currentQuestionId = response.questionId;
+        // Update pagination state
+        currentPage = response.currentPage;
+        totalPages = response.totalPages;
+        // Update the pagination controls
+        updatePaginationControls();
+        // Check for a saved response
+        const savedResponse = getStudentResponse(examToken, currentQuestionId);
+        if (savedResponse) {
+          // Display the saved response
+          $("#student-response").text("Your previous answer: " + savedResponse);
         }
-        });
+        isFetchingQuestion = false;
+        resolve();
+      },
+      error: function (xhr, status, error) {
+        $("#spinner").hide();
+        $("#error-message").text("An error occurred while fetching the question. Please try again.").show();
+        isFetchingQuestion = false;
+        reject();
+      },
+    });
+    // Check for a saved response
+const userResponseKey = `userResponse-${student}-${examToken}-${currentQuestionId}`;
+const savedResponse = localStorage.getItem(userResponseKey);
+if (savedResponse) {
+  // Display the saved response
+  const userResponse = JSON.parse(savedResponse);
+  $("#student-response").text("Your previous answer: " + userResponse.selectedAnswer);
+}
+  });
+}
 
-       $("#submit-button").on("click", function () {
-         const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer, function () {
-         const url = theoryPageUrl;
-         window.location.href = url;
-         });
-            });
 
 
-        $(".page-numbers").on("click", ".page-item", function () {
-        const selectedAnswer = getStudentResponse();
-        saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer);
-        selectedOptions = []; // Clear the selectedOptions array
-        const page = $(this).data("page");
-        if (page !== currentPage) {
-            fetchQuestion(page);
+//Student Response Handling
+
+/**
+ * Gets the student's response
+ * @returns {string} Student's response
+ */
+
+function getStudentResponse() {
+    const response = [];
+
+    // Get values from checkboxes, radio buttons, and inputs
+    $("#options-container select, input").each(function () {
+        const inputType = $(this).attr("type");
+        const value = $(this).val();
+        if (inputType === "checkbox" || inputType === "radio") {
+            if ($(this).is(":checked")) response.push(value);
+        } else if ($(this).is("select")) {
+            const selectedValue = $(this).find(":selected").val();
+            if (selectedValue) response.push(selectedValue);
+        } else {
+            if (value) response.push(value);
         }
-        });
+    });
 
-            fetchQuestion(currentPage);
- });
+    // Explicitly collect dropdown values
+    $(".dynamic-dropdown").each(function () {
+        const selectedValue = $(this).val();
+        if (selectedValue) response.push(selectedValue);
+    });
+
+    return response.join(", ");
+}
+
+
+/**
+ * Stores the student's response
+ * @param {string} response - Student's response
+ */
+function storeStudentResponse(response) {
+  // Store the response in local storage or a database
+  localStorage.setItem(`response-${currentQuestionId}`, response);
+}
+
+/**
+ * Retrieves the student's response
+ * @param {number} questionId - Question ID
+ * @returns {string} Student's response
+ */
+function getStoredStudentResponse(questionId) {
+  // Retrieve the response from local storage or a database
+  return localStorage.getItem(`response-${questionId}`);
+}
+
+
+//Pagination Controls
+
+/**
+ * Updates the pagination controls
+ */
+function updatePaginationControls() {
+  console.log("Updating pagination controls...");
+  console.log("Current page:", currentPage);
+  console.log("Total pages:", totalPages);
+
+  const prevButton = $("#prev-button");
+  const nextButton = $("#next-button");
+  const submitButton = $("#submit-button");
+  const paginationInfo = $("#page-info");
+
+  // Enable/Disable Previous button
+  prevButton.prop("disabled", currentPage <= 1);
+
+  // Update "Page X of Y" text
+  paginationInfo.text(`Page ${currentPage} of ${totalPages}`);
+
+  // Show or hide Next/Submit button
+  if (currentPage < totalPages) {
+    nextButton.show();
+    submitButton.hide();
+  } else {
+    nextButton.hide();
+    submitButton.show();
+  }
+
+  // Update page numbers dynamically
+  const pageNumbersDiv = $(".page-numbers");
+  pageNumbersDiv.empty();
+
+  for (let i = 1; i <= totalPages; i++) {
+    const pageButton = $("<span>")
+      .addClass("page-item")
+      .text(i)
+      .attr("data-page", i)
+      .css({
+        padding: "10px 15px",
+        borderRadius: i === currentPage ? "50%" : "10px",
+        backgroundColor: i === currentPage ? "#0056b3" : "#e0e0e0",
+        color: i === currentPage ? "white" : "black",
+        margin: "5px",
+        cursor: "pointer",
+      });
+
+    // Add event listener to page button
+    pageButton.on("click", function () {
+      fetchQuestion(i);
+    });
+
+    // Add animation classes
+    if (i < currentPage) {
+      pageButton.addClass("animate-out");
+    } else if (i === currentPage) {
+      pageButton.addClass("animate-in");
+    } else {
+      pageButton.addClass("animate-in-right");
+    }
+
+    pageNumbersDiv.append(pageButton);
+  }
+
+  // Add animation to page numbers
+  $(".animate-out").animate({ opacity: 0, marginLeft: "-50px" }, 500, function () {
+    $(this).remove();
+  });
+
+  $(".animate-in").animate({ opacity: 1, marginLeft: "0px" }, 500);
+
+  $(".animate-in-right").animate({ opacity: 1, marginRight: "0px" }, 500);
+}
+
+
+//Answered Question Handling
+
+/**
+ * Stores the answered question
+ * @param {number} questionId - Question ID
+ * @param {string} response - Student's response
+ */
+function storeAnsweredQuestion(questionId, response) {
+  // Store the answered question in local storage or a database
+  localStorage.setItem(`answered-question-${questionId}`, response);
+}
+
+/**
+ * Retrieves the answered question
+ * @param {number} questionId - Question ID
+ * @returns {string} Student's response
+ */
+function getAnsweredQuestion(questionId) {
+  // Retrieve the answered question from local storage or a database
+  return localStorage.getItem(`answered-question-${questionId}`);
+}
+
+/**
+ * Decorates the page number for an answered question
+ * @param {number} questionId - Question ID
+ */
+function decorateAnsweredQuestionPageNumber(questionId) {
+  // Get the page number element
+  const pageNumberElement = $(`#page-number-${questionId}`);
+
+  // Add a class to indicate that the question has been answered
+  pageNumberElement.addClass("answered-question");
+
+  // Store the answered question
+  const response = getStudentResponse();
+  storeAnsweredQuestion(questionId, response);
+}
+
+
+//Pagination Control Event Handlers
+
+/**
+ * Handles the click event for the previous button
+ */
+function handlePreviousButtonClick() {
+  // Decrement the current page
+  currentPage--;
+
+  // Fetch the previous question
+  fetchQuestion(currentPage);
+}
+
+/**
+ * Handles the click event for the next button
+ */
+function handleNextButtonClick() {
+  // Increment the current page
+  currentPage++;
+
+  // Fetch the next question
+  fetchQuestion(currentPage);
+}
+
+/**
+ * Handles the click event for the submit button
+ */
+function handleSubmitButtonClick() {
+  // Get the student's response
+  const response = getStudentResponse();
+
+  // Store the response
+  storeStudentResponse(response);
+
+  // Fetch the next question
+  fetchQuestion(currentPage + 1);
+}
+
+
+//Page Number Event Handlers
+
+/**
+ * Handles the click event for a page number
+ * @param {number} questionId - Question ID
+ */
+function handlePageNumberClick(questionId) {
+  // Fetch the question
+  fetchQuestion(questionId);
+}
+
+
+// Question Rendering
+/**
+ * Renders a question
+ * @param {object} question - Question object
+ * @param {number} questionId - Question ID
+ * @returns {string} Rendered question HTML
+ */
+function renderQuestionWithDropdowns(question, questionId) {
+  // Render the question text
+  const questionText = renderQuestionText(question);
+  
+  // Render the dropdowns
+  const dropdownsHtml = renderDropdowns(question);
+  
+  // Combine the question text and dropdowns HTML
+  return `${questionText}${dropdownsHtml}`;
+}
+
+/** 
+ * Renders the question with dropdowns 
+ * @param {object} question - Question object 
+ * @returns {string} Rendered question HTML 
+ */
+function renderQuestionWithDropdowns(question) {
+  const questionTextHtml = renderQuestionText(question);
+  return questionTextHtml;
+}
+
+
+/**
+ * Renders the question text
+ * @param {object} question - Question object
+ * @returns {string} Rendered question text HTML
+ */
+function renderQuestionText(question) {
+  const dropdownPlaceholders = question.match(/\[(.*?)\]/g);
+  if (dropdownPlaceholders) {
+    dropdownPlaceholders.forEach((placeholder) => {
+      const options = placeholder.replace('[', '').replace(']', '').split('/');
+      const dropdownHtml = renderDropdown(options);
+      question = question.replace(placeholder, dropdownHtml);
+    });
+  }
+  return `<p>${question}</p>`;
+}
+
+
+/**
+ * Renders a dropdown
+ * @param {array} options - Array of options
+ * @returns {string} Rendered dropdown HTML
+ */
+function renderDropdown(options) {
+  return `<select class="dropdown-options">${options.map((option) => {
+    return `<option value="${option}">${option}</option>`;
+  }).join("")}</select>`;
+}
+
+
+
+//Dropdown Event Handlers
+
+/**
+ * Handles the change event for a dropdown
+ * @param {number} questionId - Question ID
+ * @param {number} dropdownId - Dropdown ID
+ */
+// Store selected dropdown values in an object
+let selectedDropdownValues = {};
+
+// Handles dropdown change
+function handleDropdownChange(questionId, dropdownId, selectedValue) {
+  // Store the selected value
+  if (!selectedDropdownValues[questionId]) {
+    selectedDropdownValues[questionId] = {};
+  }
+  selectedDropdownValues[questionId][dropdownId] = selectedValue;
+
+  // Update and store the student response
+  updateStudentResponse();
+  storeStudentResponse(getStudentResponse());
+}
+
+//Pagination Control Initialization
+
+/**
+ * Initializes the pagination controls
+ */
+function initPaginationControls() {
+  // Initialize the pagination controls
+  $("#prev-button").on("click", handlePreviousButtonClick);
+  $("#next-button").on("click", handleNextButtonClick);
+  $("#submit-button").on("click", handleSubmitButtonClick);
+}
+
+
+//Page Number Initialization
+
+/**
+ * Initializes the page numbers
+ */
+function initPageNumbers() {
+  // Initialize the page numbers
+  $(".page-number").on("click", function () {
+    const questionId = $(this).data("question-id");
+    handlePageNumberClick(questionId);
+  });
+}
 
 
 
 
+//Question Options Rendering
+
+/**
+ * Renders the question options
+ * @param {object} response - Question response object
+ */
+function renderQuestionOptions(response) {
+  // Render the question options
+  const optionsContainer = $("#options-container");
+  optionsContainer.empty();
+
+  switch (response.options.type) {
+    case "RadioOption":
+      renderRadioOptions(response.options.options);
+      break;
+    case "CheckboxOption":
+      renderCheckboxOptions(response.options.options);
+      break;
+    case "GermanOption":
+      renderGermanOption();
+      break;
+    case "BooleanOption":
+      renderBooleanOption(response.options.options);
+      break;
+    case "DropdownOption":
+    case "RegisterOption":
+      renderDropdownsInQuestion();
+      break;
+    case "ImagesOption":
+      renderImageOption(response.options.options);
+      break;
+    default:
+      optionsContainer.html("<p>No valid options available.</p>");
+  }
+}
 
 
+//Dropdowns in Question Rendering
+
+/**
+ * Renders the dropdowns in the question
+ */
+// Update updateStudentResponse function
+function updateStudentResponse() {
+  const studentResponse = getStudentResponse();
+  $("#student-response").text("Your Selected Answer is : " + studentResponse);
+}
+
+//Dropdowns in Question Rendering
+/** * Renders the dropdowns in the question */
+// Store selected dropdown values in an object
+
+// Update renderDropdownsInQuestion function
+function renderDropdownsInQuestion() {
+  $(document).on("change", "#question-text .dynamic-dropdown", function() {
+    const selectedOption = $(this).val();
+    const dropdownIndex = $(this).data("dropdown-index");
+
+    if (typeof currentQuestionId === "undefined") {
+      console.error("currentQuestionId is not set!");
+      return;
+    }
+
+    // Handle dropdown selection change
+    handleDropdownChange(currentQuestionId, dropdownIndex, selectedOption);
+  });
+}
+
+
+
+
+//Image Option Rendering
+
+/**
+ * Renders the image option
+ * @param {object} options - Image option object
+ */
+function renderImageOption(options) {
+  // Render the image option
+  const optionsContainer = $("#options-container");
+  optionsContainer.append(`
+    <div>
+      <img src="${options.imagePath}" alt="Question Image" style="max-width: 80%; max-height: 150px; margin-bottom: 5px;">
+      <div>
+        <label for="imageResponse">Type Answer Here:</label>
+        <input type="text" id="imageResponse" name="imageResponse" placeholder="Answer here">
+      </div>
+    </div>
+  `);
+}
+
+
+
+// Button Event Handlers
+
+/** * Handles the click event for the previous button */
+function handlePreviousButtonClick() {
+const selectedAnswer = getStudentResponse();
+saveStudentResponse(student, currentPage, currentQuestionId, examToken, selectedAnswer);
+if (currentPage > 1) {
+currentPage--;
+fetchQuestion(currentPage).then(() => {
+selectedOptions = []; // Clear the selectedOptions array only after the previous question is fetched
+});
+}
+}
+
+/** * Handles the click event for the next button */
+function handleNextButtonClick() {
+const selectedAnswer = getStudentResponse();
+saveStudentResponse(student, currentPage, currentQuestionId, examToken, selectedAnswer);
+if (currentPage < totalPages) {
+currentPage++;
+fetchQuestion(currentPage).then(() => {
+selectedOptions = []; // Clear the selectedOptions array only after the next question is fetched
+});
+}
+}
+
+/** * Handles the click event for the submit button */
+function handleSubmitButtonClick() {
+const selectedAnswer = getStudentResponse();
+saveStudentResponse(student, currentPage, currentQuestionId, examToken, selectedAnswer, function () {
+selectedOptions = []; // Clear the selectedOptions array only after the response is saved
+const url = theoryPageUrl;
+window.location.href = url;
+});
+}
+
+/** * Handles the click event for the page numbers */
+function handlePageNumberClick(page) {
+const selectedAnswer = getStudentResponse();
+saveStudentResponse(student, currentPage, currentQuestionId, examToken, selectedAnswer);
+if (page !== currentPage) {
+fetchQuestion(page).then(() => {
+selectedOptions = []; // Clear the selectedOptions array only after the new question is fetched
+});
+}
+}
+
+
+//Button Initialization
+
+/**
+ * Initializes the button event handlers
+ */
+function initButtonEventHandlers() {
+  $("#prev-button").on("click", handlePreviousButtonClick);
+  $("#next-button").on("click", handleNextButtonClick);
+  $("#submit-button").on("click", handleSubmitButtonClick);
+  $(".page-numbers").on("click", ".page-item", function () {
+    const page = $(this).data("page");
+    handlePageNumberClick(page);
+  });
+}
+
+
+
+//Error Handling
+
+/**
+ * Handles errors
+ * @param {object} error - Error object
+ */
+function handleError(error) {
+  // Handle the error
+  console.error(error);
+  $("#error-message").text("An error occurred. Please click the page number to reload.").show();
+}
+
+
+//Initialization
+
+/**
+ * Initializes the application
+ */
+function init() {
+  // Initialize the application
+  initPaginationControls();
+  initPageNumbers();
+  fetchQuestion(1);
+}
+
+// Initialize the application
+init();
+
+
+
+
+//Save Student Response
+
+/**
+ * Saves the student's response
+ * @param {number} currentPage - Current page number
+ * @param {number} currentQuestionId - Current question ID
+ * @param {string} examToken - Exam token
+ * @param {string} selectedAnswer - Selected answer
+ * @param {function} callback - Callback function
+ */
 
 // Function to save response dynamically
-function saveStudentResponse(currentPage, currentQuestionId, examToken, selectedAnswer, callback) {
-    // Skip submission if no answer is selected
-    if (selectedAnswer === null || selectedAnswer === undefined || selectedAnswer === "" || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) {
-        console.log("No answer selected, skipping submission.");
-        return; // Exit the function without making the AJAX call
-    }
+function saveStudentResponse(student, currentPage, currentQuestionId, examToken, selectedAnswer, callback) {
 
-    // Ensure selectedAnswer is formatted correctly (e.g., JSON string for arrays)
-    if (Array.isArray(selectedAnswer)) {
-        selectedAnswer = JSON.stringify(selectedAnswer);
-    }
 
-    // Submit response via AJAX
-    $.ajax({
+  // Skip submission if no answer is selected
+  if (selectedAnswer === null || selectedAnswer === undefined || selectedAnswer === "" || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) {
+    console.log("No answer selected, skipping submission.");
+    return; // Exit the function without making the AJAX call
+  }
+
+  // Ensure selectedAnswer is formatted correctly (e.g., JSON string for arrays)
+  if (Array.isArray(selectedAnswer)) {
+    selectedAnswer = JSON.stringify(selectedAnswer);
+  }
+
+  // Save response in LocalStorage
+  let userResponseKey = `userResponse-${student}-${examToken}-${currentQuestionId}`;
+  let userResponse = {
+    currentPage: currentPage,
+    selectedAnswer: selectedAnswer
+  };
+  localStorage.setItem(userResponseKey, JSON.stringify(userResponse));
+
+  // Submit response via AJAX
+  $.ajax({
     url: `/student/save-response`,
     method: "POST",
     data: {
@@ -680,16 +1099,16 @@ function saveStudentResponse(currentPage, currentQuestionId, examToken, selected
       examId: examToken,
       answer: selectedAnswer,
     },
-        success: function (response) {
-    if (response.success) {
+    success: function (response) {
+      if (response.success) {
         console.log("Response saved successfully:", response.message);
         if (callback) {
-        console.log("Calling callback function...");
-        callback();
+          console.log("Calling callback function...");
+          callback();
         }
-    } else {
+      } else {
         console.error("Error saving response:", response.message);
-    }
+      }
     },
     error: function (xhr, status, error) {
       console.error("Error saving response:", error);
@@ -699,114 +1118,9 @@ function saveStudentResponse(currentPage, currentQuestionId, examToken, selected
 }
 
 
-
-
-
-
-
-// Example of retrieving the saved response
-function getStudentResponse(questionId, examId) {
-
-    
-    $.ajax({
-        url: '/student/get-response',
-        method: 'GET',
-        data: {
-            questionId: questionId,
-            examId: examId
-        },
-        success: function(response) {
-            if (response.success) {
-                console.log('Saved answer:', response.answer);
-                // Use response.answer to pre-fill the form if necessary
-            }
-        },
-        error: function() {
-            console.error('An error occurred while retrieving the response.');
-        }
-    });
-}
-
-
-
-        
 </script>
-
  <style>
-        /* Optional styling for your overlay */
-        .noscript-overlay {
-            position: fixed;
-            margin:10px;
-            width: 95%;
-            height: 95%;
-            background: white;
-            color: red;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            font-size: 2rem;
-        }
 
-        h1,h4{
-            font-size:100px;
-        }
-
-
-        #fullscreenWarning {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 1.50);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            z-index: 9999;
-        }
-
-        #examContent {
-            display: none; /* Initially hidden until fullscreen is entered */
-        }
-
-        #fullscreenButton {
-            padding: 10px 20px;
-            background-color: blue;
-            color: white;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        #fullscreenButton:hover {
-            background-color: white;
-            color:blue;
-        }
-
-
-        /* Container to align the buttons inline */
-.button-container {
-    position: absolute;
-    top: 20px; /* Adjust the top margin as needed */
-    left: 30px; /* Adjust the left margin as needed */
-    display: flex;
-    gap: 10px; /* Space between the buttons */
-}
-
-/* Apply a little margin-top and margin-left for spacing */
-.button-container .btn {
-    margin-top: 5px;
-    margin-left: 5px;
-}
-
-/* Make sure buttons are disabled and not clickable */
-.disabled {
-    pointer-events: none;
-    opacity: 0.5; /* Make the disabled buttons look grayed out */
-}
  
 .title{
     font-size:20px;
@@ -910,6 +1224,11 @@ function getStudentResponse(questionId, examId) {
 /* Styling for option labels */
 label {
     margin-left: 10px;
+}
+
+#germanResponse{
+    width:300px;
+    height:40px;
 }
 
 

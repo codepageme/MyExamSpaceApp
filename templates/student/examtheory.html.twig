@@ -1,4 +1,299 @@
-<h1> This is the theory page</h1>
+{% extends 'xbase.html.twig' %}
 
- <p><strong>Classroom:</strong> {{ exam.classroom.classname }}</p>
-    <p><strong>Exam Type:</strong> {{ exam.Examtype.name }}</p>
+{% block title %} Theory Questions {% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/student.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="full container-fluid">
+    
+
+ <div class="row">
+            <!-- Left Side: Student Profile -->
+            <div class="col-sm-9 col-md-9">
+
+
+<div class="button-container">
+    <a  class="btn btn-default btm"> <span class="glyphicon glyphicon-file"></span> Objective</a>
+    <a  class="btn btn-primary btm"> <span class="glyphicon glyphicon-file"></span> Theory</a>
+    <a  class="btn btn-default btm"> <span class="glyphicon glyphicon-file"></span> Result</a>
+</div>
+
+
+
+    <noscript>
+        <div class="noscript-overlay">
+          <h1> ⚠️ </h1> 
+          <h4>Scripts are required for this exam. Please enable JavaScript to continue.</h4>
+        </div>
+    </noscript>
+
+
+    <!-- Fullscreen Warning -->
+    <div id="fullscreenWarning">
+        <h2>Please Enter Full screen to Proceed with the Exam</h2>
+        <p>Exams are only allowed on Full Screen Mode to avoid distractions</p>
+        <button id="fullscreenButton">Go To Full-screen</button>
+    </div>
+
+
+
+
+<div class="exam-details" style="text-align:center;">
+    <h4 class="title"><strong>{{ exam.subject.course }}, {{ exam.Theoryduration|date('H:i') }} minutes</strong></h4>
+
+   <div id="countdown-timer">
+    <h2 id="time-remaining" class="timecount">Loading...</h2>
+   </div>
+
+    <p>Instruction: Seek your instructor !.</p>
+</div>
+
+<!-- Questions Section -->
+<div class="container mt-4">
+    {% if questions is not empty %}
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div style="max-height: 30vh; overflow-y: auto; padding-right: 10px;">
+                    {% for question in questions %}
+                        <!-- Question Index -->
+                        <h5 class="text-primary mb-2">Question {{ loop.index }}</h5>
+
+                        <!-- Question Content -->
+                        <div class="question p-3 mb-4 bg-light rounded shadow-sm">
+                            <p class="mb-3">{{ question.Question }}</p>
+
+                            <!-- Answer Text Area commented for iterations -->
+                            <!--
+                            <textarea 
+                                name="answers[{{ question.id }}]" 
+                                class="form-control" 
+                                rows="5" 
+                                placeholder="Write your answer here..."></textarea>
+                            -->
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4" style="margin-top:20px">
+                    <button 
+                        type="button" 
+                        class="btn btn-primary btn-sm px-4" 
+                        id="submitExamButton" 
+                        data-url="{{ resultPageUrl }}"
+                    >
+                        Submit Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p class="text-danger text-center">No questions available for this exam.</p>
+    {% endif %}
+</div>
+
+</div>
+
+
+
+<!-- Right Side: Exam Content -->
+            <div class="col-sm-3 col-md-3">
+
+<!-- Full Page Layout -->
+<div class="d-flex flex-column align-items-left" style="height: 80vh; justify-content: space-between;">
+
+    <!-- Top Section: Profile Picture, Name, and Logo -->
+    <div class="text-center" style="margin-top: 30px;">
+        <!-- Student Profile Picture -->
+        <img 
+            src="/" 
+            alt="student dp"
+            style="width: 250px; height: 250px; border-radius: 70%;"
+        />
+        
+        <!-- Student Name -->
+        <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 35px;">{{ student.name }}</p>
+        
+        <!-- School Logo -->
+        <img 
+            src="/path-to-school-logo.png" 
+            alt="School Logo" 
+            style="width: 250px; height: 250px; border-radius: 100%;"
+        />
+    </div>
+
+    <!-- Bottom Section: Logout Button -->
+    <div class="text-center" style="margin-top: 400px;">
+        <a 
+            href="{{ path('student_logout') }}" 
+            style="padding: 10px 20px; font-size: 1.5rem;"
+        >
+            <span class="glyphicon glyphicon-log-out"></span> Logout
+        </a>
+    </div>
+</div>
+</div>
+
+
+
+
+
+</div>
+</div>
+
+
+
+
+
+
+<script>
+ // Function to request fullscreen mode
+        function enterFullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                document.documentElement.msRequestFullscreen();
+            } else {
+                console.error("Fullscreen is not supported in this browser.");
+            }
+        }
+
+        // Check if fullscreen mode is active
+        function isFullscreen() {
+            return document.fullscreenElement || 
+                document.mozFullScreenElement || 
+                document.webkitFullscreenElement || 
+                document.msFullscreenElement;
+        }
+
+        // Handle fullscreen button click
+        document.getElementById('fullscreenButton').addEventListener('click', function () {
+            enterFullscreen();
+        });
+
+        // Monitor fullscreen changes
+        document.addEventListener('fullscreenchange', toggleExamAccess);
+        document.addEventListener('webkitfullscreenchange', toggleExamAccess);
+        document.addEventListener('mozfullscreenchange', toggleExamAccess);
+        document.addEventListener('msfullscreenchange', toggleExamAccess);
+
+        // Toggle visibility of the exam content and fullscreen warning
+        function toggleExamAccess() {
+            if (isFullscreen()) {
+                document.getElementById('fullscreenWarning').style.display = 'none';
+                document.getElementById('examContent').style.display = 'block';
+            } else {
+                // If fullscreen is exited, block the page again
+                document.getElementById('fullscreenWarning').style.display = 'flex';
+                document.getElementById('examContent').style.display = 'none';
+                enterFullscreen();  // Re-enter fullscreen if the user exits it
+            }
+        }
+
+        // Enforce fullscreen every few seconds
+        setInterval(function () {
+            if (!isFullscreen()) {
+                enterFullscreen();  // Re-enter fullscreen if not in fullscreen mode
+            }
+        }, 2000);  // Check every 2 seconds
+
+
+
+
+$(document).ready(function () {
+    // Constants to avoid duplication
+    const durationSeconds = {{ formattedDuration }}; // Total exam duration in seconds
+    const studentId = "{{ student.id }}"; // Dynamic student ID
+    const examId = "{{ examToken }}"; // Dynamic exam ID
+    const resultPageUrl = "{{ resultPageUrl }}"; // Result page URL
+    const timerKey = `examEndTime_${examId}_${studentId}`; // Unique key for this exam and student
+    const examCompletedKey = `examCompleted_${examId}_${studentId}`; // Key to track if the exam is completed
+
+    let endTime;
+
+    // Check if the exam is already completed
+    if (sessionStorage.getItem(examCompletedKey)) {
+        // If the exam is completed, redirect to result page immediately
+        window.location.href = resultPageUrl;
+        return; // Prevent the timer from starting
+    }
+
+    // Check if the timer already exists in localStorage for this specific exam and student
+    if (localStorage.getItem(timerKey)) {
+        endTime = parseInt(localStorage.getItem(timerKey), 10);
+    } else {
+        // If not, calculate the end time and store it in localStorage
+        endTime = new Date().getTime() + durationSeconds * 1000;
+        localStorage.setItem(timerKey, endTime);
+    }
+
+    // Function to update the timer
+    function updateTimer() {
+        const now = new Date().getTime();
+        const remainingTime = endTime - now;
+
+        if (remainingTime > 0) {
+            const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+            // Display the timer in HH:mm:ss format
+            $('#time-remaining').text(
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+            );
+        } else {
+            // Time's up
+            $('#time-remaining').text("Time's Up!");
+            clearInterval(timerInterval);
+
+            // Clear localStorage for this specific exam and student
+            localStorage.removeItem(timerKey);
+
+            // Set exam completed flag in sessionStorage
+            sessionStorage.setItem(examCompletedKey, 'true');
+
+            // Redirect to the result page
+            alert("Time is up. Redirecting to the result page.");
+            window.location.href = resultPageUrl;
+        }
+    }
+
+    // Update the timer every second
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    // Initial call to display the timer immediately
+    updateTimer();
+});
+
+
+
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const submitButton = document.getElementById('submitExamButton');
+        
+        submitButton.addEventListener('click', function () {
+            const resultPageUrl = this.getAttribute('data-url');
+            
+            // Optional: Add confirmation dialog
+            const confirmSubmit = confirm('Are you sure you want to submit the exam?');
+            
+            if (confirmSubmit) {
+                window.location.href = resultPageUrl;
+            }
+        });
+    });
+
+
+</script>
+
+
+{% endblock %}

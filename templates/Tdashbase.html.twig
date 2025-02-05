@@ -21,6 +21,11 @@
     
 
     <div id="screen">
+
+              <div id="loader">
+        {% include 'partial/pload.html.twig' %}
+    </div>  
+    
         {% block content %}
         <!-- Default content, can be overridden in child templates -->
         {% endblock %}
@@ -63,7 +68,20 @@ footerToggle.on('click', function () {
     }
 });
 
+ // Ensure the loader is hidden once the page is fully loaded
+            window.addEventListener('load', function () {
+                // Wait for the page to load, then hide the loader
+                var loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.display = 'none';
+                }
+            });
 
+            // In case the page is already loaded when this script is run (for cache scenarios)
+            if (document.readyState === 'complete') {
+                document.getElementById('loader').style.display = 'none';
+            }
+            
 </script>
 
 <style>

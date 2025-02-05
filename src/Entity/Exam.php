@@ -58,6 +58,12 @@ class Exam
     #[ORM\OneToMany(targetEntity: Responses::class, mappedBy: 'Exam', orphanRemoval: true)]
     private Collection $responses;
 
+    #[ORM\Column]
+    private ?int $theoryQuestions = null;
+
+    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    private ?\DateTimeInterface $theoryDuration = null;
+
     public function __construct()
     {
         $this->results = new ArrayCollection();
@@ -234,6 +240,30 @@ class Exam
                 $response->setExam(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getTheoryQuestions(): ?int
+    {
+        return $this->theoryQuestions;
+    }
+
+    public function setTheoryQuestions(int $theoryQuestions): static
+    {
+        $this->theoryQuestions = $theoryQuestions;
+
+        return $this;
+    }
+
+    public function getTheoryDuration(): ?\DateTimeInterface
+    {
+        return $this->theoryDuration;
+    }
+
+    public function setTheoryDuration(\DateTimeInterface $theoryDuration): static
+    {
+        $this->theoryDuration = $theoryDuration;
 
         return $this;
     }
