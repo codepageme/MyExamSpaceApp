@@ -3,9 +3,28 @@
 {% block title %} Account - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
      <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+     <style>
+         body {
+             max-width: 100vw;
+             overflow-x: hidden;
+         }
+         .container {
+             max-width: 100vw;
+             margin: 0 auto;
+             padding: 0 20px;
+             box-sizing: border-box;
+         }
+
+         #pagetag{
+            margin-left:30px;
+            font-size:20px;
+            margin-bottom:;
+         }
+     </style>
 {% endblock %}
 
 {% block map_content %}
+
 
     <div class = "here" ></div>
  
@@ -38,72 +57,102 @@
 
 {% block content %}
 
+ <div class="container-fluid">
+     <div class="row">
+         <div class="col-md-8">
+             <h3 id="pagetag">My Account</h3>
 
- <div class="container" style="max-width:900px;">
+             <div class="container bracket">
+                 <h4>My Profile</h4>
+                 <div class="container-fluid prof" style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                     <div class="row">
+                         <div class="col-md-4 text-center">
+                             <div id="dp" style="width: 70px; height: 70px; border-radius: 50%; margin-top:2px; overflow: hidden; ;">
+                                 {% if teacher.profilePicture %}
+                                     <img src="{{ asset('uploads/profile_pictures/' ~ teacher.profilePicture) }}" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
+                                 {% else %}
+                                     <p style="text-align:center; font-size:15px;">No image uploaded</p>
+                                 {% endif %}
+                             </div>
+                         </div>
+                         <div class="col-md-8">
+                             <div class="prof-text">
+                                 <h5>{{ teacher.lastname }} - {{ teacher.firstname }}</h5>
+                                 <h6>
+                                     {% if isClassroomTeacher %}
+                                         Class Teacher
+                                     {% endif %}
+                                     {% if teacher.roles[0] == 'ROLE_TEACHER' %}
+                                         | Subject Teacher
+                                     {% endif %}
+                                 </h6>
+                             </div>
+                         </div>
+                     </div>
+                     {{ form_start(profileForm) }}
+                         <div class="form-group">
+                             {{ form_widget(profileForm.profilePicture, {'attr': {'class': 'btn btn-default btn-sm', 'style': 'padding: 0; border: none;'}}) }}
+                             <button type="submit" class="btn btn-primary btn-sm" style= "margin-botton:20px; "><span class="glyphicon glyphicon-upload"></span></button>
+                         </div>
+                     {{ form_end(profileForm) }}
+                 </div>
+             </div>
 
- <h3 id="pagetag">My ACCOUNT</h3>
+             <div class="container bracket">
+                 <h4>Personal Information</h4>
+                 <div class="container-fluid prof">
+                     <div class="prof-text" style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+                         <p style="width: 45%; display: inline-block;">First Name: {{ teacher.firstname }}</p>
+                         <p style="width: 45%; display: inline-block;">Last Name: {{ teacher.lastname }}</p>
+                         <p style="width: 45%; display: inline-block;">Email Address: {{ teacher.email }}</p>
+                         <p style="width: 45%; display: inline-block;">Phone: {{ teacher.number }}</p>
+                         <p style="width: 45%; display: inline-block;">Bio: current status</p>
+                                                
+                         <a href="/" style="width: 45%; display: inline-block; text-align: right;"><span class="glyphicon glyphicon-edit editb"></span></a>
+                     </div>
+                 </div>
+             </div>
 
-    <div class="container bracket">
-            <h4>My Profile</h4>
-            <div class="container-fluid prof">
-                <div id="dp"><p style = "text-align:center; display:inline-flex ; font-size:15px;">add image here</p></div>
-                <div class="prof-text">
-                    <h5>{{ teacher.username }}</h5>
-                    <h6>{{ teacher.roles[0] }} | class teacher</h6>
-                    <p>English - Language</p>
+
+             <div class="container bracket">
+                 <h4>More Information</h4>
+                 <div class="container-fluid prof">
+                     <div class="prof-text" style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+                         <p style="width: 45%; display: inline-block;">Class: {{ classroom.classname }}</p>
+                        <p style="width: 45%; display: inline-block;">Student: {{ studentsCount }}</p>
+                        <p style="width: 45%; display: inline-block;">Subject: {{subjectName}}</p>
+                        <p style="width: 45%; display: inline-block;">Questions: {{ questionsCount }}</p>
+                         <a href="/" style="width: 45%; display: inline-block; text-align: right;"><span class="glyphicon glyphicon-edit editb"></span></a>
+                     </div>
+                 </div>
+             </div>
+         </div>
+
+         <div class="col-md-4" style="margin-top:30px;">
+             <div class="container bracket">
+                 <h4>Notes</h4>
+                 {{ form_start(noteForm) }}
+                     <div class="form-group">
+                     {{ form_widget(noteForm.note, {'attr': {'placeholder': 'Write your notes here...', 'class': 'form-control', 'rows': 5, 'style': 'width: 250px; resize: vertical;'}}) }}
+                    </div>
+                     <button type="submit" class="btn btn-primary">Save Note</button>
+                 {{ form_end(noteForm) }}
+
+                
+                 <h4>Your Notes</h4>
+        <div style="max-height: 200px; overflow-y: auto;">
+            {% for note in teacher.teacherNotes %}
+                <div class="note" style="background-color: #f9f9f9; padding: 0px; border-bottom: 2px solid #ddd; width:200px;">
+                    <p>{{ note.note }}</p>
+                    <div style="text-align: right;">
+                        <a href="{{ path('edit_note', {'id': note.id}) }}" style="margin-right: 10px;">Edit</a>
+                        <a href="{{ path('delete_note', {'id': note.id}) }}">Delete</a>
+                    </div>
                 </div>
-                <a href="/"><span class="glyphicon glyphicon-edit editb"></span></a>
-            </div>
-    
-    <div class="container bracket">
-    <h4>Personal Information</h4>
-    <div class="container-fluid prof">
-        <div class="prof-text">
-            <h5>First Name: {{ teacher.firstname }}</h5>
-            <p>Last Name: {{ teacher.lastname }}</p>
-            <p>Email Address: {{ teacher.email }}</p>
-            <p>Phone: {{ teacher.number }}</p>
-            <p>Bio: current status</p>
+            {% endfor %}
         </div>
-        <a href="/"><span class="glyphicon glyphicon-edit editb"></span></a>
-    </div>
-</div>
-
- <div class="container bracket">
-    <h4>Question Information</h4>
-    <div class="container-fluid prof">
-        <div class="prof-text">
-            <h5>No of question</h5>
-            <p>no od subject</p>
-            <p></p>
-            <p>Phone: {{ teacher.number }}</p>
-            <p>Bio: current status</p>
         </div>
-        <a href="/"><span class="glyphicon glyphicon-edit editb"></span></a>
-    </div>
-</div>
-
-<div class="container bracket">
-    <h4>Notes</h4>
-    <form action="{{ path('teacher_account') }}" method="post">
-        {{ form_start(form) }}
-        {{ form_widget(form.note, {'attr': {'placeholder': 'Write your notes here...'}}) }}
-        <button type="submit">Save Note</button>
-        {{ form_end(form) }}
-    </form>
-
-    <h4>Your Notes</h4>
-    {% for note in teacher.teacherNotes %}
-        <div class="note">
-            <p>{{ note.note }}</p>
-            <a href="{{ path('edit_note', {'id': note.id}) }}">Edit</a>
-            <a href="{{ path('delete_note', {'id': note.id}) }}">Delete</a>
-        </div>
-    {% endfor %}
-</div>
-
-
-
-</div>
+     </div>
+ </div> 
 
 {% endblock %}

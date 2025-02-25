@@ -68,6 +68,9 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Theory::class, mappedBy: 'Teacher', orphanRemoval: true)]
     private Collection $theories;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $profilePicture = null;
+
 
 
 
@@ -339,6 +342,18 @@ class Teacher implements UserInterface, PasswordAuthenticatedUserInterface
                 $theory->setTeacher(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getProfilePicture(): ?string
+    {
+        return $this->profilePicture;
+    }
+
+    public function setProfilePicture(?string $profilePicture): static
+    {
+        $this->profilePicture = $profilePicture;
 
         return $this;
     }

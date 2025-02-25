@@ -1,0 +1,23 @@
+#ADMIN LOGIC/FUNCTION == [
+
+]
+
+
+#ADMIN LOGIC/FUNCTION == [
+
+]
+
+
+#ADMIN LOGIC/FUNCTION == [
+
+]
+
+
+#TEACHER's LOGIC/FUNCTION == [
+    1.Account page - has the following 
+            1
+            2
+            3
+            4
+
+]

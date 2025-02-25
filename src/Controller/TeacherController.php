@@ -11,6 +11,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 
 
@@ -52,11 +54,13 @@ use App\Entity\Exam;
 use App\Form\SetExamType;
 use App\Entity\Question;
 use App\Form\AQuestionType;
+use App\Form\TeacherProfilePictureType;
 
 
 use App\Repository\TeacherSubjectClassroomRepository;
 use App\Repository\SubjectRepository;
 use App\Repository\QuestionRepository;
+use App\Repository\TeacherClassroomRepository;
 
 
 
@@ -139,6 +143,12 @@ public function authenticate(Request $request, TeacherRepository $teacherReposit
          
     }
 
+
+
+
+
+
+
 //Teacher Logout Logic --------------------------------------------------------------------------
 
     /**
@@ -150,15 +160,8 @@ public function authenticate(Request $request, TeacherRepository $teacherReposit
         throw new \Exception('This should never be reached!');
     }
     
-
-
-
-    
 //Teacher EDit Logic -------------------------------------------------------------------------
-    
-
-
-    /**
+        /**
      * @Route("/teacher/edit-account", name="teacher_edit_account")
      */
     public function editAccount(): Response
@@ -180,45 +183,81 @@ public function authenticate(Request $request, TeacherRepository $teacherReposit
     //}
 
 
-
-
-
-
-
-
-
 //Teacher Account Controller  -------------------------------------------- ; Note ; starts here 
 
 #[Route('/teacher/account', name: 'teacher_account')]
-public function account(EntityManagerInterface $em, Request $request): Response
+public function account(EntityManagerInterface $em, Request $request, TeacherClassroomRepository $teacherClassroomRepository): Response
 {
-    // Retrieve the logged-in teacher
-    $teacher = $this->getUser();
+     // Retrieve the logged-in teacher
+     $teacher = $this->getUser();
 
-    // Create a new note
+     // Check if the teacher is a classroom teacher
+     $teacherClassrooms = $teacherClassroomRepository->findOneBy(['teacher' => $teacher]);
+     $isClassroomTeacher = $teacherClassrooms !== null;
+ 
+     // Get the classroom information
+     $classroom = null;
+     if ($isClassroomTeacher) {
+         $classroom = $teacherClassrooms->getClassroom();
+     }
+ 
+     // Get the number of students in the classroom
+     $studentsCount = 0;
+     if ($classroom) {
+         $studentsCount = count($classroom->getStudents());
+     }
+
+$teacherSubject = $em->getRepository(TeacherSubject::class)->findOneBy(['teacher' => $teacher]);
+$subject = $teacherSubject->getSubject();
+$subjectName = $subject->getcourse();
+
+$questionsCount = $em->getRepository(Question::class)->countByTeacher($teacher);
+
+    // Create a new note form
     $note = new TeacherNote();
-    $form = $this->createForm(TeacherNoteType::class, $note);
+    $noteForm = $this->createForm(TeacherNoteType::class, $note);
+    $noteForm->handleRequest($request);
 
-    // Handle form submission
-    $form->handleRequest($request);
-    if ($form->isSubmitted() && $form->isValid()) {
+    if ($noteForm->isSubmitted() && $noteForm->isValid()) {
         $note->setTeacher($teacher);
-        $note->setCreatedat(new \DateTime());
-        $note->setUpdatedat(new \DateTime());
+        $note->setCreatedAt(new \DateTime());
+        $note->setUpdatedAt(new \DateTime());
 
         $em->persist($note);
         $em->flush();
 
         return $this->redirectToRoute('teacher_account');
     }
+    
 
-    // Fetch existing notes
-    $notes = $teacher->getTeacherNotes(); // Updated method name
+    // Create Profile Picture Form
+    $profileForm = $this->createForm(TeacherProfilePictureType::class);
+    $profileForm->handleRequest($request);
+
+    if ($profileForm->isSubmitted() && $profileForm->isValid()) {
+        $imageFile = $profileForm->get('profilePicture')->getData();
+
+        if ($imageFile) {
+            $newFilename = uniqid().'.'.$imageFile->guessExtension();
+            $imageFile->move($this->getParameter('profile_pictures_directory'), $newFilename);
+            $teacher->setProfilePicture($newFilename);
+
+            $em->persist($teacher);
+            $em->flush();
+
+            return $this->redirectToRoute('teacher_account');
+        }
+    }
 
     return $this->render('teacher/account.html.twig', [
-        'teacher' => $teacher,
-        'form' => $form->createView(),
-        'notes' => $notes,
+    'teacher' => $teacher,
+    'noteForm' => $noteForm->createView(),
+    'profileForm' => $profileForm->createView(),
+    'isClassroomTeacher' => $isClassroomTeacher,
+    'classroom' => $classroom,
+    'studentsCount' => $studentsCount,
+    'subjectName' => $subjectName,
+    'questionsCount' => $questionsCount,
     ]);
 }
 
@@ -254,10 +293,9 @@ public function deleteNote(TeacherNote $note, EntityManagerInterface $em): Respo
     return $this->redirectToRoute('teacher_account');
 }
 
+
+
 //Teacher Account Controller --------------------------------------------------------------Ends here
-
-
-
 //Teacher Question logic -------------------------------------------------------------- Working
 
 //preview question
@@ -428,11 +466,8 @@ public function getTerms(EntityManagerInterface $entityManager): JsonResponse
 
 
 
-
-
-
-
-
+//--------------------------------------------------------------------------------------------END HERE ; 
+//CREATE QUESTION BEGINS HERE -------------------------------------------------------------------------------;
 
 //Create-Question
 
@@ -1387,111 +1422,53 @@ public function saveImageQuestion(Request $request): JsonResponse
     
 
 //---------------------------------------------------------------------------------------------D.O.N.E
+//Result page Begins here-------------------------------------------------------------------;
 
 
-
-
-
-
-
-
-// src/Controller/TeacherController.php
-
-#[Route('/teacher/exams/create', name: 'teacher_create_exam')]
-public function createExam(Request $request, EntityManagerInterface $em): Response
+#[Route('/teacher/results', name: 'teacher_results')]
+public function results(EntityManagerInterface $em): Response
 {
+    // Get the logged-in teacher
     $teacher = $this->getUser();
-    
-    // Create a new Exam
-    $exam = new Exam();
-    $form = $this->createForm(SetExamType::class, $exam);
 
-    // Handle form submission
-    $form->handleRequest($request);
-    if ($form->isSubmitted() && $form->isValid()) {
-        $exam->setTeacher($teacher);
-        $exam->setCreatedAt(new \DateTime());
-        $exam->setUpdatedAt(new \DateTime());
+    // Get subjects assigned to the teacher
+    $subjects = $em->getRepository(Subject::class)->findBy(['teacher' => $teacher]);
 
-        $em->persist($exam);
-        $em->flush();
+    // Get classes assigned to the teacher
+    $classes = $em->getRepository(TeacherClass::class)->findBy(['teacher' => $teacher]);
 
-        return $this->redirectToRoute('teacher_create_exam');
-    }
+    // Get student results for the teacher's subjects
+    $results = $em->getRepository(Result::class)->createQueryBuilder('r')
+        ->join('r.student', 's')
+        ->join('r.subject', 'sub')
+        ->where('sub IN (:subjects)')
+        ->setParameter('subjects', $subjects)
+        ->getQuery()
+        ->getResult();
 
-    // Fetch all exams created by the teacher
-    $exams = $em->getRepository(Exam::class)->findBy(['teacher' => $teacher]);
-
-    return $this->render('teacher/create_exam.html.twig', [
-        'form' => $form->createView(),
-        'exams' => $exams,
-    ]);
-}
-
-
-//view exams
-
-#[Route('/teacher/exam/{id}', name: 'teacher_view_exam')]
-public function viewExam(int $id, EntityManagerInterface $em): Response
-{
-    $exam = $em->getRepository(Exam::class)->find($id);
-    return $this->render('teacher/view_exam.html.twig', [
-        'exam' => $exam,
+    return $this->render('teacher/results.html.twig', [
+        'teacher' => $teacher,
+        'results' => $results,
+        'subjects' => $subjects,
+        'classes' => $classes,
     ]);
 }
 
 
 
-//edit exams in list
-
-#[Route('/teacher/exam/{id}/edit', name: 'teacher_edit_exam')]
-public function editExam(int $id, Request $request, EntityManagerInterface $em): Response
-{
-    $exam = $em->getRepository(Exam::class)->find($id);
-    $form = $this->createForm(SetExamType::class, $exam);
-
-    $form->handleRequest($request);
-    if ($form->isSubmitted() && $form->isValid()) {
-        $exam->setUpdatedAt(new \DateTime());
-        $em->flush();
-
-        return $this->redirectToRoute('teacher_create_exam');
-    }
-
-    return $this->render('teacher/edit_exam.html.twig', [
-        'form' => $form->createView(),
-        'exam' => $exam,
-    ]);
-}
-
-//delete exams
-
-#[Route('/teacher/exam/{id}/delete', name: 'teacher_delete_exam')]
-public function deleteExam(int $id, EntityManagerInterface $em): Response
-{
-    $exam = $em->getRepository(Exam::class)->find($id);
-    if ($exam) {
-        $em->remove($exam);
-        $em->flush();
-    }
-
-    return $this->redirectToRoute('teacher_create_exam');
-}
 
 
-//publish exams
 
-#[Route('/teacher/exam/{id}/publish', name: 'teacher_publish_exam')]
-public function publishExam(int $id, EntityManagerInterface $em): Response
-{
-    $exam = $em->getRepository(Exam::class)->find($id);
-    if ($exam) {
-        $exam->setPublished(true); // Assuming you have a published field
-        $em->flush();
-    }
 
-    return $this->redirectToRoute('teacher_create_exam');
-}
+
+
+
+
+
+
+
+
+
 
 
 
