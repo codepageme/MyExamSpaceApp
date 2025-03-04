@@ -1,47 +1,323 @@
 {% extends 'tdashbase.html.twig' %}
 
-{% block title %}Account - MyExamSpace.Com{% endblock %}
+{% block title %}Teacher Result - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
-     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
-     <style>
-         body {
-             max-width: 100vw;
-             overflow-x: hidden;
-         }
-         .container {
-             max-width: 100vw;
-             margin: 0 auto;
-             padding: 0 20px;
-             box-sizing: border-box;
-         }
-         </style>
+    <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+    <style>
+        body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 100vw;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .button-container {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        .filters-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .filters-container select {
+            width: 200px;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            margin-bottom: 10px;
+            width: 250px;
+        }
+        .search-container input {
+            padding-right: 30px;
+            width: 100%;
+        }
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            color: gray;
+        }
+       .table-container {
+        max-width: 100%;
+        overflow-x: scroll;
+        overflow-y: auto;
+        max-height: 500px; /* Adjust height as needed */
+        border: 1px solid #ccc;
+    }
+
+    table {
+        width: auto; /* Prevent stretching */
+        min-width: 600px; /* Ensures a minimum width */
+        border-collapse: collapse;
+        white-space: nowrap; /* Prevents text wrapping */
+    }
+
+    th, td {
+        padding: 5px;
+        text-align: center;
+        border: 1px solid #ddd;
+        font-size: 14px; /* Slightly smaller text */
+    }
+
+    input.theory-input {
+        width: 50px; /* Smaller input size */
+        padding: 1px;
+        font-size: 12px;
+    }
+    </style>
 {% endblock %}
 
 {% block map_content %}
-
-    <div class = "here" ></div>
- 
+    <div class="here"></div>
     <ul>
         <li class="boton"><span class="glyphicon glyphicon-th-large glypha"></span>
-        <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
-
+            <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
         <li class="boton"><span class="glyphicon glyphicon-book glypha"></span>
-        <br><a href="#">Exam</a></li>
-
+            <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
         <li class="boton activa"><span class="glyphicon glyphicon-list-alt glyph"></span>
-        <br><a href="#">Results</a></li>
-
+            <br><a href="{{ path('teacher_results') }}">Results</a></li>
         <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
-        <br><a href="#">Data</a></li>
-
+            <br><a href="#">Data</a></li>
         <li class="boton"><span class="glyphicon glyphicon-user glypha"></span>
-        <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
+            <br><a href="{{ path('teacher_account') }}">My Account</a></li>
     </ul>
+    <a href="{{ path('teacher_logout') }}" id="logout" 
+       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <span class="glyphicon glyphicon-log-out glypha"></span> Logout
+    </a>
 
-    <a href="#" id="logout"><span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
-   
+    <form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+    </form>
 {% endblock %}
 
 {% block content %}
-<p style="color:black;"> result</p>
+
+<div class="container">
+    <!-- 🔹 Button Group -->
+    <div class="button-container">
+        <a href="{{ path('teacher_results') }}" class="btn btn-primary">
+            <span class="glyphicon glyphicon-floppy-save"></span> Edit Result
+        </a>
+        <a href="/" class="btn btn-default">
+            <span class="glyphicon glyphicon-floppy-saved"></span> View Result
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- 🔹 Filters (Dropdowns & Search Bar) -->
+        <div class="filters-container">
+            <!-- Subject Dropdown -->
+           <select name="subject" id="subjectDropdown" class="form-control">
+          <option value="">Select Subject</option>
+             {% for teacherSubject in teacherSubjects %}
+               <option value="{{ teacherSubject.id }}" data-subject-id="{{ teacherSubject.subject.id }}">
+            {{ teacherSubject.subject.course }}
+                </option>
+             {% endfor %}
+                </select>
+
+
+            <!-- Classroom Dropdown -->
+            <select name="classroom" id="classroomDropdown" class="form-control" disabled>
+                <option value="">Select Classroom</option>
+            </select>
+        </div>
+
+        <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search student...">
+                <span class="glyphicon glyphicon-search search-icon"></span>
+            </div>
+
+
+        <!-- 🔹 Results Table (Scrollable) -->
+        <div class="table-container">
+            <table class="table table-bordered table-hover" id="resultsTable">
+                <thead id="examTypesHeader">
+                    <tr>
+                        <th>Student Name</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No data available.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let subjectDropdown = document.getElementById("subjectDropdown");
+    let classroomDropdown = document.getElementById("classroomDropdown");
+    let searchInput = document.getElementById("searchInput");
+
+    // 🔹 When subject is selected, fetch classrooms using teacherSubjectId
+    subjectDropdown.addEventListener("change", function () {
+        let teacherSubjectId = this.value; // 🔹 This is teacher_subject.id
+        let subjectId = this.options[this.selectedIndex].dataset.subjectId; // 🔹 Get real subject.id
+
+        console.log("Selected TeacherSubject ID:", teacherSubjectId);
+        console.log("Mapped Subject ID:", subjectId); // ✅ Correct subject ID for fetching results
+
+        classroomDropdown.innerHTML = '<option value="">Loading...</option>';
+        classroomDropdown.disabled = true;
+
+        if (teacherSubjectId) {
+            fetch(`/get-classrooms/${teacherSubjectId}`) // ✅ Fetch classrooms using teacherSubjectId
+                .then(response => response.json())
+                .then(data => {
+                    classroomDropdown.innerHTML = '<option value="">Select Classroom</option>';
+                    data.forEach(classroom => {
+                        let option = document.createElement("option");
+                        option.value = classroom.id;
+                        option.textContent = classroom.name;
+                        classroomDropdown.appendChild(option);
+                    });
+                    classroomDropdown.disabled = false;
+                })
+                .catch(error => console.error("Error fetching classrooms:", error));
+        }
+
+        // Store subject ID for later result fetching
+        classroomDropdown.dataset.subjectId = subjectId;
+    });
+
+    // 🔹 When classroom is selected, fetch results using subjectId
+    classroomDropdown.addEventListener("change", function () {
+        let classroomId = this.value;
+        let teacherSubjectId = subjectDropdown.value; // Still useful for classroom fetching
+        let subjectId = this.dataset.subjectId; // ✅ Fetch stored subject.id from dataset
+
+        console.log("TeacherSubject ID for classroom:", teacherSubjectId);
+        console.log("Mapped Subject ID for result fetching:", subjectId); // ✅ Ensuring correct ID
+        console.log("Selected Classroom ID:", classroomId);
+
+        if (classroomId && subjectId) {
+            fetchResults(subjectId, classroomId); // ✅ Using real subject ID to fetch results
+        }
+    });
+
+    function fetchResults(subjectId, classroomId) {
+        console.log("Fetching results for Subject ID:", subjectId, "Classroom ID:", classroomId);
+
+        fetch(`/get-results/${subjectId}/${classroomId}`)
+            .then(response => response.json())
+            .then(data => {
+                let resultsBody = document.getElementById("resultsBody");
+                let examTypesHeader = document.getElementById("examTypesHeader");
+
+                resultsBody.innerHTML = "";
+                examTypesHeader.innerHTML = "";
+
+                if (data.students.length === 0) {
+                    resultsBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No students found.</td></tr>';
+                    return;
+                }
+
+                let examTypes = data.exam_types;
+                let headerRow1 = "<tr><th>Student Name</th>";
+                let headerRow2 = "<tr><th></th>";
+
+                examTypes.forEach(type => {
+                    headerRow1 += `<th colspan="3" class="text-center">${type}</th>`;
+                    headerRow2 += `<th class="text-center">Total</th><th class="text-center">OBJ</th><th class="text-center">Theory</th>`;
+                });
+
+                headerRow1 += "</tr>";
+                headerRow2 += "</tr>";
+                examTypesHeader.innerHTML = headerRow1 + headerRow2;
+
+                let studentResults = {}; // 🔹 Store student scores
+
+                // 🔹 Fetch student results separately
+                fetch(`/get-student-results/${classroomId}/${subjectId}`)
+                    .then(response => response.json())
+                    .then(resultsData => {
+                        studentResults = resultsData;
+
+                        // Populate student rows
+                        data.students.forEach(student => {
+                            let row = `<tr class="student-row" data-student-id="${student.student_id}">
+                                <td>${student.student_name}</td>`;
+
+                            examTypes.forEach(type => {
+                                let scores = studentResults[student.student_id] || {};
+                                let objScore = scores.OBJ || 0; 
+                                let theoryScore = scores.Theory || 0; 
+                                let totalScore = objScore + theoryScore; 
+
+                                row += `
+                                    <td class="text-center total-score" data-exam-type="${type}">${totalScore}</td>
+                                    <td class="text-center obj-score" data-exam-type="${type}">${Score}</td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control theory-input" 
+                                               data-student-id="${student.student_id}" 
+                                               data-exam-type="${type}" 
+                                               value="${theoryScore}">
+                                    </td>`;
+                            });
+
+                            row += `</tr>`;
+                            resultsBody.innerHTML += row;
+                        });
+
+                        attachTheoryScoreListeners();
+                    })
+                    .catch(error => console.error("Error fetching student results:", error));
+            })
+            .catch(error => console.error("Error fetching results:", error));
+    }
+
+    function attachTheoryScoreListeners() {
+        document.querySelectorAll(".theory-input").forEach(input => {
+            input.addEventListener("change", function () {
+                let studentId = this.dataset.studentId;
+                let examType = this.dataset.examType;
+                let newTheoryScore = parseFloat(this.value) || 0;
+
+                let totalScoreCell = this.closest("tr").querySelector(`td.total-score[data-exam-type="${examType}"]`);
+                let objScoreCell = this.closest("tr").querySelector(`td.obj-score[data-exam-type="${examType}"]`);
+
+                let objScore = parseFloat(objScoreCell.textContent) || 0;
+                let totalScore = objScore + newTheoryScore;
+
+                if (totalScoreCell) {
+                    totalScoreCell.textContent = totalScore;
+                }
+
+                fetch(`/update-theory-score/${studentId}/${examType}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ theory_score: newTheoryScore })
+                })
+                .then(response => response.json())
+                .then(data => console.log("Score updated:", data))
+                .catch(error => console.error("Request failed:", error));
+            });
+        });
+    }
+
+    searchInput.addEventListener("keyup", function () {
+        let filter = this.value.toLowerCase();
+        document.querySelectorAll("#resultsBody .student-row").forEach(row => {
+            row.style.display = row.children[0].textContent.toLowerCase().includes(filter) ? "" : "none";
+        });
+    });
+});
+
+</script>
 {% endblock %}

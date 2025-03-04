@@ -3,6 +3,19 @@
 {% block title %}Teacher Dashboard - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
      <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+
+      <style>
+         body {
+             max-width: 100vw;
+             overflow-x: hidden;
+         }
+         .container {
+             max-width: 100vw;
+             margin: 0 auto;
+             padding: 0 20px;
+             box-sizing: border-box;
+         }
+         </style>
 {% endblock %}
 
 {% block map_content %}
@@ -17,7 +30,7 @@
         <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
-        <br><a href="#">Results</a></li>
+        <br><a href="{{ path('teacher_results') }}">Results</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
         <br><a href="#">Data</a></li>
@@ -38,10 +51,67 @@
 {% endblock %}
 
 {% block content %}
-<h1>Welcome to your Dashboard, {{ username }}!</h1>
 
-<p>Email: {{ email }}</p>
-<p>Role: {{ role }}</p>
+<div class="container">
 
+  <h1>Welcome to your Dashboard, {{ username }}!</h1>
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Total Students</h5>
+          <h1 class="card-text"></h1>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Total Questions</h5>
+          <h1 class="card-text"></h1>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Total Exams</h5>
+          <h1 class="card-text"></h1>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Average Student Score</h5>
+          <h1 class="card-text">%</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Student Performance Chart</h5>
+          <canvas id="studentPerformanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Exam Results Chart</h5>
+          <canvas id="examResultsChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+</div>
 
 {% endblock %}

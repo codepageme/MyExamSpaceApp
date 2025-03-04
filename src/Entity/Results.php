@@ -48,6 +48,9 @@ class Results
     #[ORM\JoinColumn(nullable: false)]
     private ?Grade $Grade = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $Theory = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -172,6 +175,23 @@ class Results
 
         return $this;
     }
+
+    public function getTheory(): ?int
+    {
+        return $this->Theory;
+    }
+
+    public function setTheory(?int $Theory): static
+    {
+        $this->Theory = $Theory;
+
+        return $this;
+    }
+
+    public function getTotalScore(): ?int
+{
+    return ($this->theoryScore ?? 0) + ($this->score ?? 0);
+}
 
 
 }

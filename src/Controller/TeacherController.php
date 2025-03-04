@@ -34,6 +34,7 @@ use App\Entity\DropdownOption;
 use App\Entity\RegisterOption;
 use App\Entity\ImagesOption;
 use App\Entity\Theory;
+use App\Entity\Results;
 
 
 
@@ -61,6 +62,9 @@ use App\Repository\TeacherSubjectClassroomRepository;
 use App\Repository\SubjectRepository;
 use App\Repository\QuestionRepository;
 use App\Repository\TeacherClassroomRepository;
+use App\Repository\StudentRepository;
+use App\Repository\ResultsRepository;
+
 
 
 
@@ -1426,31 +1430,58 @@ public function saveImageQuestion(Request $request): JsonResponse
 
 
 #[Route('/teacher/results', name: 'teacher_results')]
+#[IsGranted('ROLE_TEACHER')]
 public function results(EntityManagerInterface $em): Response
 {
-    // Get the logged-in teacher
+    // Get the currently logged-in teacher
     $teacher = $this->getUser();
 
-    // Get subjects assigned to the teacher
-    $subjects = $em->getRepository(Subject::class)->findBy(['teacher' => $teacher]);
+    // Ensure that $teacher is an instance of Teacher
+    if (!$teacher instanceof Teacher) {
+        throw $this->createAccessDeniedException('Access denied. Teacher not found.');
+    }
 
-    // Get classes assigned to the teacher
-    $classes = $em->getRepository(TeacherClass::class)->findBy(['teacher' => $teacher]);
+    // Get the teacher's subject assignments
+    $teacherSubjects = $em->getRepository(TeacherSubject::class)->findBy(['teacher' => $teacher]);
 
-    // Get student results for the teacher's subjects
-    $results = $em->getRepository(Result::class)->createQueryBuilder('r')
-        ->join('r.student', 's')
-        ->join('r.subject', 'sub')
-        ->where('sub IN (:subjects)')
-        ->setParameter('subjects', $subjects)
+    // Extract subject IDs
+    $subjectIds = array_map(fn($ts) => $ts->getSubject()->getId(), $teacherSubjects);
+    
+    // Get classrooms linked to the teacher's subjects
+    $teacherSubjectClassrooms = $em->getRepository(TeacherSubjectClassroom::class)->findBy([
+        'teacherSubject' => $teacherSubjects
+    ]);
+
+    // Extract classroom IDs
+    $classroomIds = array_map(fn($tsc) => $tsc->getClassroom()->getId(), $teacherSubjectClassrooms);
+
+    // Get results for the teacher's subjects and classrooms
+    $results = (empty($subjectIds) || empty($classroomIds)) ? [] :
+        $em->getRepository(Results::class)->createQueryBuilder('r')
+            ->join('r.Student', 's')  
+            ->join('r.Exam', 'e')   
+            ->join('s.classroom', 'c') 
+            ->where('e.Subject IN (:subjectIds)') 
+            ->andWhere('c.id IN (:classroomIds)') 
+            ->setParameter('subjectIds', $subjectIds)
+            ->setParameter('classroomIds', $classroomIds)
+            ->getQuery()
+            ->getResult();
+
+    // Get the latest session
+    $latestSession = $em->getRepository(Session::class)
+        ->createQueryBuilder('s')
+        ->orderBy('s.id', 'DESC')
+        ->setMaxResults(1)
         ->getQuery()
-        ->getResult();
+        ->getOneOrNullResult();  
 
     return $this->render('teacher/results.html.twig', [
         'teacher' => $teacher,
+        'latestSession' => $latestSession ? $latestSession->getName() : 'No Session Found',
         'results' => $results,
-        'subjects' => $subjects,
-        'classes' => $classes,
+        'teacherSubjects' => $teacherSubjects,
+        'teacherSubjectClassrooms' => $teacherSubjectClassrooms,
     ]);
 }
 
@@ -1459,6 +1490,116 @@ public function results(EntityManagerInterface $em): Response
 
 
 
+#[Route('/get-classrooms/{teacherSubjectId}', name: 'get_classrooms')]
+public function getClassroom(EntityManagerInterface $em, $teacherSubjectId): JsonResponse
+{
+    $teacherSubject = $em->getRepository(TeacherSubject::class)->find($teacherSubjectId);
+
+    if (!$teacherSubject) {
+        return new JsonResponse([]);
+    }
+
+    // Get classrooms assigned to the selected TeacherSubject
+    $teacherSubjectClassrooms = $em->getRepository(TeacherSubjectClassroom::class)->findBy([
+        'teacherSubject' => $teacherSubject
+    ]);
+
+    // Prepare response data
+    $classrooms = array_map(fn($tsc) => [
+        'id' => $tsc->getClassroom()->getId(),
+        'name' => $tsc->getClassroom()->getClassname()
+    ], $teacherSubjectClassrooms);
+
+    return new JsonResponse($classrooms);
+}
+
+
+
+
+
+#[Route('/get-results/{subjectId}/{classroomId}', name: 'get_results')]
+public function getResults(
+    int $subjectId, 
+    int $classroomId, 
+    EntityManagerInterface $em, 
+    StudentRepository $studentRepository
+): JsonResponse {
+    try {
+        // 🔹 Get all students in the selected classroom
+        $students = $studentRepository->findBy(['classroom' => $classroomId]);
+        if (empty($students)) {
+            return new JsonResponse(['error' => 'No students found in classroom'], 404);
+        }
+
+        // 🔹 Get all exam types
+        $examTypesQuery = $em->createQuery("SELECT et.name FROM App\Entity\Examtype et");
+        $examTypes = array_column($examTypesQuery->getResult(), 'name'); // Extract names correctly
+
+        // 🔹 Prepare student response
+        $studentData = array_map(function ($student) {
+            return [
+                'student_id' => $student->getId(),
+                'student_name' => $student->getFirstname() . ' ' . $student->getLastname(),
+            ];
+        }, $students);
+
+        return new JsonResponse([
+            'exam_types' => $examTypes,
+            'students' => $studentData,
+        ]);
+
+    } catch (\Exception $e) {
+        return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+    }
+}
+
+
+
+
+#[Route('/get-student-results/{classroomId}/{subjectId}', name: 'get_student_results')]
+public function getStudentResults(
+    int $classroomId, 
+    int $subjectId, 
+    EntityManagerInterface $em
+): JsonResponse {
+    try {
+        // 🔹 Fetch results based on classroom and subject
+        $resultsQuery = $em->createQuery("
+        SELECT s.id AS studentId, s.Firstname, s.Lastname, et.name AS examType, r.Score AS score
+        FROM App\Entity\Results r
+        JOIN r.Student s  
+        JOIN r.Exam e  
+        JOIN e.Examtype et
+        WHERE e.Subject = :subjectId
+        AND s.classroom = :classroomId  -- ✅ Corrected lowercase property
+    ")
+    ->setParameter('subjectId', $subjectId)
+    ->setParameter('classroomId', $classroomId);
+    
+    
+    
+    
+    
+
+        $resultsData = [];
+        foreach ($resultsQuery->getResult() as $result) {
+            $studentId = $result['studentId'];
+            $examType = $result['examType'];
+            $score = $result['score'];
+
+            if (!isset($resultsData[$studentId])) {
+                $resultsData[$studentId] = [];
+            }
+
+            $resultsData[$studentId][$examType] = $score;
+        }
+
+        return new JsonResponse($resultsData);
+
+    } catch (\Exception $e) {
+        return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+    }
+}
 
 
 
