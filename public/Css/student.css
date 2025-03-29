@@ -306,10 +306,11 @@ h5.text-primary {
 }
 
 .question p {
-    font-size: 16px;
+   
     line-height: 1.5;
     margin: 0;
 }
+
 
 
 .container {
@@ -387,11 +388,7 @@ h1,h4{
     max-height: 30%; /* Limits the height */
 }
 
-.question-text {
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-}
+
 
 .options-container {
     width: 90%;

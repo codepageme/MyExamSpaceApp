@@ -15,6 +15,8 @@
              padding: 0 20px;
              box-sizing: border-box;
          }
+
+
          </style>
 {% endblock %}
 
@@ -28,9 +30,9 @@
         <li class="boton activa"><span class="glyphicon glyphicon-book glyph"></span>
         <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
 
-        <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
-        <br><a href="#">Results</a></li>
-
+         <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
+        <br><a href="{{ path('teacher_results') }}">Results</a></li>
+        
         <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
         <br><a href="#">Data</a></li>
 
@@ -135,10 +137,11 @@
            <div id="radioButtonSetup" style="display: none;">
             <form id="radioButtonForm">
         <!-- Textarea for Question -->
-        <div class="form-group">
-            <label for="radioquestionText"> Question (Radio) : </label>
-            <textarea id="radioquestionText" name="radioquestionText" class="form-control" rows="3" placeholder="Enter your question"></textarea>
-        </div>
+     
+<div class="form-group">
+    <label for="radioquestionText"> Question (Radio) : </label>
+    <textarea id="radioquestionText" name="radioquestionText" class="form-control" rows="3" placeholder="Enter your question"></textarea>
+</div>
 
        <div class="form-group">
     <div class="row">
@@ -200,12 +203,18 @@
 
           <!--Check box option-->
        <!-- Checkbox Question Form (Initially Hidden) -->
-<form id="checkbox-question-form" style="display: none;" method="POST">
+<form id="checkbox-question-form" style="display: none;  height:300px ; overflow-y:auto;" method="POST">
     <!-- Question Textarea -->
     <div class="form-group">
         <label for="checkboxquestionText">Question (Checkbox):</label>
         <textarea id="checkboxquestionText" name="checkboxquestionText" class="form-control" placeholder="Enter the question here"></textarea>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/trumbowyg@2.25.1/dist/trumbowyg.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trumbowyg@2.25.1/dist/ui/trumbowyg.min.css">
+
+<script>
+    $('#checkboxquestionText').trumbowyg();
+</script>
 
     <!-- Options A to E with checkboxes -->
     <div class="form-group">

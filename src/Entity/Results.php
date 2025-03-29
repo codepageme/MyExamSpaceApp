@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ResultsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\EntityManagerInterface;
 
 #[ORM\Entity(repositoryClass: ResultsRepository::class)]
 class Results
@@ -22,8 +23,8 @@ class Results
     #[ORM\JoinColumn(nullable: false)]
     private ?Exam $Exam = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2)]
-    private ?string $Score = null;
+    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, options: ["default" => 0])]
+    private ?string $Score = "0.00";
 
     #[ORM\ManyToOne(inversedBy: 'results')]
     #[ORM\JoinColumn(nullable: false)]
@@ -32,24 +33,37 @@ class Results
     #[ORM\Column]
     private ?\DateTimeImmutable $Date = null;
 
-    #[ORM\Column]
-    private ?float $Percentage = null;
+    #[ORM\Column(options: ["default" => 0])]
+    private ?float $Percentage = 0.0;
 
-    #[ORM\Column]
-    private ?int $totalQuestions = null;
+    #[ORM\Column(options: ["default" => 0])]
+    private ?int $totalQuestions = 0;
 
-    #[ORM\Column]
-    private ?int $answeredQuestions = null;
+    #[ORM\Column(options: ["default" => 0])]
+    private ?int $answeredQuestions = 0;
 
-    #[ORM\Column]
-    private ?int $correctAnswers = null;
+    #[ORM\Column(options: ["default" => 0])]
+    private ?int $correctAnswers = 0;
 
     #[ORM\ManyToOne(inversedBy: 'results')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Grade $Grade = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?int $Theory = null;
+    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true, options: ["default" => 0])]
+    private ?string $Theory = "0.00";
+
+    // 🔥 Constructor to set default values
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->Date = new \DateTimeImmutable();
+
+        // Fetch the latest active academic calendar
+        $currentCalendar = $entityManager->getRepository(AcademicCalender::class)->findOneBy([]);
+        
+        if ($currentCalendar) {
+            $this->AcademicCalender = $currentCalendar;
+        }
+    }
 
     public function getId(): ?int
     {
@@ -64,7 +78,6 @@ class Results
     public function setStudent(?Student $Student): static
     {
         $this->Student = $Student;
-
         return $this;
     }
 
@@ -76,19 +89,17 @@ class Results
     public function setExam(?Exam $Exam): static
     {
         $this->Exam = $Exam;
-
         return $this;
     }
 
-    public function getScore(): ?string
+    public function getScore(): ?float
     {
-        return $this->Score;
+        return $this->Score !== null ? (float) $this->Score : 0.0;
     }
 
-    public function setScore(string $Score): static
+    public function setScore(float $Score): static
     {
-        $this->Score = $Score;
-
+        $this->Score = number_format($Score, 2, '.', '');
         return $this;
     }
 
@@ -100,7 +111,6 @@ class Results
     public function setAcademicCalender(?AcademicCalender $AcademicCalender): static
     {
         $this->AcademicCalender = $AcademicCalender;
-
         return $this;
     }
 
@@ -112,7 +122,6 @@ class Results
     public function setDate(\DateTimeImmutable $Date): static
     {
         $this->Date = $Date;
-
         return $this;
     }
 
@@ -124,7 +133,6 @@ class Results
     public function setPercentage(float $Percentage): static
     {
         $this->Percentage = $Percentage;
-
         return $this;
     }
 
@@ -136,7 +144,6 @@ class Results
     public function setTotalQuestions(int $totalQuestions): static
     {
         $this->totalQuestions = $totalQuestions;
-
         return $this;
     }
 
@@ -148,7 +155,6 @@ class Results
     public function setAnsweredQuestions(int $answeredQuestions): static
     {
         $this->answeredQuestions = $answeredQuestions;
-
         return $this;
     }
 
@@ -160,7 +166,6 @@ class Results
     public function setCorrectAnswers(int $correctAnswers): static
     {
         $this->correctAnswers = $correctAnswers;
-
         return $this;
     }
 
@@ -172,26 +177,22 @@ class Results
     public function setGrade(?Grade $Grade): static
     {
         $this->Grade = $Grade;
-
         return $this;
     }
 
-    public function getTheory(): ?int
+    public function getTheory(): ?float
     {
-        return $this->Theory;
+        return $this->Theory !== null ? (float) $this->Theory : 0.0;
     }
 
-    public function setTheory(?int $Theory): static
+    public function setTheory(?float $Theory): static
     {
-        $this->Theory = $Theory;
-
+        $this->Theory = $Theory !== null ? number_format($Theory, 2, '.', '') : "0.00";
         return $this;
     }
 
-    public function getTotalScore(): ?int
-{
-    return ($this->theoryScore ?? 0) + ($this->score ?? 0);
-}
-
-
+    public function getTotalScore(): ?float
+    {
+        return ($this->getTheory() ?? 0) + ($this->getScore() ?? 0);
+    }
 }

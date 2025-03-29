@@ -15,6 +15,68 @@
              padding: 0 20px;
              box-sizing: border-box;
          }
+         .card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.card-text {
+    font-size: 24px;
+    color: #333;
+}
+
+h1, h2, h5 {
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+h1 {
+    font-size: 36px;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h5 {
+    font-size: 18px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.col-md-3, .col-md-6 {
+    flex-basis: 100%;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+    .col-md-3 {
+        flex-basis: 25%;
+    }
+    .col-md-6 {
+        flex-basis: 50%;
+    }
+}
          </style>
 {% endblock %}
 
@@ -52,66 +114,76 @@
 
 {% block content %}
 
-<div class="container">
+<div class="container mt-5">
+    <h1 class="text-center mb-5">Welcome to your Dashboard, {{ username }}!</h1>
 
-  <h1>Welcome to your Dashboard, {{ username }}!</h1>
+    <!-- Display teacher's subjects and classes -->
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <h2>Your Subjects:</h2>
+            <div class="row">
+                {% for subject in subjects %}
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ subject.subject.Course }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h2>Your Classes:</h2>
+            <div class="row">
+                {% for classroom in classrooms %}
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ classroom.classroom.classname }}</h5>
+                                <p>Number of Students: {{ classroom['studentsCount'] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 
-  <div class="row">
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Total Students</h5>
-          <h1 class="card-text"></h1>
+    <!-- Display teacher's statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Students</h5>
+                    <h1 class="card-text">{{ totalStudents }}</h1>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Total Questions</h5>
-          <h1 class="card-text"></h1>
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Questions</h5>
+                    <h1 class="card-text">{{ totalQuestions }}</h1>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Total Exams</h5>
-          <h1 class="card-text"></h1>
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Exams</h5>
+                    <h1 class="card-text">/</h1>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Average Student Score</h5>
-          <h1 class="card-text">%</h1>
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Average Student Score</h5>
+                    <h1 class="card-text">averageStudentScore %</h1>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Student Performance Chart</h5>
-          <canvas id="studentPerformanceChart"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Exam Results Chart</h5>
-          <canvas id="examResultsChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
 </div>
-
 {% endblock %}

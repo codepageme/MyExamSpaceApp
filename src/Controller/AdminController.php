@@ -14,6 +14,8 @@ use App\Entity\TeacherSubjectClassroom;
 use App\Entity\TodoList; 
 use App\Entity\Message;
 use App\Entity\Department;
+use App\Entity\Question;
+use App\Entity\Exam;
 
 
 use App\Repository\AdminRepository;
@@ -981,6 +983,24 @@ public function curriculumPage(DepartmentRepository $departmentRepository): Resp
 
 
 
+    /**
+     * @Route("/admin/add-department", name="admin_add_department", methods={"POST"})
+     */
+    public function addDepartment(Request $request)
+    {
+        $departmentName = $request->request->get('department');
+        $department = new Department();
+        $department->setdepartment($departmentName);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($department);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Department added successfully']);
+    }
+
+
+
 
 
 /**
@@ -1030,7 +1050,7 @@ public function addSubject(Request $request, EntityManagerInterface $entityManag
  * @Route("/admin/dashboard", name="admin_dashboard")
  * @IsGranted('ROLE_ADMIN')
  */
-public function dashboard(): Response
+public function dashboard(EntityManagerInterface $em): Response
 {
     $admin = $this->getUser();
 
@@ -1038,9 +1058,23 @@ public function dashboard(): Response
         throw $this->createAccessDeniedException('Access denied.');
     }
 
+    // Fetch total teachers, students, classes, exams, and questions
+    $totalTeachers = $em->getRepository(Teacher::class)->count([]);
+    $totalStudents = $em->getRepository(Student::class)->count([]);
+    $totalClasses = $em->getRepository(Classroom::class)->count([]);
+    $totalExams = $em->getRepository(Exam::class)->count([]);
+    $totalQuestions = $em->getRepository(Question::class)->count([]);
+
+    
     return $this->render('admin/dashboard.html.twig', [
         'name' => $admin->getname(),
-        'role' => $admin->getRoles()[0] // Assuming 'ROLE_ADMIN' is present
+        'role' => $admin->getRoles()[0],
+        'totalTeachers' => $totalTeachers,
+        'totalStudents' => $totalStudents,
+        'totalClasses' => $totalClasses,
+        'totalExams' => $totalExams,
+        'totalQuestions' => $totalQuestions,
+       
     ]);
 }
 

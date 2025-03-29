@@ -35,10 +35,13 @@ use App\Entity\RegisterOption;
 use App\Entity\ImagesOption;
 use App\Entity\Theory;
 use App\Entity\Results;
-
-
-
-
+use App\Entity\Student;
+use App\Entity\ExamResult;
+use App\Entity\ExamScore;
+use App\Entity\ExamConfiguration;
+use App\Entity\Classroomsubject;
+use App\Entity\Behavior;
+use App\Entity\Comment;
 
 
 
@@ -126,28 +129,69 @@ public function authenticate(Request $request, TeacherRepository $teacherReposit
 
 //Teacher Dashboard Logic --------------------------------------------------------------------------
 
-    #[Route('/teacher/dashboard', name: 'teacher_dashboard')]
-    #[IsGranted('ROLE_TEACHER')]
-    public function dashboard(): Response
-    {
-        // Get the currently logged-in teacher
-        $teacher = $this->getUser();
+#[Route('/teacher/dashboard', name: 'teacher_dashboard')]
+#[IsGranted('ROLE_TEACHER')]
+public function dashboard(EntityManagerInterface $em): Response
+{
+    // Get the currently logged-in teacher
+    $teacher = $this->getUser();
 
-        // Ensure that $teacher is indeed an instance of the Teacher entity
-        if (!$teacher instanceof Teacher) {
-            throw $this->createAccessDeniedException('Access denied. Teacher not found.');
-        }
-
-        return $this->render('teacher/dashboard.html.twig', [
-            'username' => $teacher->getUsername(),
-            'email' => $teacher->getEmail(),
-            'role' => $teacher->getRoles()[0] // Assuming 'TEACHER' is always present
-        ]);
-
-         
+    // Ensure that $teacher is indeed an instance of the Teacher entity
+    if (!$teacher instanceof Teacher) {
+        throw $this->createAccessDeniedException('Access denied. Teacher not found.');
     }
 
+    // Fetch subjects assigned to the teacher
+    $subjects = $em->getRepository(TeacherSubject::class)
+        ->findBy(['teacher' => $teacher]);
 
+    // Fetch classrooms assigned to the teacher
+    $classrooms = $teacher->getTeacherClassrooms();
+
+    // Fetch total students, questions, and exams for the teacher
+    // Fetch teacher classrooms
+    $teacherClassrooms = $teacher->getTeacherClassrooms();
+
+    // Initialize total students count
+    $totalStudents = 0;
+    $classroomsData = []; // Define $classroomsData
+
+    // Iterate over teacher classrooms
+    foreach ($teacherClassrooms as $teacherClassroom) {
+        // Get the classroom ID
+        $classroomId = $teacherClassroom->getClassroom()->getId();
+
+        // Count students in the classroom
+        $studentsInClassroom = $em->getRepository(Student::class)
+            ->createQueryBuilder('s')
+            ->andWhere('s.classroom = :classroomId')
+            ->setParameter('classroomId', $classroomId)
+            ->getQuery()
+            ->getResult();
+
+        // Increment total students count
+        $totalStudents += count($studentsInClassroom);
+
+        // Populate $classroomsData
+        $classroomsData[] = [
+            'classroom' => $teacherClassroom->getClassroom(),
+            'studentsCount' => count($studentsInClassroom),
+        ];
+    }
+
+    $totalQuestions = $em->getRepository(Question::class)
+        ->countByTeacher($teacher);
+
+    return $this->render('teacher/dashboard.html.twig', [
+        'username' => $teacher->getUsername(),
+        'email' => $teacher->getEmail(),
+        'role' => $teacher->getRoles()[0],
+        'subjects' => $subjects,
+        'classrooms' => $classroomsData, 
+        'totalStudents' => $totalStudents,
+        'totalQuestions' => $totalQuestions,
+    ]);
+}
 
 
 
@@ -1428,62 +1472,52 @@ public function saveImageQuestion(Request $request): JsonResponse
 //---------------------------------------------------------------------------------------------D.O.N.E
 //Result page Begins here-------------------------------------------------------------------;
 
-
 #[Route('/teacher/results', name: 'teacher_results')]
 #[IsGranted('ROLE_TEACHER')]
 public function results(EntityManagerInterface $em): Response
 {
-    // Get the currently logged-in teacher
     $teacher = $this->getUser();
 
-    // Ensure that $teacher is an instance of Teacher
     if (!$teacher instanceof Teacher) {
         throw $this->createAccessDeniedException('Access denied. Teacher not found.');
     }
 
-    // Get the teacher's subject assignments
-    $teacherSubjects = $em->getRepository(TeacherSubject::class)->findBy(['teacher' => $teacher]);
-
-    // Extract subject IDs
-    $subjectIds = array_map(fn($ts) => $ts->getSubject()->getId(), $teacherSubjects);
-    
-    // Get classrooms linked to the teacher's subjects
-    $teacherSubjectClassrooms = $em->getRepository(TeacherSubjectClassroom::class)->findBy([
-        'teacherSubject' => $teacherSubjects
-    ]);
-
-    // Extract classroom IDs
-    $classroomIds = array_map(fn($tsc) => $tsc->getClassroom()->getId(), $teacherSubjectClassrooms);
-
-    // Get results for the teacher's subjects and classrooms
-    $results = (empty($subjectIds) || empty($classroomIds)) ? [] :
-        $em->getRepository(Results::class)->createQueryBuilder('r')
-            ->join('r.Student', 's')  
-            ->join('r.Exam', 'e')   
-            ->join('s.classroom', 'c') 
-            ->where('e.Subject IN (:subjectIds)') 
-            ->andWhere('c.id IN (:classroomIds)') 
-            ->setParameter('subjectIds', $subjectIds)
-            ->setParameter('classroomIds', $classroomIds)
-            ->getQuery()
-            ->getResult();
-
-    // Get the latest session
-    $latestSession = $em->getRepository(Session::class)
-        ->createQueryBuilder('s')
-        ->orderBy('s.id', 'DESC')
+    // 🔹 Get the latest academic calendar (session and term)
+    $latestAcademicCalendar = $em->getRepository(AcademicCalender::class)
+        ->createQueryBuilder('ac')
+        ->orderBy('ac.id', 'DESC')
         ->setMaxResults(1)
         ->getQuery()
-        ->getOneOrNullResult();  
+        ->getOneOrNullResult();
+
+    if (!$latestAcademicCalendar) {
+        throw $this->createNotFoundException('No academic calendar entry found.');
+    }
+
+    $latestSession = $latestAcademicCalendar->getSession();
+    $latestTerm = $latestAcademicCalendar->getTerm();
+
+    // 🔹 Get all terms for dropdown
+    $terms = $em->getRepository(Term::class)->findAll();
+
+    // 🔹 Fetch teacher’s assigned subjects
+    $teacherSubjects = $em->getRepository(TeacherSubject::class)->findBy(['teacher' => $teacher]);
+
+    // 🔹 Fetch teacher’s assigned classrooms
+    $teacherSubjectClassrooms = $em->getRepository(TeacherSubjectClassroom::class)->findBy([
+        'teacherSubject' => $teacherSubjects,
+    ]);
 
     return $this->render('teacher/results.html.twig', [
         'teacher' => $teacher,
-        'latestSession' => $latestSession ? $latestSession->getName() : 'No Session Found',
-        'results' => $results,
+        'latestSession' => $latestSession,
+        'selectedTerm' => $latestTerm,
+        'terms' => $terms,
         'teacherSubjects' => $teacherSubjects,
         'teacherSubjectClassrooms' => $teacherSubjectClassrooms,
     ]);
 }
+
 
 
 
@@ -1517,38 +1551,106 @@ public function getClassroom(EntityManagerInterface $em, $teacherSubjectId): Jso
 
 
 
-#[Route('/get-results/{subjectId}/{classroomId}', name: 'get_results')]
+
+
+#[Route('/get-results/{subjectId}/{classroomId}/{sessionId}/{termId}', name: 'get_results')]
 public function getResults(
     int $subjectId, 
     int $classroomId, 
+    int $sessionId, 
+    int $termId, 
     EntityManagerInterface $em, 
     StudentRepository $studentRepository
 ): JsonResponse {
     try {
-        // 🔹 Get all students in the selected classroom
+        // 🔹 Fetch all students in the selected classroom
         $students = $studentRepository->findBy(['classroom' => $classroomId]);
+        
         if (empty($students)) {
             return new JsonResponse(['error' => 'No students found in classroom'], 404);
         }
 
-        // 🔹 Get all exam types
-        $examTypesQuery = $em->createQuery("SELECT et.name FROM App\Entity\Examtype et");
-        $examTypes = array_column($examTypesQuery->getResult(), 'name'); // Extract names correctly
+        // 🔹 Get exam types (ID & Name)
+        $examTypes = $em->createQuery("
+            SELECT et.id, et.name FROM App\Entity\Examtype et
+        ")->getResult();
+        
+        // 🟢 Debug Log: Check exam types retrieved
+        error_log("Exam Types: " . json_encode($examTypes));
 
-        // 🔹 Prepare student response
-        $studentData = array_map(function ($student) {
-            return [
-                'student_id' => $student->getId(),
+        // 🔹 Fetch student scores
+        $scoresQuery = $em->createQuery("
+            SELECT 
+                s.id AS studentId, 
+                et.id AS examTypeId, 
+                es.score, 
+                es.id AS examScoreId
+            FROM App\Entity\ExamScore es
+            JOIN es.examResult er
+            JOIN er.student s
+            JOIN er.subject sub
+            JOIN er.term t
+            JOIN er.session sess
+            JOIN es.examType et
+            WHERE sub.id = :subjectId
+            AND s.classroom = :classroomId
+            AND sess.id = :sessionId
+            AND t.id = :termId
+        ")
+        ->setParameter('subjectId', $subjectId)
+        ->setParameter('classroomId', $classroomId)
+        ->setParameter('sessionId', $sessionId)
+        ->setParameter('termId', $termId);
+
+        $scores = $scoresQuery->getResult();
+
+        // 🟢 Debug Log: Check scores retrieved
+        error_log("Scores: " . json_encode($scores));
+
+        // 🔹 Prepare student data
+        $studentData = [];
+        foreach ($students as $student) {
+            $studentId = $student->getId();
+            $studentData[$studentId] = [
+                'student_id' => $studentId,
                 'student_name' => $student->getFirstname() . ' ' . $student->getLastname(),
+                'scores' => []
             ];
-        }, $students);
+
+            // Initialize all exam types with "0.00"
+            foreach ($examTypes as $type) {
+                $studentData[$studentId]['scores'][$type['id']] = [
+                    'score' => '0.00',
+                    'exam_score_id' => null
+                ];
+            }
+        }
+
+        // 🔹 Assign actual scores to students
+        foreach ($scores as $result) {
+            $studentId = $result['studentId'];
+            $examTypeId = $result['examTypeId'];
+            $score = round((float) $result['score'], 2);
+            $examScoreId = $result['examScoreId'] ?? null;
+
+            if (isset($studentData[$studentId]['scores'][$examTypeId])) {
+                $studentData[$studentId]['scores'][$examTypeId] = [
+                    'score' => number_format($score, 2, '.', ''),
+                    'exam_score_id' => $examScoreId
+                ];
+            }
+        }
+
+        // 🟢 Debug Log: Final processed student data
+        error_log("Final Student Data: " . json_encode($studentData));
 
         return new JsonResponse([
-            'exam_types' => $examTypes,
-            'students' => $studentData,
+            'exam_types' => $examTypes, // Contains IDs and names
+            'students' => array_values($studentData),
         ]);
 
     } catch (\Exception $e) {
+        error_log("Error: " . $e->getMessage()); // 🟢 Log errors
         return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], 500);
     }
 }
@@ -1556,52 +1658,279 @@ public function getResults(
 
 
 
-#[Route('/get-student-results/{classroomId}/{subjectId}', name: 'get_student_results')]
-public function getStudentResults(
-    int $classroomId, 
-    int $subjectId, 
-    EntityManagerInterface $em
-): JsonResponse {
-    try {
-        // 🔹 Fetch results based on classroom and subject
-        $resultsQuery = $em->createQuery("
-        SELECT s.id AS studentId, s.Firstname, s.Lastname, et.name AS examType, r.Score AS score
-        FROM App\Entity\Results r
-        JOIN r.Student s  
-        JOIN r.Exam e  
-        JOIN e.Examtype et
-        WHERE e.Subject = :subjectId
-        AND s.classroom = :classroomId  -- ✅ Corrected lowercase property
-    ")
-    ->setParameter('subjectId', $subjectId)
-    ->setParameter('classroomId', $classroomId);
-    
-    
-    
-    
-    
 
-        $resultsData = [];
-        foreach ($resultsQuery->getResult() as $result) {
-            $studentId = $result['studentId'];
-            $examType = $result['examType'];
-            $score = $result['score'];
 
-            if (!isset($resultsData[$studentId])) {
-                $resultsData[$studentId] = [];
-            }
+#[Route('/teacher/update-score', name: 'update_score', methods: ['POST'])]
+public function updateScore(Request $request, EntityManagerInterface $em): JsonResponse
+{
+    $teacher = $this->getUser();
+    if (!$teacher instanceof Teacher) {
+        return new JsonResponse(['error' => 'Access denied.'], Response::HTTP_FORBIDDEN);
+    }
 
-            $resultsData[$studentId][$examType] = $score;
+    $data = json_decode($request->getContent(), true);
+    if (!isset($data['studentId'], $data['subjecttId'], $data['termId'], $data['sessionId'], $data['examTypeId'], $data['score'])) {
+        return new JsonResponse(['error' => 'Invalid data.'], Response::HTTP_BAD_REQUEST);
+    }
+
+    // 🔹 Map subjecttId (from frontend) to subjectId (in database)
+    $subjectId = $data['subjecttId'];
+
+    // 🔹 Fetch Entities (Fix applied here 👇)
+    $student = $em->getRepository(Student::class)->find($data['studentId']);
+    $subject = $em->getRepository(Subject::class)->find($subjectId); // FIXED!
+    $term = $em->getRepository(Term::class)->find($data['termId']);
+    $session = $em->getRepository(Session::class)->find($data['sessionId']);
+    $examType = $em->getRepository(Examtype::class)->find($data['examTypeId']);
+
+    if (!$student || !$subject || !$term || !$session || !$examType) {
+        return new JsonResponse(['error' => 'Invalid references.'], Response::HTTP_NOT_FOUND);
+    }
+
+    // 🔹 Find or create ExamResult
+    $examResult = $em->getRepository(ExamResult::class)->findOneBy([
+        'student' => $student,
+        'subject' => $subject,
+        'term' => $term,
+        'session' => $session
+    ]);
+
+    if (!$examResult) {
+        $examResult = new ExamResult();
+        $examResult->setStudent($student);
+        $examResult->setSubject($subject);
+        $examResult->setTerm($term);
+        $examResult->setSession($session);
+        $examResult->setClassroom($student->getClassroom());
+        $em->persist($examResult);
+    }
+
+    // 🔹 Find or create ExamScore
+    $examScore = $em->getRepository(ExamScore::class)->findOneBy([
+        'examResult' => $examResult,
+        'examType' => $examType
+    ]);
+
+    if (!$examScore) {
+        $examScore = new ExamScore($examResult, $examType, 0);
+        $em->persist($examScore);
+    }
+
+    // 🔹 Update score
+    $examScore->setScore($data['score']);
+    $em->persist($examScore);
+
+    // 🔹 Recalculate scores
+    $this->calculateScores($examResult, $em);
+
+    // 🔹 Persist the updated exam result
+    $examResult->setUpdatedAt(new \DateTime());
+    $em->persist($examResult);
+    $em->flush();
+
+    return new JsonResponse([
+        'message' => 'Score updated successfully!',
+        'testScore' => $examResult->getTestScore(),
+        'examScore' => $examResult->getExamScore(),
+        'totalScore' => $examResult->getTotalScore()
+    ]);
+}
+
+
+
+
+/**
+ * Helper function to calculate Test Score, Exam Score, and Total Score.
+ */
+private function calculateScores(ExamResult $examResult, EntityManagerInterface $em)
+{
+    $examScores = $em->getRepository(ExamScore::class)->findBy(['examResult' => $examResult]);
+
+    $testScores = [];
+    $examScoreRaw = 0;
+
+    // 🔹 Fetch Max Scores & Scaling Factors from ExamConfiguration Table
+    $examConfig = $em->getRepository(ExamConfiguration::class)->find(1); // Assuming a single config record
+
+    $maxExamScore = $examConfig?->getMaxExamScore() ?? 60; // Default raw exam scale
+    $maxTestScore = $examConfig?->getMaxTestScore() ?? 40;  // Default raw test scale
+
+    // 🔹 Fetch dynamic weight (scaled values for Test and Exam)
+    $scaledExamScore = $examConfig?->getScaledExamScore() ?? 60; // Default scale for exam: 60
+    $scaledTestScore = $examConfig?->getScaledTestScore() ?? 40; // Default scale for test: 40
+
+    foreach ($examScores as $examScoreEntry) {
+        $examType = $examScoreEntry->getExamType();
+        $score = (float) $examScoreEntry->getScore();
+
+        if (strtolower($examType->getName()) === 'examination') {
+            $examScoreRaw = $score;
+        } else {
+            $testScores[] = $score;
+        }
+    }
+
+    // 🔹 Normalize Test Scores (Scale to `scaledTestScore`)
+    $rawTotalTestScore = array_sum($testScores);
+    $testScaleFactor = ($rawTotalTestScore > 0) ? ($scaledTestScore / $maxTestScore) : 1;
+    $normalizedTestScores = array_map(fn($s) => round($s * $testScaleFactor, 2), $testScores);
+    $testScore = array_sum($normalizedTestScores);
+
+    // 🔹 Normalize Exam Score (Scale to `scaledExamScore`)
+    $examScore = ($examScoreRaw > 0) ? round(($examScoreRaw / $maxExamScore) * $scaledExamScore, 2) : 0;
+
+    // 🔹 Calculate Total Score
+    $totalScore = round($testScore + $examScore, 2);
+
+    // 🔹 Set calculated values in ExamResult
+    $examResult->setTestScore($testScore);
+    $examResult->setExamScore($examScore);
+
+    // 🔹 Persist changes
+    $em->persist($examResult);
+}
+
+
+
+
+
+
+
+
+
+
+#[Route('/teacher/finalresults', name: 'view_results')]
+public function viewResults(Request $request, EntityManagerInterface $em): Response
+{
+    $session = $request->query->get('session');
+    $term = $request->query->get('term');
+    $classroomId = $request->query->get('classroom'); // Use ID variable to prevent conflicts
+    $student = $request->query->get('student');
+
+    // Fetch all available sessions
+    $sessions = $em->getRepository(Session::class)->findAll();
+
+    // Fetch all available terms
+    $terms = $em->getRepository(Term::class)->findAll();
+
+    // Fetch all available classrooms
+    $classrooms = $em->getRepository(Classroom::class)->findAll();
+
+    // Fetch the selected classroom entity
+    $selectedClassroom = null;
+    $subjects = [];
+
+    if ($classroomId) {
+        $selectedClassroom = $em->getRepository(Classroom::class)->find($classroomId);
+
+        if ($selectedClassroom) {
+            $subjects = $selectedClassroom->getSubject(); // ✅ Fetch subjects using the entity
+        }
+    }
+
+    // Fetch students based on the selected classroom
+    $students = [];
+    if ($selectedClassroom) {
+        $students = $em->getRepository(Student::class)->findBy(['classroom' => $selectedClassroom]);
+    }
+
+    // Structure student data for easy use in Twig
+    $studentsData = array_map(fn($s) => [
+        'id' => $s->getId(),
+        'name' => $s->getFirstName() . ' ' . $s->getLastName()
+    ], $students);
+
+    // Fetch exam results including subject details
+    $queryBuilder = $em->getRepository(ExamResult::class)->createQueryBuilder('r')
+        ->join('r.student', 's')
+        ->join('r.classroom', 'c')
+        ->join('r.session', 'sess')
+        ->join('r.term', 't')
+        ->join('r.subject', 'subj')
+        ->addSelect('
+            sess.name AS sessionName,
+            t.name AS termName,
+            subj.Course AS Course, 
+            s.id AS studentId,
+            s.Firstname AS Firstname,
+            s.Lastname AS Lastname,
+            r.testScore AS testScore,
+            r.examScore AS examScore,
+            (r.testScore + r.examScore) AS totalScore
+        ');
+
+    // Apply filters
+    if ($session) {
+        $queryBuilder->andWhere('sess.id = :session')->setParameter('session', $session);
+    }
+    if ($term) {
+        $queryBuilder->andWhere('t.id = :term')->setParameter('term', $term);
+    }
+    if ($selectedClassroom) {
+        $queryBuilder->andWhere('c.id = :classroom')->setParameter('classroom', $selectedClassroom->getId());
+    }
+    if ($student) {
+        $queryBuilder->andWhere('s.id = :student')->setParameter('student', $student);
+    }
+
+    $examResults = $queryBuilder->getQuery()->getResult();
+
+    // Restructure data to group by student
+    $groupedResults = [];
+    foreach ($examResults as $result) {
+        $studentId = $result['studentId'];
+        $studentName = $result['Firstname'] . ' ' . $result['Lastname'];
+
+        if (!isset($groupedResults[$studentId])) {
+            $groupedResults[$studentId] = [
+                'id' => $studentId,
+                'name' => $studentName,
+                'subjects' => [],
+            ];
         }
 
-        return new JsonResponse($resultsData);
-
-    } catch (\Exception $e) {
-        return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+        $groupedResults[$studentId]['subjects'][] = [
+            'subject' => $result['Course'],
+            'testScore' => $result['testScore'],
+            'examScore' => $result['examScore'],
+            'totalScore' => $result['totalScore'],
+        ];
     }
+
+    return $this->render('teacher/teacherresult.html.twig', [
+        'results' => $groupedResults,
+        'sessions' => $sessions,
+        'selectedSession' => $session,
+        'terms' => $terms,
+        'selectedTerm' => $term,
+        'classrooms' => $classrooms,
+       'selectedClassroom' => $selectedClassroom ? $selectedClassroom->getId() : null,
+        'students' => $studentsData,
+        'selectedStudent' => $student,
+        'subjects' => $subjects,
+    ]);
 }
 
 
+
+
+
+
+
+
+#[Route('/get-students-by-classroom', name: 'get_students_by_classroom')]
+public function getStudentsByClassroom(Request $request, EntityManagerInterface $em): JsonResponse
+{
+    $classroomId = $request->query->get('classroom');
+    $students = $em->getRepository(Student::class)->findBy(['classroom' => $classroomId]);
+
+    $studentsData = array_map(fn($s) => [
+        'id' => $s->getId(),
+        'name' => $s->getFirstName() . ' ' . $s->getLastName()
+    ], $students);
+
+    return new JsonResponse($studentsData);
+}
 
 
 

@@ -33,10 +33,10 @@
         <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-book glypha"></span>
-        <br><a href="#">Exam</a></li>
+        <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-list-alt glypha"></span>
-        <br><a href="#">Results</a></li>
+        <br><a href="{{ path('teacher_results') }}">Results</a></li>
 
         <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
         <br><a href="#">Data</a></li>
@@ -44,14 +44,14 @@
         <li class="boton activa"><span class="glyphicon glyphicon-user glyph"></span>
         <br><a href="{{ path('teacher_account') }}"> MyAccount </a></li>
     </ul>
-
- <a href="{{ path('teacher_logout') }}" id="logout" 
+    <a href="{{ path('teacher_logout') }}" id="logout" 
    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
     <span class="glyphicon glyphicon-log-out glypha"></span>    Logout</a>
 
 <form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
 </form>
+
 
 {% endblock %}
 

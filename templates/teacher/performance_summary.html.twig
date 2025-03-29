@@ -1,0 +1,50 @@
+<div class="row no-gutters">
+    <div class="col-md-12">
+        <!-- Cognitive Domain -->
+        <div class="col-md-12 border border-dark p-3 mt-3">
+            <h4 class="text-muted">Cognitive Domain</h4>
+            <table class="table table-bordered text-center">
+                <thead>
+                    <tr>
+                        <th style="width: 150px;">Subject</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">C.A (40)</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">Examination (60)</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">1st Term</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">2nd Term</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">3rd Term</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">Score Average</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">Grade</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">Position</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">Grade Remark</th>
+                        <th style="width: 50px; writing-mode: vertical-rl; transform: rotate(180deg);">Class Average</th>
+                    </tr>
+                </thead>
+              {% if selectedClassroom is not null %}
+    <tbody>
+        {% for subject in selectedClassroom.subject %}
+        <tr>
+            <td>{{ subject.Course }}</td>
+            <td></td>  <!-- C.A Score -->
+            <td></td>  <!-- Examination Score -->
+            <td></td>  <!-- 1st Term -->
+            <td></td>  <!-- 2nd Term -->
+            <td></td>  <!-- 3rd Term -->
+            <td></td>  <!-- Score Average -->
+            <td></td>  <!-- Grade -->
+            <td></td>  <!-- Position -->
+            <td></td>  <!-- Grade Remark -->
+            <td></td>  <!-- Class Average -->
+        </tr>
+        {% endfor %}
+    </tbody>
+{% else %}
+    <tbody>
+        <tr>
+            <td colspan="11" class="text-center">No subjects assigned to this classroom.</td>
+        </tr>
+    </tbody>
+{% endif %}
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,262 @@
+{% extends 'tdashbase.html.twig' %}
+
+{% block title %}Teacher FinalResult - MyExamSpace.Com{% endblock %}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
+   <style>
+        body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 100vw;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .button-container {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        .full-width {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table-section {
+    vertical-align: top;
+    padding: 10px;
+    border: 1px solid black;
+    width: 33%;
+}
+
+.inner-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inner-table th, .inner-table td {
+    border: 1px solid black;
+    padding: 5px;
+    text-align: center;
+}
+
+/* Container should be scrollable if content overflows */
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 80vh; /* Adjust height so it doesn't take the full screen */
+}
+
+/* Reduce table width */
+.table-bordered th, .table-bordered td {
+    white-space: nowrap; /* Prevent text wrapping */
+    padding: 5px; /* Reduce padding for a more compact table */
+    font-size: 14px; /* Reduce font size slightly */
+}
+
+/* Reduce the width of specific columns */
+.table-bordered th {
+    width: auto; /* Allow columns to shrink */
+}
+
+.table-bordered th:nth-child(1) { width: 120px; } /* Subject */
+.table-bordered th:nth-child(2),
+.table-bordered th:nth-child(3),
+.table-bordered th:nth-child(4),
+.table-bordered th:nth-child(5),
+.table-bordered th:nth-child(6),
+.table-bordered th:nth-child(7),
+.table-bordered th:nth-child(8),
+.table-bordered th:nth-child(9),
+.table-bordered th:nth-child(10),
+.table-bordered th:nth-child(11) {
+    width: 60px;
+}
+
+/* Ensure the whole page does not overflow */
+body {
+    overflow-x: hidden; /* Prevent full-page horizontal scroll */
+}
+
+
+
+    </style>
+{% endblock %}
+
+{% block map_content %}
+    <div class="here"></div>
+    <ul>
+        <li class="boton"><span class="glyphicon glyphicon-th-large glypha"></span>
+            <br><a href="{{ path('teacher_dashboard') }}">Dashboard</a></li>
+        <li class="boton"><span class="glyphicon glyphicon-book glypha"></span>
+            <br><a href="{{ path('teacher_preview_question') }}">Exam</a></li>
+        <li class="boton activa"><span class="glyphicon glyphicon-list-alt glyph"></span>
+            <br><a href="{{ path('teacher_results') }}">Results</a></li>
+        <li class="boton"><span class="glyphicon glyphicon-phone glypha"></span>
+            <br><a href="#">Data</a></li>
+        <li class="boton"><span class="glyphicon glyphicon-user glypha"></span>
+            <br><a href="{{ path('teacher_account') }}">My Account</a></li>
+    </ul>
+    <a href="{{ path('teacher_logout') }}" id="logout" 
+       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <span class="glyphicon glyphicon-log-out glypha"></span> Logout
+    </a>
+
+    <form id="logout-form" action="{{ path('teacher_logout') }}" method="POST" style="display: none;">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+    </form>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="button-container">
+        <a href="{{ path('teacher_results') }}" class="btn btn-default">
+            <span class="glyphicon glyphicon-floppy-save"></span> Edit Result
+        </a>
+        <a href="{{ path('view_results') }}" class="btn btn-primary">
+            <span class="glyphicon glyphicon-floppy-saved"></span> View Result
+        </a>
+    </div>
+
+
+
+<!--report card starts here-->
+
+<!-- 🔹 Filters (Dropdowns) -->
+<form method="GET" action="{{ path('view_results') }}" class="mb-3 filter-form">
+    <div class="row g-2 align-items-end">  
+        <!-- Academic Session Dropdown -->
+        <div class="col-md-2">
+            <select name="session" id="session" class="form-control form-control-sm">
+                <option value="">-- Select Session --</option>
+                {% for s in sessions %}
+                    <option value="{{ s.id }}" {{ s.id == selectedSession ? 'selected' : '' }}>
+                        {{ s.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Term Dropdown -->
+        <div class="col-md-2">
+            <select name="term" id="term" class="form-control form-control-sm">
+                <option value="">-- Select Term --</option>
+                {% for t in terms %}
+                    <option value="{{ t.id }}" {{ t.id == selectedTerm ? 'selected' : '' }}>
+                        {{ t.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Classroom Dropdown -->
+        <div class="col-md-2">
+            <select name="classroom" id="classroom" class="form-control form-control-sm">
+                <option value="">-- Select Classroom --</option>
+                {% for c in classrooms %}
+                   <option value="{{ c.id }}" {{ selectedClassroom is not null and c.id == selectedClassroom ? 'selected' : '' }}>
+                        {{ c.classname }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Student Dropdown -->
+        <div class="col-md-2">
+            <select name="student" id="student" class="form-control form-control-sm">
+                <option value="">-- Select Student --</option>
+                {% for s in students %}
+                    <option value="{{ s.id }}" {{ s.id == selectedStudent ? 'selected' : '' }}>
+                        {{ s.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="col-md-2 text-center">
+            <button type="submit" class="btn btn-sm btn-primary">View</button>
+        </div>
+    </div>
+</form>
+
+
+
+
+
+<!-- Table to display student results -->
+    <div class="table-responsive">
+        <table class="table table-bordered full-width">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Subject</th>
+                    <th>Test Score</th>
+                    <th>Exam Score</th>
+                    <th>Total Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                    {% for subject in result.subjects %}
+                        <tr>
+                            <td>{{ result.name }}</td>
+                            <td>{{ subject.subject }}</td>
+                            <td>{{ subject.testScore }}</td>
+                            <td>{{ subject.examScore }}</td>
+                            <td>{{ subject.totalScore }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#classroom').change(function() {
+        var classroomId = $(this).val();
+
+        // Clear the student dropdown
+        $('#student').html('<option value="">-- Select Student --</option>');
+
+        if (classroomId) {
+            $.ajax({
+                url: "{{ path('get_students_by_classroom') }}",
+                data: { classroom: classroomId },
+                success: function(response) {
+                    response.forEach(function(student) {
+                        $('#student').append(
+                            `<option value="${student.id}">${student.name}</option>`
+                        );
+                    });
+                }
+            });
+        }
+    });
+});
+</script>
+
+
+
+
+
+
+    </div>
+{% endblock %}
+
+
+
+
+
+
+
+

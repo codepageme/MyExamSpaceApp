@@ -118,7 +118,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="deptModalLabel">Add Department</h4>
             </div>
-            <form action="/" method="POST">
+            <form id="dept-form" method="POST">
                 <div class="modal-body">
                     <input type="text" name="department" placeholder="Department Name" class="form-control">
                 </div>
@@ -203,6 +203,24 @@
     });
 });
 
+
+$('#dept-form').submit(function(event) {
+    event.preventDefault();
+    var department = $('input[name=department]').val();
+    $.ajax({
+        type: 'POST',
+        url: "{{ path('admin_add_department') }}",
+        data: { department: department },
+        success: function(response) {
+            console.log(response);
+            // reload departments list or display success message
+            location.reload();
+        },
+        error: function(xhr, status, error) {
+            console.log(xhr.responseText);
+        }
+    });
+});
 </script>
 
 

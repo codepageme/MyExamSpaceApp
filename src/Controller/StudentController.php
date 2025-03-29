@@ -1023,7 +1023,7 @@ public function saveResponse(Request $request): JsonResponse {
             return $this->redirectToRoute('student_login_form');
         }
     
-        // Fetch the current academic calendar
+       // Fetch the current academic calendar
         $academicCalendarRepository = $doctrine->getRepository(AcademicCalender::class);
         $currentCalendar = $academicCalendarRepository->createQueryBuilder('a')
             ->orderBy('a.id', 'DESC')
@@ -1102,7 +1102,7 @@ public function saveResponse(Request $request): JsonResponse {
                 $em->flush(); // Commit the changes
             } else {
                 // If no result exists, create a new one
-                $result = new Results();
+                $result = new Results($doctrine->getManager());
                 $result->setStudent($studentEntity); // Relationship
                 $result->setExam($exam); // Relationship
                 $result->setCorrectAnswers($correctAnswers);

@@ -60,10 +60,17 @@ class Student
     #[ORM\OneToMany(targetEntity: Results::class, mappedBy: 'Student')]
     private Collection $results;
 
+    /**
+     * @var Collection<int, Reportsheet>
+     */
+    #[ORM\OneToMany(targetEntity: Reportsheet::class, mappedBy: 'student')]
+    private Collection $reportsheets;
+
     public function __construct()
     {
         $this->responses = new ArrayCollection();
         $this->results = new ArrayCollection();
+        $this->reportsheets = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -251,6 +258,36 @@ class Student
             // set the owning side to null (unless already changed)
             if ($result->getStudent() === $this) {
                 $result->setStudent(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Reportsheet>
+     */
+    public function getReportsheets(): Collection
+    {
+        return $this->reportsheets;
+    }
+
+    public function addReportsheet(Reportsheet $reportsheet): static
+    {
+        if (!$this->reportsheets->contains($reportsheet)) {
+            $this->reportsheets->add($reportsheet);
+            $reportsheet->setStudent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReportsheet(Reportsheet $reportsheet): static
+    {
+        if ($this->reportsheets->removeElement($reportsheet)) {
+            // set the owning side to null (unless already changed)
+            if ($reportsheet->getStudent() === $this) {
+                $reportsheet->setStudent(null);
             }
         }
 

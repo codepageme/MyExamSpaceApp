@@ -79,7 +79,8 @@ security:
         - { path: ^/teacher/create-question, roles: ROLE_TEACHER }
         - { path: ^/teacher/get-classrooms, roles: ROLE_TEACHER }
         - { path: ^/teacher/save-theoryquestion, roles: ROLE_TEACHER }
-        
+        - { path: ^/teacher/update-score, roles: ROLE_TEACHER }
+
 
 
 

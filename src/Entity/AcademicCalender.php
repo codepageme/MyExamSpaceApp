@@ -36,9 +36,16 @@ class AcademicCalender
     #[ORM\OneToMany(targetEntity: Results::class, mappedBy: 'AcademicCalender')]
     private Collection $results;
 
+    /**
+     * @var Collection<int, Reportsheet>
+     */
+    #[ORM\ManyToMany(targetEntity: Reportsheet::class, mappedBy: 'AcademicCalender')]
+    private Collection $reportsheets;
+
     public function __construct()
     {
         $this->results = new ArrayCollection();
+        $this->reportsheets = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -119,6 +126,33 @@ class AcademicCalender
             if ($result->getAcademicCalender() === $this) {
                 $result->setAcademicCalender(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Reportsheet>
+     */
+    public function getReportsheets(): Collection
+    {
+        return $this->reportsheets;
+    }
+
+    public function addReportsheet(Reportsheet $reportsheet): static
+    {
+        if (!$this->reportsheets->contains($reportsheet)) {
+            $this->reportsheets->add($reportsheet);
+            $reportsheet->addAcademicCalender($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReportsheet(Reportsheet $reportsheet): static
+    {
+        if ($this->reportsheets->removeElement($reportsheet)) {
+            $reportsheet->removeAcademicCalender($this);
         }
 
         return $this;

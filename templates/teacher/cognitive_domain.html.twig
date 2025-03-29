@@ -1,0 +1,60 @@
+       <table class="border-all full-width">
+    <tr>
+        <!-- Affective Domain -->
+        <td class="table-section">
+            <table class="inner-table">
+                <tr>
+                    <th>Affective Domain</th>
+                    <th>1st Term</th>
+                    <th>2nd Term</th>
+                    <th>3rd Term</th>
+                </tr>
+                {% for trait in ['Attentiveness', 'Honesty', 'Neatness', 'Politeness', 'Punctuality', 'Self Control', 'Obedience', 'Reliability', 'Sense of Responsibility', 'Relationship with Others'] %}
+                <tr>
+                    <td>{{ trait }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </td>
+
+        <!-- Psychomotor Skills -->
+        <td class="table-section">
+            <table class="inner-table">
+                <tr>
+                    <th>Psychomotor Skills</th>
+                    <th>1st Term</th>
+                    <th>2nd Term</th>
+                    <th>3rd Term</th>
+                </tr>
+                {% for skill in ['Handling of Tools', 'Drawing/Painting', 'Handwriting', 'Public Speaking', 'Speech Fluency', 'Sports', 'Genetics (Practical)'] %}
+                <tr>
+                    <td>{{ skill }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </td>
+
+        <!-- Grade Scale -->
+        <td class="table-section">
+            <table class="inner-table">
+                <tr>
+                    <th>Grade</th>
+                    <th>Percentage</th>
+                </tr>
+                {% set grades = {'A+': '90-100%', 'A': '80-89%', 'B': '70-79%', 'C': '60-69%', 'D': '50-59%', 'E': '40-49%', 'F': 'Below 40%'} %}
+                {% for grade, percentage in grades %}
+                <tr>
+                    <td>{{ grade }}</td>
+                    <td>{{ percentage }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </td>
+    </tr>
+</table>

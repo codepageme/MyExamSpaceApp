@@ -3,7 +3,7 @@
 {% block title %}Teacher Result - MyExamSpace.Com{% endblock %}
 {% block stylesheets %}
     <link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}">
-    <style>
+   <style>
         body {
             max-width: 100vw;
             overflow-x: hidden;
@@ -27,52 +27,57 @@
             flex-wrap: wrap;
             margin-bottom: 15px;
         }
+        .filters-container input, 
         .filters-container select {
-            width: 200px;
+            width: 200px; /* Make all filter elements uniform */
         }
-        .search-container {
-            display: flex;
-            align-items: center;
-            position: relative;
-            margin-bottom: 10px;
-            width: 250px;
+        .table-container {
+            max-width: 100%;
+            max-height: 500px;
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid #ccc;
         }
-        .search-container input {
-            padding-right: 30px;
-            width: 100%;
+        table {
+            width: auto;
+            min-width: 1700px;
+            border-collapse: collapse;
+            white-space: nowrap;
         }
-        .search-icon {
-            position: absolute;
-            right: 10px;
-            color: gray;
+        th, td {
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+            font-size: 14px;
         }
-       .table-container {
-        max-width: 100%;
-        overflow-x: scroll;
-        overflow-y: auto;
-        max-height: 500px; /* Adjust height as needed */
-        border: 1px solid #ccc;
-    }
+        button.process-btn {
+            font-size: 12px;
+            width:70px;
+            padding: 5px;
+        }
+        button.reset-btn {
+            font-size: 12px;
+             width:70px;
+            padding: 5px;
+        }
 
-    table {
-        width: auto; /* Prevent stretching */
-        min-width: 600px; /* Ensures a minimum width */
-        border-collapse: collapse;
-        white-space: nowrap; /* Prevents text wrapping */
-    }
+        .highlight-success {
+    background-color: #d4edda; /* Light green */
+    transition: background-color 0.5s ease-in-out;
+}
 
-    th, td {
-        padding: 5px;
-        text-align: center;
-        border: 1px solid #ddd;
-        font-size: 14px; /* Slightly smaller text */
-    }
+#success-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: none;
+    font-size: 14px;
+}
 
-    input.theory-input {
-        width: 50px; /* Smaller input size */
-        padding: 1px;
-        font-size: 12px;
-    }
     </style>
 {% endblock %}
 
@@ -101,83 +106,102 @@
 {% endblock %}
 
 {% block content %}
-
 <div class="container">
-    <!-- 🔹 Button Group -->
     <div class="button-container">
         <a href="{{ path('teacher_results') }}" class="btn btn-primary">
             <span class="glyphicon glyphicon-floppy-save"></span> Edit Result
         </a>
-        <a href="/" class="btn btn-default">
+        <a   href="{{ path('view_results') }}" class="btn btn-default">
             <span class="glyphicon glyphicon-floppy-saved"></span> View Result
         </a>
     </div>
 
-    <div class="container">
-        <!-- 🔹 Filters (Dropdowns & Search Bar) -->
-        <div class="filters-container">
-            <!-- Subject Dropdown -->
-           <select name="subject" id="subjectDropdown" class="form-control">
-          <option value="">Select Subject</option>
-             {% for teacherSubject in teacherSubjects %}
-               <option value="{{ teacherSubject.id }}" data-subject-id="{{ teacherSubject.subject.id }}">
-            {{ teacherSubject.subject.course }}
+    <!-- 🔹 Filters (Dropdowns) -->
+    <div class="filters-container">
+        <input type="hidden" id="sessionIdInput" value="{{ latestSession.id }}">
+        <input type="text" value="{{ latestSession.name }}" class="form-control" disabled>
+
+        <select name="term" id="termDropdown" class="form-control">
+            {% for term in terms %}
+                <option value="{{ term.id }}" {% if term.id == selectedTerm.id %}selected{% endif %}>
+                    {{ term.name }}
                 </option>
-             {% endfor %}
-                </select>
+            {% endfor %}
+        </select>
 
+          <select name="subject" id="subjectDropdown" class="form-control">
+            <option value="">Select Subject</option>
+            {% for teacherSubject in teacherSubjects %}
+                <option value="{{ teacherSubject.id }}" data-subjectt-id="{{ teacherSubject.subject.id }}">
+                    {{ teacherSubject.subject.course }}
+                </option>
+            {% endfor %}
+        </select>
 
-            <!-- Classroom Dropdown -->
-            <select name="classroom" id="classroomDropdown" class="form-control" disabled>
-                <option value="">Select Classroom</option>
-            </select>
-        </div>
+        <select name="classroom" id="classroomDropdown" class="form-control" disabled>
+            <option value="">Select Classroom</option>
+        </select>
+    </div>
 
-        <!-- Search Bar -->
-            <div class="search-container">
-                <input type="text" id="searchInput" class="form-control" placeholder="Search student...">
-                <span class="glyphicon glyphicon-search search-icon"></span>
-            </div>
-
-
-        <!-- 🔹 Results Table (Scrollable) -->
-        <div class="table-container">
-            <table class="table table-bordered table-hover" id="resultsTable">
-                <thead id="examTypesHeader">
-                    <tr>
-                        <th>Student Name</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsBody">
-                    <tr>
-                        <td colspan="8" class="text-center text-muted">No data available.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <!-- 🔹 Results Table -->
+    <div class="table-container">
+        <table class="table table-bordered table-hover">
+            <thead id="examTypesHeader">
+                <tr>
+                    <th>Awaiting Data Query</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <tr>
+                    <td colspan="8" class="text-center text-muted">No data available.</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    let termDropdown = document.getElementById("termDropdown");
     let subjectDropdown = document.getElementById("subjectDropdown");
     let classroomDropdown = document.getElementById("classroomDropdown");
-    let searchInput = document.getElementById("searchInput");
 
-    // 🔹 When subject is selected, fetch classrooms using teacherSubjectId
+    // 🎯 Store the selected subject ID globally
     subjectDropdown.addEventListener("change", function () {
-        let teacherSubjectId = this.value; // 🔹 This is teacher_subject.id
-        let subjectId = this.options[this.selectedIndex].dataset.subjectId; // 🔹 Get real subject.id
+        let selectedOption = this.options[this.selectedIndex];
 
-        console.log("Selected TeacherSubject ID:", teacherSubjectId);
-        console.log("Mapped Subject ID:", subjectId); // ✅ Correct subject ID for fetching results
+        if (!selectedOption) {
+            console.error("❌ Error: No subject selected!");
+            return;
+        }
+
+        let teacherSubjectId = selectedOption.value;
+        let subjecttId = selectedOption.getAttribute("data-subjectt-id");
+
+        if (!subjecttId) {
+            console.error("❌ Error: subjecttId is missing!", selectedOption);
+        } else {
+            console.log("✅ Selected subjecttId:", subjecttId);
+        }
+
+        // Store globally
+        window.selectedTeacherSubjectId = teacherSubjectId;
+        window.selectedSubjecttId = subjecttId ? parseInt(subjecttId, 10) : null;
+    });
+
+    termDropdown.addEventListener("change", updateResults);
+    subjectDropdown.addEventListener("change", fetchClassrooms);
+    classroomDropdown.addEventListener("change", updateResults);
+
+    function fetchClassrooms() {
+        let teacherSubjectId = this.value;
+        let subjecttId = window.selectedSubjecttId; // Use globally stored value
 
         classroomDropdown.innerHTML = '<option value="">Loading...</option>';
         classroomDropdown.disabled = true;
 
         if (teacherSubjectId) {
-            fetch(`/get-classrooms/${teacherSubjectId}`) // ✅ Fetch classrooms using teacherSubjectId
+            fetch(`/get-classrooms/${teacherSubjectId}`)
                 .then(response => response.json())
                 .then(data => {
                     classroomDropdown.innerHTML = '<option value="">Select Classroom</option>';
@@ -189,135 +213,157 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                     classroomDropdown.disabled = false;
                 })
-                .catch(error => console.error("Error fetching classrooms:", error));
+                .catch(error => console.error("⚠️ Error fetching classrooms:", error));
         }
+    }
 
-        // Store subject ID for later result fetching
-        classroomDropdown.dataset.subjectId = subjectId;
-    });
+    function updateResults() {
+        let classroomId = classroomDropdown.value;
+        let subjecttId = window.selectedSubjecttId; // Use stored subject ID
+        let termId = termDropdown.value;
+        let sessionId = document.getElementById("sessionIdInput").value;
 
-    // 🔹 When classroom is selected, fetch results using subjectId
-    classroomDropdown.addEventListener("change", function () {
-        let classroomId = this.value;
-        let teacherSubjectId = subjectDropdown.value; // Still useful for classroom fetching
-        let subjectId = this.dataset.subjectId; // ✅ Fetch stored subject.id from dataset
+        console.log("🔍 Fetching results for:", {
+            classroomId,
+            subjecttId,
+            termId,
+            sessionId,
+        });
 
-        console.log("TeacherSubject ID for classroom:", teacherSubjectId);
-        console.log("Mapped Subject ID for result fetching:", subjectId); // ✅ Ensuring correct ID
-        console.log("Selected Classroom ID:", classroomId);
+        if (classroomId && subjecttId) {
+          fetch(`/get-results/${subjecttId}/${classroomId}/${sessionId}/${termId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ Received Data:", data); // 🔹 Add this to check API response
 
-        if (classroomId && subjectId) {
-            fetchResults(subjectId, classroomId); // ✅ Using real subject ID to fetch results
-        }
-    });
+                    let resultsBody = document.getElementById("resultsBody");
+                    let examTypesHeader = document.getElementById("examTypesHeader");
 
-    function fetchResults(subjectId, classroomId) {
-        console.log("Fetching results for Subject ID:", subjectId, "Classroom ID:", classroomId);
+                    resultsBody.innerHTML = "";
+                    examTypesHeader.innerHTML = "";
 
-        fetch(`/get-results/${subjectId}/${classroomId}`)
-            .then(response => response.json())
-            .then(data => {
-                let resultsBody = document.getElementById("resultsBody");
-                let examTypesHeader = document.getElementById("examTypesHeader");
+                    if (data.students.length === 0) {
+                        resultsBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No students found.</td></tr>';
+                        return;
+                    }
 
-                resultsBody.innerHTML = "";
-                examTypesHeader.innerHTML = "";
+                    let examTypes = data.exam_types;
 
-                if (data.students.length === 0) {
-                    resultsBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No students found.</td></tr>';
-                    return;
-                }
+                    let headerRow1 = "<tr><th>Student Name</th>";
+                    let headerRow2 = "<tr><th></th>";
 
-                let examTypes = data.exam_types;
-                let headerRow1 = "<tr><th>Student Name</th>";
-                let headerRow2 = "<tr><th></th>";
+                    examTypes.forEach(type => {
+                        headerRow1 += `<th>${type.name}</th>`;
+                        headerRow2 += `<th><input type="text" class="form-control text-center" disabled value="Score"></th>`;
+                    });
+
+                    headerRow1 += "<th>Total</th><th>Action</th></tr>";
+                    headerRow2 += "<th><input type='text' class='form-control text-center' disabled value='Auto'></th><th></th></tr>";
+
+                    examTypesHeader.innerHTML = headerRow1 + headerRow2;
+
+                                data.students.forEach(student => {
+                let row = `<tr class="student-row" data-student-id="${student.student_id}"> 
+                            <td>${student.student_name}</td>`;
+
+                let totalScore = 0;
 
                 examTypes.forEach(type => {
-                    headerRow1 += `<th colspan="3" class="text-center">${type}</th>`;
-                    headerRow2 += `<th class="text-center">Total</th><th class="text-center">OBJ</th><th class="text-center">Theory</th>`;
-                });
+                        let scoreObj = student.scores[type.id];  // Get the object
+                        let score = scoreObj ? parseFloat(scoreObj.score) : 0.00; // Extract score safely
+                        totalScore += score;
+                        
+                        row += `<td>
+                                    <input type="number" class="exam-score" 
+                                        data-exam-type-id="${type.id}" 
+                                        value="${score.toFixed(2)}" min="0" max="100">
+                                </td>`;
+                    });
 
-                headerRow1 += "</tr>";
-                headerRow2 += "</tr>";
-                examTypesHeader.innerHTML = headerRow1 + headerRow2;
+                row += `<td><input type="text" class="form-control text-center total-score" disabled value="${totalScore.toFixed(2)}"></td>`;
+                row += `<td>
+                            <button class="btn btn-success process-btn">Process</button>
+                            <button class="btn btn-warning reset-btn">Reset</button>
+                        </td></tr>`;
 
-                let studentResults = {}; // 🔹 Store student scores
-
-                // 🔹 Fetch student results separately
-                fetch(`/get-student-results/${classroomId}/${subjectId}`)
-                    .then(response => response.json())
-                    .then(resultsData => {
-                        studentResults = resultsData;
-
-                        // Populate student rows
-                        data.students.forEach(student => {
-                            let row = `<tr class="student-row" data-student-id="${student.student_id}">
-                                <td>${student.student_name}</td>`;
-
-                            examTypes.forEach(type => {
-                                let scores = studentResults[student.student_id] || {};
-                                let objScore = scores.OBJ || 0; 
-                                let theoryScore = scores.Theory || 0; 
-                                let totalScore = objScore + theoryScore; 
-
-                                row += `
-                                    <td class="text-center total-score" data-exam-type="${type}">${totalScore}</td>
-                                    <td class="text-center obj-score" data-exam-type="${type}">${Score}</td>
-                                    <td class="text-center">
-                                        <input type="number" class="form-control theory-input" 
-                                               data-student-id="${student.student_id}" 
-                                               data-exam-type="${type}" 
-                                               value="${theoryScore}">
-                                    </td>`;
-                            });
-
-                            row += `</tr>`;
-                            resultsBody.innerHTML += row;
-                        });
-
-                        attachTheoryScoreListeners();
-                    })
-                    .catch(error => console.error("Error fetching student results:", error));
-            })
-            .catch(error => console.error("Error fetching results:", error));
-    }
-
-    function attachTheoryScoreListeners() {
-        document.querySelectorAll(".theory-input").forEach(input => {
-            input.addEventListener("change", function () {
-                let studentId = this.dataset.studentId;
-                let examType = this.dataset.examType;
-                let newTheoryScore = parseFloat(this.value) || 0;
-
-                let totalScoreCell = this.closest("tr").querySelector(`td.total-score[data-exam-type="${examType}"]`);
-                let objScoreCell = this.closest("tr").querySelector(`td.obj-score[data-exam-type="${examType}"]`);
-
-                let objScore = parseFloat(objScoreCell.textContent) || 0;
-                let totalScore = objScore + newTheoryScore;
-
-                if (totalScoreCell) {
-                    totalScoreCell.textContent = totalScore;
-                }
-
-                fetch(`/update-theory-score/${studentId}/${examType}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ theory_score: newTheoryScore })
-                })
-                .then(response => response.json())
-                .then(data => console.log("Score updated:", data))
-                .catch(error => console.error("Request failed:", error));
+                resultsBody.innerHTML += row;
             });
-        });
+
+                    attachListeners();
+                })
+                .catch(error => console.error("⚠️ Error fetching student results:", error));
+        }
     }
 
-    searchInput.addEventListener("keyup", function () {
-        let filter = this.value.toLowerCase();
-        document.querySelectorAll("#resultsBody .student-row").forEach(row => {
-            row.style.display = row.children[0].textContent.toLowerCase().includes(filter) ? "" : "none";
+   function attachListeners() {
+    document.querySelectorAll(".exam-score").forEach(input => {
+        input.addEventListener("input", function () {
+            let row = this.closest("tr");
+            let studentId = row.dataset.studentId;
+            let subjecttId = window.selectedSubjecttId; // Use stored subject ID
+            let termId = document.getElementById("termDropdown").value;
+            let sessionId = document.getElementById("sessionIdInput").value;
+            let examTypeId = this.dataset.examTypeId;
+            let score = parseFloat(this.value) || 0.00;
+
+            updateTotal(row);
+
+            fetch("/teacher/update-score", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    studentId: studentId,
+                    subjecttId: subjecttId,
+                    termId: termId,
+                    sessionId: sessionId,
+                    examTypeId: examTypeId,
+                    score: score,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error("❌ Error updating score:", data.error);
+                } else {
+                    console.log("✅ Score updated successfully!");
+                    showSuccessMessage(`Score updated for ${row.children[0].textContent}`);
+                    input.classList.add("highlight-success"); // Add highlight effect
+
+                    setTimeout(() => {
+                        input.classList.remove("highlight-success");
+                    }, 2000);
+                }
+            })
+            .catch(error => console.error("⚠️ Error:", error));
         });
     });
+}
+
+function showSuccessMessage(message) {
+    let toast = document.getElementById("success-toast");
+    toast.textContent = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 2000);
+}
+
+
+    function updateTotal(row) {
+        let totalScoreCell = row.querySelector(".total-score");
+        let totalScore = 0;
+
+        row.querySelectorAll(".exam-score").forEach(input => {
+            totalScore += parseFloat(input.value) || 0.00;
+        });
+
+        totalScoreCell.value = totalScore.toFixed(2);
+    }
 });
 
+
+
 </script>
+
 {% endblock %}

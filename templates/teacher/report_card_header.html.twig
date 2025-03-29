@@ -1,0 +1,54 @@
+<!-- report_card_header.html.twig -->
+
+<div class="report-card-header">
+    <!-- School logo and information -->
+
+
+
+        <div class="container border rounded p-3">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- 🔹 Header Section -->
+            <div class="row align-items-center">
+                <!-- 🔹 School Logo -->
+                <div class="col-md-3 text-center">
+                    <div class="header-logo">
+                        <img src="{{ asset('images/school-logo.png') }}" alt="School Logo" class="img-fluid" style="max-height: 100px;">
+                    </div>
+                </div>
+
+                <!-- 🔹 School Info -->
+                <div class="col-md-6 text-center">
+                    <h2 class="school-name">{{ school.name|default('Placeholder School Name') }}</h2>
+                    <p class="mb-1"><strong>{{ school.motto|default('Placeholder School Motto') }}</strong></p>
+                    <p class="mb-1">{{ school.address|default('Placeholder School Address') }}</p>
+                    <p class="mb-1">
+                        📞 {{ school.phone|default('08012345678') }} | ✉️ 
+                        <a href="mailto:{{ school.email|default('info@schoolname.com') }}">
+                            {{ school.email|default('info@schoolname.com') }}
+                        </a>
+                    </p>
+                </div>
+
+                <!-- 🔹 Student Photo -->
+                <div class="col-md-3 text-center">
+                    <div class="header-student-photo">
+                        <img src="{{ student.photo|default(asset('images/default-student.png')) }}" 
+                             alt="Student Photo" class="img-fluid rounded-circle" 
+                             style="max-height: 100px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔹 Report Title -->
+            <div class="row mt-3">
+                <div class="col-md-12 text-center">
+                    <h4>{{ selectedSession.name|default('2021/2022') }} - {{ selectedTerm.name|default('First Term') }} Student Academic Performance</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</div>

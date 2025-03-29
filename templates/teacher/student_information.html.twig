@@ -1,0 +1,103 @@
+<!-- student_information.html.twig -->
+
+<div class="student-information">
+    <!-- Student photo and details -->
+
+    <div class="container border border-dark rounded p-3 mt-3">
+    <div class="row">
+        <div class="col-md-12 border border-dark p-3">
+            <div class="row">
+                <!-- 🔹 Personal Data -->
+                <div class="col-md-5 border border-dark p-3 me-4">
+                    <h4 class="text-muted">Personal Data</h4>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Name</th>
+                            <td>{{ selectedStudent.firstname|default('__________') }} {{ selectedStudent.lastname|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Admin No</th>
+                            <td>{{ selectedStudent.admissionNumber|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Class</th>
+                            <td>{{ selectedClassroom.classname|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Gender</th>
+                            <td>{{ selectedStudent.gender|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>D.O.B</th>
+                            <td>{{ selectedStudent.dob|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Club/Society</th>
+                            <td>{{ selectedStudent.club|default('__________') }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- 🔹 Attendance -->
+                <div class="col-md-3 border border-dark p-3 me-3">
+                    <h4 class="text-muted">Attendance</h4>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>No. of times school opened</th>
+                            <td>{{ attendance.totalDays|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>No. Present</th>
+                            <td>{{ attendance.present|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>No. Absent</th>
+                            <td>{{ attendance.absent|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>School Start Date</th>
+                            <td>{{ attendance.startDate|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>School End Date</th>
+                            <td>{{ attendance.endDate|default('__________') }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- 🔹 Performance Summary -->
+                <div class="col-md-3 border border-dark p-3">
+                    <h4 class="text-muted">Performance Summary</h4>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Total Score Obtainable</th>
+                            <td>{{ totalScoreObtainable|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Obtained</th>
+                            <td>{{ totalObtained|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Percentage</th>
+                            <td>{{ percentage|default('__________') }}%</td>
+                        </tr>
+                        <tr>
+                            <th>Grade</th>
+                            <td>{{ grade|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Position</th>
+                            <td>{{ position|default('__________') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Class Size</th>
+                            <td>{{ classSize|default('__________') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>

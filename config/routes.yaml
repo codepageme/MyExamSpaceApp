@@ -57,6 +57,11 @@ teacher_save_theoryquestion:
     controller: App\Controller\TeacherController::saveTheoryQuestion
     methods: POST
 
+update-score:
+    path: /teacher/update-score
+    controller: App\Controller\TeacherController::updateScore
+    methods: [GET, POST, PUT, DELETE, OPTIONS]
+
 
 
 
@@ -206,7 +211,10 @@ admin_add_subject:
     controller: App\Controller\AdminController::addsubject
     methods: POST
 
-
+admin_add_department:
+    path: /admin/add-department
+    controller: App\Controller\AdminController::addDepartment
+    methods: POST
 
 
 
