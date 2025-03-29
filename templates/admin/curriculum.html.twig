@@ -139,7 +139,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="examTypeModalLabel">Add Exam Type</h4>
             </div>
-            <form action="/" method="POST">
+            <form action="{{ path('admin_add_exam_type') }}" method="POST">
                 <div class="modal-body">
                     <input type="text" name="examtype" placeholder="Exam Type" class="form-control">
                 </div>
@@ -162,7 +162,7 @@
             </div>
             <form action="{{ path('admin_add_subject') }}" method="POST">
                 <div class="modal-body">
-                    <input type="text" name="course" placeholder="Course Name" class="form-control">
+                    <input type="text" name="subject" placeholder="Course Name" class="form-control">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

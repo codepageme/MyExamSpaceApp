@@ -216,6 +216,10 @@ admin_add_department:
     controller: App\Controller\AdminController::addDepartment
     methods: POST
 
+admin_add_exam_type:
+  path: /admin/add-exam-type
+  controller: App\Controller\AdminController::addExamType
+  methods: POST
 
 
 

@@ -16,6 +16,7 @@ use App\Entity\Message;
 use App\Entity\Department;
 use App\Entity\Question;
 use App\Entity\Exam;
+use App\Entity\Examtype;
 
 
 use App\Repository\AdminRepository;
@@ -51,9 +52,16 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 
 
+
 class AdminController extends AbstractController
 {
 
+    private $entityManager;
+
+public function __construct(EntityManagerInterface $entityManager)
+{
+    $this->entityManager = $entityManager;
+}
     
 //Admin Login Logic --------------------------------------------------------------------------D.O.N.E
 
@@ -992,9 +1000,8 @@ public function curriculumPage(DepartmentRepository $departmentRepository): Resp
         $department = new Department();
         $department->setdepartment($departmentName);
 
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($department);
-        $entityManager->flush();
+        $this->entityManager->persist($department);
+        $this->entityManager->flush();
 
         return new JsonResponse(['message' => 'Department added successfully']);
     }
@@ -1003,31 +1010,53 @@ public function curriculumPage(DepartmentRepository $departmentRepository): Resp
 
 
 
-/**
- * @Route("/admin/add-subject", name="admin_add_subject", methods={"POST"})
- */
-public function addSubject(Request $request, EntityManagerInterface $entityManager): Response
-{
-    $subjectName = $request->request->get('subject');
+    /**
+     * @Route("/admin/add-subject", name="admin_add_subject", methods={"POST"})
+     */
+    public function addSubject(Request $request): Response
+    {
+        $subjectName = $request->request->get('subject');
 
-    if (!$subjectName) {
-        $this->addFlash('error', 'Please enter a subject name.');
+        if (!$subjectName) {
+            $this->addFlash('error', 'Please enter a subject name.');
+            return $this->redirectToRoute('admin_curriculum');
+        }
+
+        $subject = new Subject();
+        $subject->setCourse($subjectName);
+
+        $this->entityManager->persist($subject);
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'Subject added successfully!');
         return $this->redirectToRoute('admin_curriculum');
     }
 
-    $subject = new Subject();
-    $subject->setCourse($subjectName);
 
-    $entityManager->persist($subject);
-    $entityManager->flush();
-
-    $this->addFlash('success', 'Subject added successfully!');
-    return $this->redirectToRoute('admin_curriculum');
-}
+    
 
 
+    /**
+     * @Route("/admin/add-exam-type", name="admin_add_exam_type", methods={"POST"})
+     */
+    public function addExamType(Request $request): Response
+    {
+        $examType = $request->request->get('examtype');
 
+        if (!$examType) {
+            $this->addFlash('error', 'Please enter an exam type.');
+            return $this->redirectToRoute('admin_curriculum');
+        }
 
+        $examTypeEntity = new Examtype();
+        $examTypeEntity->setName($examType);
+
+        $this->entityManager->persist($examTypeEntity);
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'Exam type added successfully!');
+        return $this->redirectToRoute('admin_curriculum');
+    }
 
 
 
@@ -1082,13 +1111,6 @@ public function dashboard(EntityManagerInterface $em): Response
 
 //Admin Logout Logic ------------------------------------------------------------------------
 
-
-private EntityManagerInterface $entityManager;
-
-public function __construct(EntityManagerInterface $entityManager)
-{
-    $this->entityManager = $entityManager;
-}
 
 /**
  * @Route("/admin/logout", name="admin_logout")
