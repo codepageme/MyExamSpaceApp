@@ -221,6 +221,41 @@ admin_add_exam_type:
   controller: App\Controller\AdminController::addExamType
   methods: POST
 
+admin_add_session:
+  path: /admin/add-session
+  controller: App\Controller\AdminController::addSession
+  methods: POST
+
+admin_add_term:
+  path: /admin/add-term
+  controller: App\Controller\AdminController::addTerm
+  methods: POST
+
+admin_add_academic_calender:
+  path: /admin/add-academic-calender
+  controller: App\Controller\AdminController::addAcademicCalender
+  methods: [POST]
+
+
+admin_add_grade:
+  path: /admin/add-grade
+  controller: App\Controller\AdminController::addGrade
+  methods: [POST]
+
+admin_add_exam:
+  path: /admin/add-exam
+  controller: App\Controller\AdminController::addExam
+  methods: [POST]
+
+admin_add_exam_configuration:
+  path: /admin/add-exam-configuration
+  controller: App\Controller\AdminController::addExamConfiguration
+  methods: [POST]
+
+admin_exam_timetable:
+  path: /admin/exam-timetable
+  controller: App\Controller\AdminController::examTimetable
+
 
 
 

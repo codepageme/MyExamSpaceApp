@@ -17,6 +17,11 @@ use App\Entity\Department;
 use App\Entity\Question;
 use App\Entity\Exam;
 use App\Entity\Examtype;
+use App\Entity\Session;
+use App\Entity\Term;
+use App\Entity\AcademicCalender;
+use App\Entity\Grade;
+use App\Entity\ExamConfiguration;
 
 
 use App\Repository\AdminRepository;
@@ -24,6 +29,8 @@ use App\Repository\TeacherRepository;
 use App\Repository\TeacherSubjectRepository;
 use App\Repository\TeacherSubjectClassroomRepository;
 use App\Repository\DepartmentRepository;
+use App\Repository\SessionRepository;
+use App\Repository\TermRepository;
 
 use App\Form\CreateteacherType;
 use App\Form\EditteacherType;
@@ -957,11 +964,19 @@ public function deleteStudent(Request $request, EntityManagerInterface $entityMa
 /**
  * @Route("/admin/curriculum", name="admin_curriculum")
  */
-public function curriculumPage(DepartmentRepository $departmentRepository): Response
-{
+public function curriculumPage(
+    DepartmentRepository $departmentRepository,
+    SessionRepository $sessionRepository,
+    TermRepository $termRepository
+): Response {
     $departments = $departmentRepository->findAll();
+    $sessions = $sessionRepository->findAll();
+    $terms = $termRepository->findAll();
+
     return $this->render('admin/curriculum.html.twig', [
         'departments' => $departments,
+        'sessions' => $sessions,
+        'terms' => $terms,
     ]);
 }
     
@@ -1060,7 +1075,167 @@ public function curriculumPage(DepartmentRepository $departmentRepository): Resp
 
 
 
+/**
+ * @Route("/admin/add-session", name="admin_add_session", methods={"POST"})
+ */
+public function addSession(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $sessionName = $request->request->get('session');
 
+    if (!$sessionName) {
+        $this->addFlash('error', 'Please enter a session name.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    if (!preg_match('/^\d{4}\/\d{4}$/', $sessionName)) {
+        $this->addFlash('error', 'Invalid session name format. Please use YYYY/YYYY format.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $session = new Session();
+    $session->setName($sessionName);
+
+    $entityManager->persist($session);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Session added successfully!');
+    return $this->redirectToRoute('admin_curriculum');
+}
+
+
+
+/**
+ * @Route("/admin/add-term", name="admin_add_term", methods={"POST"})
+ */
+public function addTerm(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $termName = $request->request->get('term');
+
+    if (!$termName) {
+        $this->addFlash('error', 'Please enter a term name.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $term = new Term();
+    $term->setName($termName);
+
+    $entityManager->persist($term);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Term added successfully!');
+    return $this->redirectToRoute('admin_curriculum');
+}
+
+
+
+
+/**
+ * @Route("/admin/add-academic-calender", name="admin_add_academic_calender", methods={"POST"})
+ */
+public function addAcademicCalender(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $sessionId = $request->request->get('session');
+    $termId = $request->request->get('term');
+    $startDate = $request->request->get('startDate');
+    $endDate = $request->request->get('endDate');
+
+    if (!$sessionId || !$termId || !$startDate || !$endDate) {
+        $this->addFlash('error', 'Please fill in all fields.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $academicCalender = new AcademicCalender();
+    $academicCalender->setSession($entityManager->getRepository(Session::class)->find($sessionId));
+    $academicCalender->setTerm($entityManager->getRepository(Term::class)->find($termId));
+    $academicCalender->setStartDate(new \DateTime($startDate));
+    $academicCalender->setEndDate(new \DateTime($endDate));
+
+    $entityManager->persist($academicCalender);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Academic calender added successfully!');
+    return $this->redirectToRoute('admin_curriculum');
+}
+
+
+
+/**
+ * @Route("/admin/add-grade", name="admin_add_grade", methods={"POST"})
+ */
+public function addGrade(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $gradeName = $request->request->get('grade');
+    $minPercentage = $request->request->get('min_percentage');
+    $maxPercentage = $request->request->get('max_percentage');
+
+    if (!$gradeName || !$minPercentage || !$maxPercentage) {
+        $this->addFlash('error', 'Please fill in all fields.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    if ($minPercentage >= $maxPercentage) {
+        $this->addFlash('error', 'Min percentage must be less than max percentage.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $grade = new Grade();
+    $grade->setGrade($gradeName);
+    $grade->setMinPercentage($minPercentage);
+    $grade->setMaxPercentage($maxPercentage);
+
+    $entityManager->persist($grade);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Grade added successfully!');
+    return $this->redirectToRoute('admin_curriculum');
+}
+
+
+
+/**
+ * @Route("/admin/add-exam-configuration", name="admin_add_exam_configuration", methods={"POST"})
+ */
+public function addExamConfiguration(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $maxExamScore = $request->request->get('max_exam_score');
+    $maxTestScore = $request->request->get('max_test_score');
+    $scaledExamScore = $request->request->get('scaled_exam_score');
+    $scaledTestScore = $request->request->get('scaled_test_score');
+
+    if (!$maxExamScore || !$maxTestScore || !$scaledExamScore || !$scaledTestScore) {
+        $this->addFlash('error', 'Please fill in all fields.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $examConfiguration = new ExamConfiguration();
+    $examConfiguration->setMaxExamScore($maxExamScore);
+    $examConfiguration->setMaxTestScore($maxTestScore);
+    $examConfiguration->setScaledExamScore($scaledExamScore);
+    $examConfiguration->setScaledTestScore($scaledTestScore);
+
+    try {
+        $entityManager->persist($examConfiguration);
+        $entityManager->flush();
+    } catch (\Exception $e) {
+        $this->addFlash('error', 'An error occurred while adding the exam configuration.');
+        return $this->redirectToRoute('admin_curriculum');
+    }
+
+    $this->addFlash('success', 'Exam configuration added successfully!');
+    return $this->redirectToRoute('admin_curriculum');
+}
+
+
+
+
+/**
+ * @Route("/admin/exam-timetable", name="admin_exam_timetable")
+ */
+public function examTimetable(): Response
+{
+    // Add logic here to display the exam timetable schedule and list current examinations
+    return $this->render('admin/exam_timetable.html.twig');
+}
 
 
 

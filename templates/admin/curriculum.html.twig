@@ -67,23 +67,47 @@
 
 
 
-<div class="container text-center" style="margin-top:20px; border:2px solid blue; border-radius: 5px; width:500px; height:200px;">
+<div class="container text-center" style="margin-top:10px; border: 3px solid lightblue; border-radius: 10px; width:500px; height:200px; padding:20px;">
     <!-- Bootstrap Pills -->
-    <ul class="nav nav-pills">
+    <ul class="nav nav-pills nav-justified">
         <li role="presentation" class="active">
-            <a href="#" data-toggle="modal" data-target="#addClassModal"> New Class</a>
+            <a href="#" data-toggle="modal" data-target="#addClassModal" class="btn btn-primary"> New Class</a>
         </li>
         <li role="presentation"  class="active">
-            <a href="#" data-toggle="modal" data-target="#deptModal"> New Department</a>
+            <a href="#" data-toggle="modal" data-target="#deptModal" class="btn btn-primary"> New Department</a>
         </li>
         <li role="presentation"  class="active">
-            <a href="#" data-toggle="modal" data-target="#examTypeModal"> New Exam Type</a>
+            <a href="#" data-toggle="modal" data-target="#examTypeModal" class="btn btn-primary"> New Exam Type</a>
+        </li>
+        <br>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#subjectModal" class="btn btn-primary"> New Subject</a>
         </li>
         <li role="presentation"  class="active">
-            <a href="#" data-toggle="modal" data-target="#subjectModal"> New Subject</a>
+            <a href="#" data-toggle="modal" data-target="#sessionModal" class="btn btn-primary"> New Session</a>
+        </li>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#termModal" class="btn btn-primary"> New Term</a>
+        </li>
+        <br>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#academicPeriodModal" class="btn btn-primary"> New Academic Period</a>
+        </li>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#gradeModal" class="btn btn-primary"> New Grade</a>
+        </li>
+        <li role="presentation"  class="active">
+            <a href="#" data-toggle="modal" data-target="#examConfigurationModal" class="btn btn-primary"> New Exam Configuration</a>
+        </li>
+        <br>
+       <li role="presentation"  class="active">
+         <a href="{{ path('admin_exam_timetable') }}" class="btn btn-primary"> New Exam Timetable</a>
         </li>
     </ul>
 </div>
+
+
+
 
 <!-- Modals for Each Pill Button -->
 <!-- Class Modal -->
@@ -173,8 +197,167 @@
     </div>
 </div>
 
+<!--Session modal-->
+<div class="modal fade" id="sessionModal" tabindex="-1" role="dialog" aria-labelledby="sessionModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="sessionModalLabel">New Session</h4>
+            </div>
+            <form id="session-form" method="POST" action="{{ path('admin_add_session') }}">
+                <div class="modal-body">
+                    <input type="text" name="session" placeholder="Session Name" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 
+<!-- Term Modal -->
+<div class="modal fade" id="termModal" tabindex="-1" role="dialog" aria-labelledby="termModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="termModalLabel">New Term</h4>
+            </div>
+            <form id="term-form" method="POST" action="{{ path('admin_add_term') }}">
+                <div class="modal-body">
+                    <input type="text" name="term" placeholder="Term Name" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Academic Period Modal -->
+<div class="modal fade" id="academicPeriodModal" tabindex="-1" role="dialog" aria-labelledby="academicPeriodModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="academicPeriodModalLabel">New Academic Calender</h4>
+            </div>
+            <form id="academicPeriod-form" method="POST" action="{{ path('admin_add_academic_calender') }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="session">Session:</label>
+                        <select name="session" id="session" class="form-control">
+                            {% for session in sessions %}
+                                <option value="{{ session.id }}">{{ session.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="term">Term:</label>
+                        <select name="term" id="term" class="form-control">
+                            {% for term in terms %}
+                                <option value="{{ term.id }}">{{ term.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startDate">Start Date:</label>
+                        <input type="date" name="startDate" id="startDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">End Date:</label>
+                        <input type="date" name="endDate" id="endDate" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Grade Modal -->
+<div class="modal fade" id="gradeModal" tabindex="-1" role="dialog" aria-labelledby="gradeModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="gradeModalLabel">New Grade</h4>
+            </div>
+            <form id="grade-form" method="POST" action="{{ path('admin_add_grade') }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="grade">Grade Name</label>
+                        <input type="text" name="grade" class="form-control" id="grade" placeholder="Enter grade name">
+                    </div>
+                    <div class="form-group">
+                        <label for="min_percentage">Min Percentage</label>
+                        <input type="number" name="min_percentage" class="form-control" id="min_percentage" placeholder="Enter min percentage">
+                    </div>
+                    <div class="form-group">
+                        <label for="max_percentage">Max Percentage</label>
+                        <input type="number" name="max_percentage" class="form-control" id="max_percentage" placeholder="Enter max percentage">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Exam Configuration Modal -->
+<div class="modal fade" id="examConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="examConfigurationModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="examConfigurationModalLabel">New Exam Configuration</h4>
+            </div>
+            <form id="exam-configuration-form" method="POST" action="{{ path('admin_add_exam_configuration') }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="max_exam_score">Max Exam Score Attainable</label>
+                        <input type="number" name="max_exam_score" class="form-control" id="max_exam_score" placeholder="Enter max exam score">
+                    </div>
+                    <div class="form-group">
+                        <label for="max_test_score">Max Test Score Attainable</label>
+                        <input type="number" name="max_test_score" class="form-control" id="max_test_score" placeholder="Enter max test score">
+                    </div>
+                    <div class="form-group">
+                        <label for="scaled_exam_score">Final Exam Score</label>
+                        <input type="number" name="scaled_exam_score" class="form-control" id="scaled_exam_score" placeholder="Enter scaled exam score">
+                    </div>
+                    <div class="form-group">
+                        <label for="scaled_test_score">Final Test Score</label>
+                        <input type="number" name="scaled_test_score" class="form-control" id="scaled_test_score" placeholder="Enter scaled test score">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 
 
