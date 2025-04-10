@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+<style>
+body {
+margin: 0 !important;
+padding: 0 !important;
+background-color: #2f4f7f !important;
+color: white !important;
+}
+</style>
+{% endblock %}
+{% block body %}
+<div class="form-container" style="max-height: 600px; overflow-y: auto;">
+<h1 style="text-align: center;">Create Timetable</h1>
+{{ form_start(form) }}
+<div class="form-horizontal" style="margin-left: 25%; margin-right: 25%;">
+{% for child in form.children %}
+{% if child.vars.name != 'submit' %}
+<div class="form-group">
+{{ form_label(child, null, {'label_attr': {'class': 'col-sm-4 control-label'}}) }}
+<div class="col-sm-8">
+{{ form_widget(child, {'attr': {'class': 'form-control'}}) }}
+</div>
+</div>
+{% endif %}
+{% endfor %}
+<div class="form-group">
+<div class="col-sm-offset-4 col-sm-8">
+{{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+</div>
+</div>
+</div>
+{{ form_end(form) }}
+</div>
+{% endblock %}

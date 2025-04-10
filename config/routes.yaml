@@ -257,9 +257,19 @@ admin_exam_timetable:
   controller: App\Controller\AdminController::examTimetable
 
 
+admin_edit_timetable:
+    path: /admin/timetable/{id}/edit
+    controller: App\Controller\AdminController::editTimetable
+
+admin_delete_timetable:
+    path: /admin/timetable/{id}/delete
+    controller: App\Controller\AdminController::deleteTimetable
 
 
-
+admin_create_timetable:
+  path: /admin/createtimetable
+  controller: App\Controller\AdminController::createTimetable
+  methods: [GET, POST]
 
 
 #student route here

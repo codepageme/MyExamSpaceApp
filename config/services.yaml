@@ -25,6 +25,7 @@ services:
             $entityManager: '@doctrine.orm.default_entity_manager'
         tags: ['controller.service_arguments']
 
+
    
     # Automatically configure all other classes as services
     App\:

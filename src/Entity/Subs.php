@@ -1,5 +1,7 @@
 <?php
 
+// src/Entity/Subs.php
+
 namespace App\Entity;
 
 use App\Repository\SubsRepository;
@@ -177,5 +179,17 @@ class Subs
         }
 
         return $this;
+    }
+
+    public function isSubscriptionActive(): bool
+    {
+        $currentDate = new \DateTime();
+        $endDate = $this->getEndDate();
+
+        if ($currentDate > $endDate) {
+            return false;
+        }
+
+        return true;
     }
 }

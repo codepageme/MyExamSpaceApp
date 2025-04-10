@@ -31,6 +31,9 @@ use App\Repository\TeacherSubjectClassroomRepository;
 use App\Repository\DepartmentRepository;
 use App\Repository\SessionRepository;
 use App\Repository\TermRepository;
+use App\Repository\ExamRepository;
+
+
 
 use App\Form\CreateteacherType;
 use App\Form\EditteacherType;
@@ -38,6 +41,7 @@ use App\Form\CreateAdminType;
 use App\Form\AdminprofilepixType;
 use App\Form\CreateStudentType;
 use App\Form\TodoItemType; 
+use App\Form\TimetableType;
 
 
 
@@ -65,10 +69,23 @@ class AdminController extends AbstractController
 
     private $entityManager;
 
-public function __construct(EntityManagerInterface $entityManager)
-{
-    $this->entityManager = $entityManager;
-}
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $lockDate = '2025-05-05';
+        $currentDate = date('Y-m-d');
+    
+        if ($currentDate >= $lockDate) {
+            http_response_code(403);
+            echo '<div style="color:white ; background-color:blue; text-align:center; margin-top:100px;margin-left:50px;margin-right:50px; height:100px;">';
+            echo 'App is locked<br>';
+            echo 'Your Subscription has Expired<br>';
+            echo 'Please Contact Your Service Provider';
+            echo '</div>';
+            exit;
+        }
+    
+        $this->entityManager = $entityManager;
+    }
     
 //Admin Login Logic --------------------------------------------------------------------------D.O.N.E
 
@@ -1228,17 +1245,84 @@ public function addExamConfiguration(Request $request, EntityManagerInterface $e
 
 
 
+
+
 /**
  * @Route("/admin/exam-timetable", name="admin_exam_timetable")
  */
-public function examTimetable(): Response
+public function examTimetable(ExamRepository $examRepository): Response
 {
-    // Add logic here to display the exam timetable schedule and list current examinations
-    return $this->render('admin/exam_timetable.html.twig');
+    $exams = $examRepository->findAll();
+    return $this->render('admin/exam_timetable.html.twig', [
+        'exams' => $exams,
+    ]);
+}
+
+
+/**
+ * @Route("/admin/timetable/{id}/edit", name="admin_edit_exam")
+ */
+public function editTimetable(Request $request, Exam $exam, EntityManagerInterface $entityManager)
+{
+    $form = $this->createForm(TimetableType::class, $exam);
+
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Timetable updated successfully!');
+
+        return $this->redirectToRoute('admin_exam_timetable');
+    }
+
+    return $this->render('admin/timetable.html.twig', [
+        'form' => $form->createView(),
+    ]);
 }
 
 
 
+/**
+ * @Route("/admin/timetable/{id}/delete", "admin_delete_timetable")
+ */
+public function deleteTimetable(Request $request, Exam $exam, EntityManagerInterface $entityManager)
+{
+    $entityManager->remove($exam);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Timetable deleted successfully!');
+
+    return $this->redirectToRoute('admin_exam_timetable');
+}
+
+
+
+/**
+ * @Route("/admin/createtimetable", name="admin_create_timetable", methods={"GET", "POST"})
+ */
+public function createTimetable(Request $request, EntityManagerInterface $entityManager): Response
+{
+    
+    $exam = new Exam();
+    $form = $this->createForm(TimetableType::class, $exam);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        $entityManager->persist($exam);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Timetable created successfully!');
+
+        return $this->redirectToRoute('admin_exam_timetable');
+    } elseif ($form->isSubmitted() && !$form->isValid()) {
+        $this->addFlash('error', 'There was an error creating the timetable. Please try again.');
+    }
+
+    return $this->render('admin/createTimetable.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
 
 //logic Ends -----------------------------------------------------------------------------------
 

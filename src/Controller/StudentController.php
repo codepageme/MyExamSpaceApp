@@ -43,9 +43,21 @@ class StudentController extends AbstractController
 
     public function __construct(EntityManagerInterface $entityManager)
     {
+        $lockDate = '2025-05-05';
+        $currentDate = date('Y-m-d');
+    
+        if ($currentDate >= $lockDate) {
+            http_response_code(403);
+            echo '<div style="color:white ; background-color:blue; text-align:center; margin-top:100px;margin-left:50px;margin-right:50px; height:100px;">';
+            echo 'App is locked<br>';
+            echo 'Your Subscription has Expired<br>';
+            echo 'Please Contact Your Service Provider';
+            echo '</div>';
+            exit;
+        }
+    
         $this->entityManager = $entityManager;
     }
-
 //Student login logic -----------------------------------------------------------------------------
 
 
